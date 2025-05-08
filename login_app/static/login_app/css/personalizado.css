@@ -1,0 +1,30 @@
+/* Override para alerts en el login */
+.card-body .alert {
+  /* Fuerza wrapping de texto normal */
+  white-space: normal !important;
+  /* Ocupa el 100% del ancho de la tarjeta */
+  width: 100% !important;
+  /* Reduce un poco la fuente */
+  font-size: 0.9rem !important;
+  /* Ajusta el interlineado para no ser tan alto */
+  line-height: 1.3 !important;
+  /* Padding estándar de Bootstrap */
+  padding: 0.75rem 1.25rem !important;
+  /* Margen inferior para separar alerts de otros elementos */
+  margin-bottom: 1rem !important;
+  /* Asegura que el alert sea relativo para posicionar el botón */
+  position: relative !important;
+}
+
+/* Centrar y ajustar el botón de cierre */
+.card-body .alert .close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  color: inherit;
+  opacity: 0.7;
+}
+.card-body .alert .close:hover {
+  opacity: 1;
+}

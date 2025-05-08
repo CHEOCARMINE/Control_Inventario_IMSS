@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block title %}Iniciar Sesión{% endblock %}</title>
+
+  {% load static %}
+  <!-- Bootstrap CSS CDN -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+    integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+    crossorigin="anonymous"
+  />
+  <!-- SB Admin 2 (si lo necesitas) -->
+  <link href="{% static 'base/css/sb-admin-2.css' %}" rel="stylesheet">
+  <!-- Tus estilos personalizados -->
+  <link href="{% static 'login_app/css/personalizado.css' %}" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-primary">
+  <div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="row justify-content-center w-100">
+      <!-- Aquí el nuevo grid responsivo -->
+      <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+        <div class="card shadow-lg">
+          <div class="card-body">
+
+            <!-- Alertas dentro de la tarjeta -->
+            {% if messages %}
+              <div class="mb-3">
+                {% for message in messages %}
+                  {% with tipo=message.tags|cut:'login-' %}
+                    <div class="alert alert-{{ tipo }} alert-dismissible fade show small" role="alert">
+                      {{ message }}
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                  {% endwith %}
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="text-center mb-4">
+              <h1 class="h4 text-gray-900">Bienvenido de vuelta!</h1>
+            </div>
+
+            <form method="post" action="{% url 'login' %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <input
+                  type="text"
+                  name="nombre_usuario"
+                  class="form-control form-control-user"
+                  placeholder="Usuario"
+                  required
+                />
+              </div>
+              <div class="form-group mb-4">
+                <input
+                  type="password"
+                  name="contraseña"
+                  class="form-control form-control-user"
+                  placeholder="Contraseña"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary btn-user btn-block">
+                Iniciar Sesión
+              </button>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery y Bootstrap JS CDN -->
+  <script
+    src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+    crossorigin="anonymous"
+  ></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+    crossorigin="anonymous"
+  ></script>
+</body>
+</html>

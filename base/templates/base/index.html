@@ -1,0 +1,23 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+  {# Mostrar sólo los errores de permiso #}
+  {% if messages %}
+    {% for message in messages %}
+      {% if 'permission-error' in message.tags %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  <div class="text-center">
+    <h1 class="h3 text-gray-800">Este es el home/index</h1>
+  </div>
+{% endblock %}
