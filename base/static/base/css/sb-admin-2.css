@@ -6491,7 +6491,7 @@ button.bg-dark:focus {
 }
 
 .bg-white {
-  background-color: #fff !important;
+  background-color: #d7d7d77d !important;
 }
 
 .bg-transparent {
@@ -10016,7 +10016,7 @@ a:focus {
 }
 
 .text-gray-600 {
-  color: #858796 !important;
+  color: #000000c2 !important;
 }
 
 .text-gray-700 {

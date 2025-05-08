@@ -18,6 +18,7 @@
 
 <!-- Estilos personalizados para esta plantilla -->
 <link href="{% static 'base/css/sb-admin-2.css' %}" rel="stylesheet">
+<link href="{% static 'base/css/personalizado.css' %}" rel="stylesheet">
 
 </head>
 
@@ -31,8 +32,10 @@
 
             <!-- Barra lateral - Marca -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'index' %}">
-                <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-laugh-wink"></i>
+                <div class="sidebar-brand-icon">
+                    <img src="{% static 'base/img/imss-logo.png' %}"
+                        alt="IMSS Bienestar"
+                        class="sidebar-brand-logo">
                 </div>
                 <div class="sidebar-brand-text mx-3">IMSS Bienestar</div>
             </a>
@@ -108,9 +111,18 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user_full_name|default:"Invitado" }}</span>
+                                <img src="{% static 'base/img/logo_blanco.svg' %}" 
+                                    alt="Logo Mexico" 
+                                    class="img-fluid" 
+                                    style="max-height:40px; width:auto;"
+                                >
+                            </a>
+                            <!-- <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user_full_name|default:"Invitado" }}</span>
                                 <img class="img-profile rounded-circle"
                                     src="{% static 'base/img/undraw_profile.svg' %}">
-                            </a>
+                            </a> -->
                             <!-- Menú desplegable - Información del usuario -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
