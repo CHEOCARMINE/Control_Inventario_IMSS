@@ -8,25 +8,35 @@ Aplicación web de gestión de inventarios para IMSS Bienestar, desarrollada en 
 
 ## Instalación
 1. **Clonar el repositorio**
-```bash git clone https://github.com/CHEOCARMINE/Control_Inventario_IMSS.git ```
-```bash cd Control_Inventario_IMSS ```
+
+```git clone https://github.com/CHEOCARMINE/Control_Inventario_IMSS.git ```
+
+```cd Control_Inventario_IMSS ```
 
 2. **Crear y activar entorno virtual**
-```bash python -m venv venv ```
-```bash ## Windows ```
-```bash venv\Scripts\activate ```
-```bash ## macOS/Linux ```
-```bash source venv/bin/activate ```
+   
+```python -m venv venv ```
 
-3. **Instalar dependencias**
-```bash pip install -r requirements.txt ```
+```## Windows ```
 
-4. **Configurar variables de entorno**
-```bash cp .env.example .env ```
+```venv\Scripts\activate ```
+
+```## macOS/Linux ```
+
+```source venv/bin/activate ```
+
+4. **Instalar dependencias**
+   
+```pip install -r requirements.txt ```
+
+6. **Configurar variables de entorno**
+   
+```cp .env.example .env ```
 ## Rellena .env con tus credenciales y settings locales
 
-5. **Aplicar migraciones y poblar datos iniciales**
-```bash python manage.py migrate ```
+1. **Aplicar migraciones y poblar datos iniciales**
+   
+```python manage.py migrate ```
 
 Al hacerlo, las señales (post_migrate) crearán automáticamente:
 - Roles básicos (4)
@@ -34,12 +44,13 @@ Al hacerlo, las señales (post_migrate) crearán automáticamente:
 - Usuarios “Invitado.Rol” (4)
 - Módulos y Acciones para auditoría (7 de cada uno)
 
-1. **Crear superusuario (opcional)**
-bash
-python manage.py createsuperuser
+2. **Crear superusuario (opcional)**
+   
+```python manage.py createsuperuser```
 
-1. **Levantar servidor de desarrollo**
-```bash python manage.py runserver ```
+3. **Levantar servidor de desarrollo**
+   
+```python manage.py runserver ```
 
 Abre tu navegador en http://127.0.0.1:8000/.
 
