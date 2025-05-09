@@ -1,6 +1,10 @@
 from django.urls import path
-from .views import registrar_usuario
+from .views import registrar_usuario, listar_usuarios, ver_usuario
+
+app_name = 'usuarios'
 
 urlpatterns = [
-    path('registrar/', registrar_usuario, name='registrar_usuario'),
+    path('registrar/', registrar_usuario,   name='registrar_usuario'),
+    path('lista/',     listar_usuarios,     name='listar_usuarios'),
+    path('ver/<int:usuario_id>/', ver_usuario, name='ver_usuario'),
 ]

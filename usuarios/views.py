@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
+from django.core.paginator   import Paginator
 from usuarios.forms import UsuarioForm
 from usuarios.models import DatosPersonales
 from usuarios.utils import generar_nombre_usuario_unico
-from login_app.models import Usuario
+from login_app.models import Usuario, Rol
 from login_app.decorators import login_required, superadmin_required
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
 from usuarios.validations import (
@@ -14,6 +15,7 @@ from usuarios.validations import (
     validate_numero_empleado
 )
 
+# Crear usuario
 @login_required
 @superadmin_required
 def registrar_usuario(request):
@@ -117,7 +119,7 @@ def registrar_usuario(request):
                 f'Usuario "{nombre_usuario}" creado exitosamente.',
                 extra_tags='registro-success'
             )
-            return redirect('registrar_usuario')
+            return redirect('usuarios:registrar_usuario')
         
         else:
             # Capturar errores de validación del Form
@@ -130,3 +132,87 @@ def registrar_usuario(request):
         form = UsuarioForm()
 
     return render(request, 'usuarios/crear_usuario.html', {'form': form})
+
+# Lista de Usuarios
+@login_required
+@superadmin_required
+def listar_usuarios(request):
+    qs = Usuario.objects.all()
+
+    # extraigo filtros GET
+    filtro_u       = request.GET.get('usuario', '').strip()
+    filtro_nom     = request.GET.get('nombres', '').strip()
+    filtro_ap      = request.GET.get('apellido_paterno', '').strip()
+    filtro_am      = request.GET.get('apellido_materno', '').strip()
+    filtro_num_emp = request.GET.get('numero_empleado', '').strip()
+    filtro_rol     = request.GET.get('rol', '')
+    filtro_estado  = request.GET.get('estado', '')
+
+    # aplico filtros sobre qs
+    if filtro_u:
+        qs = qs.filter(nombre_usuario__icontains=filtro_u)
+    if filtro_nom:
+        ids = DatosPersonales.objects.filter(nombres__icontains=filtro_nom).values_list('id', flat=True)
+        qs = qs.filter(id_dato__in=ids)
+    if filtro_ap:
+        ids = DatosPersonales.objects.filter(apellido_paterno__icontains=filtro_ap).values_list('id', flat=True)
+        qs = qs.filter(id_dato__in=ids)
+    if filtro_am:
+        ids = DatosPersonales.objects.filter(apellido_materno__icontains=filtro_am).values_list('id', flat=True)
+        qs = qs.filter(id_dato__in=ids)
+    if filtro_num_emp:
+        ids = DatosPersonales.objects.filter(numero_empleado__icontains=filtro_num_emp).values_list('id', flat=True)
+        qs = qs.filter(id_dato__in=ids)
+    if filtro_rol:
+        qs = qs.filter(id_rol__id=filtro_rol)
+    if filtro_estado in ['activo', 'inactivo']:
+        qs = qs.filter(estado=(filtro_estado == 'activo'))
+
+    # traigo en un solo query todos los DatosPersonales necesarios
+    datos_qs = DatosPersonales.objects.filter(id__in=qs.values_list('id_dato', flat=True))
+    datos_map = { dp.id: dp for dp in datos_qs }
+
+    # construyo la lista que iteraré en la plantilla
+    usuarios_data = []
+    for usuario in qs:
+        usuarios_data.append({
+            'usuario': usuario,
+            'datos':   datos_map.get(usuario.id_dato)
+        })
+
+    # Paginación: 10 items por página
+    paginator   = Paginator(usuarios_data, 10)
+    page_number = request.GET.get('page')
+    page_obj    = paginator.get_page(page_number)
+
+    # Reconstruir base_url con los filtros (sin el parámetro page)
+    params = request.GET.copy()
+    params.pop('page', None)
+    qs_prefix = '?' + params.urlencode() + ('&' if params else '')
+
+    return render(request, 'usuarios/listar_usuarios.html', {
+        'page_obj':   page_obj,
+        'roles':      Rol.objects.all(),
+        'filter': {
+            'usuario':          filtro_u,
+            'nombres':          filtro_nom,
+            'apellido_paterno': filtro_ap,
+            'apellido_materno': filtro_am,
+            'numero_empleado':  filtro_num_emp,
+            'rol':              filtro_rol,
+            'estado':           filtro_estado,
+        },
+        'qs_prefix': qs_prefix,
+    })
+
+# Ver y editar usuarios
+@login_required
+@superadmin_required
+def ver_usuario(request, pk):
+    # Trae el usuario y sus datos personales
+    u   = get_object_or_404(Usuario, pk=pk)
+    dp  = get_object_or_404(DatosPersonales, pk=u.id_dato)
+    return render(request, 'usuarios/ver_usuario.html', {
+        'usuario': u,
+        'datos':    dp,
+    })

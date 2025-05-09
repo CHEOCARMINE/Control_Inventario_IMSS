@@ -1,0 +1,22 @@
+{% extends 'base/base.html' %}
+{% block title %}Ver Usuario{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Detalle de {{ usuario.nombre_usuario }}</h2>
+  <ul class="list-group">
+    <li class="list-group-item"><strong>Nombres:</strong> {{ datos.nombres }}</li>
+    <li class="list-group-item"><strong>Apellido Paterno:</strong> {{ datos.apellido_paterno }}</li>
+    <li class="list-group-item"><strong>Apellido Materno:</strong> {{ datos.apellido_materno }}</li>
+    <li class="list-group-item"><strong>Correo:</strong> {{ datos.correo }}</li>
+    <li class="list-group-item"><strong># Empleado:</strong> {{ datos.numero_empleado }}</li>
+    <li class="list-group-item"><strong>Teléfono:</strong> {{ datos.telefono }}</li>
+    <li class="list-group-item"><strong>Rol:</strong> {{ usuario.id_rol.nombre }}</li>
+    <li class="list-group-item"><strong>Estado:</strong>
+      {% if usuario.estado %}Activo{% else %}Inactivo{% endif %}
+    </li>
+  </ul>
+  <a href="{% url 'usuarios:listar_usuarios' %}" class="btn btn-secondary mt-3">
+    <i class="fas fa-arrow-left"></i> Volver a la lista
+  </a>
+</div>
+{% endblock %}

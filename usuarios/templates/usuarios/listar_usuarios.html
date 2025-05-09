@@ -1,0 +1,160 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+<div class="d-flex align-items-center mb-3">
+    <h2 class="mr-auto">Usuarios</h2>
+    <a href="{% url 'usuarios:registrar_usuario' %}" class="btn btn-success">
+        <i class="fas fa-user-plus"></i> Registrar Usuario
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form id="filterForm" method="get" action="{% url 'usuarios:listar_usuarios' %}">
+        <div class="form-row">
+            <div class="col-md-2 mb-2">
+            <input type="text" name="usuario" class="form-control auto-submit"
+                    placeholder="Usuario" value="{{ filter.usuario }}">
+            </div>
+            <div class="col-md-2 mb-2">
+            <input type="text" name="nombres" class="form-control auto-submit"
+                    placeholder="Nombres" value="{{ filter.nombres }}">
+            </div>
+            <div class="col-md-2 mb-2">
+            <input type="text" name="apellido_paterno" class="form-control auto-submit"
+                    placeholder="Apellido Paterno" value="{{ filter.apellido_paterno }}">
+            </div>
+            <div class="col-md-2 mb-2">
+            <input type="text" name="apellido_materno" class="form-control auto-submit"
+                    placeholder="Apellido Materno" value="{{ filter.apellido_materno }}">
+            </div>
+            <div class="col-md-2 mb-2">
+            <input type="text" name="numero_empleado" class="form-control auto-submit"
+                    placeholder="N° Empleado" value="{{ filter.numero_empleado }}">
+            </div>
+            <div class="col-md-2 mb-2">
+            <select name="rol" class="form-control auto-submit">
+                <option value="">-- Rol --</option>
+                {% for r in roles %}
+                <option value="{{ r.id }}"
+                    {% if filter.rol == r.id|stringformat:"s" %}selected{% endif %}>
+                    {{ r.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+            </div>
+            <div class="col-md-2 mb-2">
+            <select name="estado" class="form-control auto-submit">
+                <option value="">-- Estado --</option>
+                <option value="activo"   {% if filter.estado == "activo"   %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if filter.estado == "inactivo" %}selected{% endif %}>Inactivo</option>
+            </select>
+            </div>
+            <div class="col-md-2 mb-2">
+            <button type="button" class="btn btn-outline-secondary btn-block" onclick="clearFilters()">
+                <i class="fas fa-eraser"></i> Limpiar
+            </button>
+            </div>
+        </div>
+        </form>
+    </div>
+    </div>
+
+    <!-- Tabla de resultados --> 
+    <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead class="thead-light">
+        <tr>
+            <th>Usuario</th>
+            <th>Nombres</th>
+            <th>Apellido P.</th>
+            <th>Apellido M.</th>
+            <th># Empleado</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acción</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in page_obj.object_list %}
+            {% with u=item.usuario dp=item.datos %}
+            <tr>
+                <td>{{ u.nombre_usuario }}</td>
+                <td>{{ dp.nombres }}</td>
+                <td>{{ dp.apellido_paterno }}</td>
+                <td>{{ dp.apellido_materno }}</td>
+                <td>{{ dp.numero_empleado }}</td>
+                <td>{{ u.id_rol.nombre }}</td>
+                <td>
+                {% if u.estado %}
+                    <span class="badge badge-success">Activo</span>
+                {% else %}
+                    <span class="badge badge-danger">Inactivo</span>
+                {% endif %}
+                </td>
+                <td>
+                <a href="{% url 'usuarios:ver_usuario' u.id %}" class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i>
+                </a>
+                </td>
+            </tr>
+            {% endwith %}
+        {% empty %}
+            <tr><td colspan="8" class="text-center">No hay usuarios.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+        {# “Anterior” #}
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <a class="page-link"
+                href="{{ qs_prefix }}page={{ page_obj.previous_page_number }}"
+                aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+            {% else %}
+            <span class="page-link disabled">&laquo;</span>
+            {% endif %}
+        </li>
+    
+        {# Números de página #}
+        {% for p in page_obj.paginator.page_range %}
+            <li class="page-item {% if p == page_obj.number %}active{% endif %}">
+            <a class="page-link" href="{{ qs_prefix }}page={{ p }}">{{ p }}</a>
+            </li>
+        {% endfor %}
+    
+        {# “Siguiente” #}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+            <a class="page-link"
+                href="{{ qs_prefix }}page={{ page_obj.next_page_number }}"
+                aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+            {% else %}
+            <span class="page-link disabled">&raquo;</span>
+            {% endif %}
+        </li>
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'usuarios/js/listar_usuarios.js' %}"></script>
+{% endblock extra_js %}
