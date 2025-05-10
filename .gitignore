@@ -15,11 +15,6 @@ db.sqlite3
 .env
 *.env
 
-# Archivos de migraciones auto-generadas (opcional si quieres versionar)
-usuarios/migrations/
-login_app/migrations/
-base/migrations/
-
 # Archivos estáticos compilados – si usas collectstatic en producción
 /staticfiles/
 /static/
