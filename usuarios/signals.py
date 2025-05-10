@@ -1,8 +1,14 @@
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
+from django.db import connection
 
-from login_app.models import Rol
-from usuarios.models import DatosPersonales
+def tabla_existe(nombre_tabla):
+    """Verifica si una tabla existe en la base de datos."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=%s", [nombre_tabla]
+        )
+        return cursor.fetchone() is not None
 
 @receiver(post_migrate)
 def create_guest_datos(sender, **kwargs):
@@ -13,6 +19,12 @@ def create_guest_datos(sender, **kwargs):
     if sender.name != 'usuarios':
         return
 
+    if not tabla_existe('login_app_rol') or not tabla_existe('usuarios_datospersonales'):
+        return
+
+    from login_app.models import Rol
+    from usuarios.models import DatosPersonales
+
     for rol in Rol.objects.all():
         DatosPersonales.objects.get_or_create(
             nombres='Invitado',
@@ -22,6 +34,6 @@ def create_guest_datos(sender, **kwargs):
                 'correo': None,
                 'numero_empleado': None,
                 'telefono': None,
-                # fecha_registro con auto_now_add
+                # fecha_registro se autogenera con auto_now_add
             }
         )

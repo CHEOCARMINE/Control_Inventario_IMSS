@@ -91,11 +91,12 @@ def registrar_usuario(request):
             # Crear Usuario
             u = Usuario.objects.create(
                 nombre_usuario = nombre_usuario,
-                contraseña = make_password(contraseña),
                 id_rol = rol,
                 id_dato = datos.id,
                 estado = True
             )
+            u.set_password(contraseña)
+            u.save()
 
             # Referencia de Log
             ref = ReferenciasLog.objects.create(

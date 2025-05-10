@@ -37,7 +37,7 @@ def login_view(request):
             return redirect('login')
 
         # Verificar contraseña
-        if not check_password(contraseña, u.contraseña):
+        if not u.check_password(contraseña):
             messages.error(request, 'Contraseña incorrecta.', extra_tags='login-danger')
             return redirect('login')
 
