@@ -27,7 +27,7 @@ def seed_roles_and_guests(apps, schema_editor):
         Usuario.objects.get_or_create(
             nombre_usuario=username,
             defaults={
-                'contraseña': make_password(default_password),
+                'password':   make_password(default_password),
                 'id_rol_id':  rol.id,
                 'id_dato':    datos.id,
                 'estado':     True,
