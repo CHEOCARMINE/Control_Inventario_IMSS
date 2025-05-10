@@ -6,39 +6,38 @@ def seed_roles_and_guests(apps, schema_editor):
     Usuario = apps.get_model('login_app', 'Usuario')
     DatosPersonales = apps.get_model('usuarios', 'DatosPersonales')
 
-    # 1) Roles
-    roles = []
-    for nombre in (
+    default_password = '0123456789'
+    # Primero, asegúrate de que existen los roles
+    for nombre in [
         "Super Administrador",
         "Administrador de Almacén",
         "Supervisor de Almacén",
-        "Salidas de Almacén",
-    ):
-        rol, _ = Rol.objects.get_or_create(nombre=nombre)
-        roles.append(rol)
+        "Salidas de Almacén"
+    ]:
+        Rol.objects.get_or_create(nombre=nombre)
 
-    # 2) Usuarios invitados
-    default_password = make_password('0123456789')
-    for rol in roles:
-        dp, _ = DatosPersonales.objects.get_or_create(
+    # Luego creamos los DatosPersonales “Invitado” y su Usuario
+    for rol in Rol.objects.all():
+        datos, _ = DatosPersonales.objects.get_or_create(
             nombres='Invitado',
             apellido_paterno=rol.nombre,
-            defaults={'correo': '', 'numero_empleado': '', 'telefono': ''}
+            defaults={'numero_empleado': '', 'correo': '', 'telefono': ''}
         )
+        username = f"Invitado.{rol.nombre.replace(' ', '')}"
         Usuario.objects.get_or_create(
-            nombre_usuario=f"Invitado.{rol.nombre.replace(' ', '')}",
+            nombre_usuario=username,
             defaults={
-                'contraseña': default_password,
-                'id_rol_id': rol.id,
-                'id_dato': dp.id,
-                'estado': True,
+                'contraseña': make_password(default_password),
+                'id_rol_id':  rol.id,
+                'id_dato':    datos.id,
+                'estado':     True,
             }
         )
 
 class Migration(migrations.Migration):
     dependencies = [
         ('login_app', '0001_initial'),
-        ('usuarios', '0001_initial'),
+        ('usuarios',  '0001_initial'),
     ]
 
     operations = [
