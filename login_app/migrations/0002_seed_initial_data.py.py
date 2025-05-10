@@ -1,15 +1,26 @@
 from django.db import migrations
 from django.contrib.auth.hashers import make_password
 
-def seed_roles_datospersonales_usuarios(apps, schema_editor):
-    Rol = apps.get_model('login_app', 'Rol')
-    Usuario = apps.get_model('login_app', 'Usuario')
-    DatosPersonales = apps.get_model('usuarios', 'DatosPersonales')
+def seed_roles_and_guests(apps, schema_editor):
+    # Obtener modelos desde el estado de la migración:
+    Rol             = apps.get_model('login_app', 'Rol')
+    Usuario         = apps.get_model('login_app', 'Usuario')
+    DatosPersonales = apps.get_model('usuarios',  'DatosPersonales')
 
     default_password = '0123456789'
+    role_names = [
+        "Super Administrador",
+        "Administrador de Almacén",
+        "Supervisor de Almacén",
+        "Salidas de Almacén"
+    ]
 
+    # 1) Crear los roles si no existen
+    for name in role_names:
+        Rol.objects.get_or_create(nombre=name)
+
+    # 2) Por cada rol, crear DatosPersonales y Usuario “Invitado”
     for rol in Rol.objects.all():
-        # 1) Crear DatosPersonales Invitado con número único INV-XX
         numero = f"INV-{rol.id:02d}"
         datos, _ = DatosPersonales.objects.get_or_create(
             nombres          = 'Invitado',
@@ -20,7 +31,6 @@ def seed_roles_datospersonales_usuarios(apps, schema_editor):
                 'telefono': '',
             }
         )
-        # 2) Crear Usuario Invitado
         username = f"Invitado.{rol.nombre.replace(' ', '')}"
         Usuario.objects.get_or_create(
             nombre_usuario = username,
@@ -33,10 +43,12 @@ def seed_roles_datospersonales_usuarios(apps, schema_editor):
         )
 
 class Migration(migrations.Migration):
+
     dependencies = [
         ('login_app', '0001_initial'),
         ('usuarios',  '0001_initial'),
     ]
+
     operations = [
-        migrations.RunPython(seed_roles_datospersonales_usuarios, migrations.RunPython.noop),
+        migrations.RunPython(seed_roles_and_guests, migrations.RunPython.noop),
     ]
