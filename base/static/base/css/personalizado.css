@@ -5,7 +5,7 @@
   }
   
   .sidebar-brand-logo {
-    width: 2.5rem;   /* igual que el tamaño de un fa-icon (aprox 24px) */
+    width: 5rem;   /* igual que el tamaño de un fa-icon (aprox 24px) */
     height: auto;
     object-fit: block;
   }
