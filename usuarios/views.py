@@ -217,3 +217,41 @@ def ver_usuario(request, pk):
         'usuario': u,
         'datos':    dp,
     })
+
+# Perfil de Usuario
+@login_required
+def perfil(request):
+    # Recuperar usuario y datos personales
+    uid = request.session.get('usuario_id')
+    u   = Usuario.objects.get(pk=uid)
+    dp  = DatosPersonales.objects.get(pk=u.id_dato)
+
+    # Determinar si es un “invitado”
+    is_guest = u.nombre_usuario.startswith('Invitado.')
+
+    if request.method == 'POST':
+        if is_guest:
+            messages.error(request, 'Los usuarios invitados no pueden cambiar la contraseña.', extra_tags='perfil-error')
+            return redirect('usuarios:perfil')
+
+        new_pw = request.POST.get('nueva_contrasena', '').strip()
+        confirm = request.POST.get('confirm_contrasena', '').strip()
+
+        if not new_pw:
+            messages.error(request, 'Por favor ingresa la nueva contraseña.', extra_tags='perfil-error')
+        elif new_pw != confirm:
+            messages.error(request, 'Las contraseñas no coinciden.', extra_tags='perfil-error')
+        else:
+            u.set_password(new_pw)
+            u.save()
+            messages.success(request, 'Contraseña actualizada correctamente.', extra_tags='perfil-success')
+            # Renovar la clave de sesión para no desconectar al user
+            request.session.cycle_key()
+
+        return redirect('usuarios:perfil')
+
+    return render(request, 'usuarios/perfil.html', {
+        'usuario':   u,
+        'datos':     dp,
+        'is_guest':  is_guest,
+    })
