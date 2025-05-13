@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.paginator   import Paginator
-from usuarios.forms import UsuarioForm
+from django.urls import reverse
+from usuarios.forms import UsuarioForm, VerUsuarioForm
 from usuarios.models import DatosPersonales
 from usuarios.utils import generar_nombre_usuario_unico
 from login_app.models import Usuario, Rol
@@ -210,13 +211,152 @@ def listar_usuarios(request):
 @login_required
 @superadmin_required
 def ver_usuario(request, pk):
-    # Trae el usuario y sus datos personales
-    u   = get_object_or_404(Usuario, pk=pk)
-    dp  = get_object_or_404(DatosPersonales, pk=u.id_dato)
+    usuario = get_object_or_404(Usuario, pk=pk)
+    datos = DatosPersonales.objects.get(pk=usuario.id_dato)
+    is_guest = usuario.nombre_usuario.startswith('Invitado.')
+
+    if request.method == 'POST':
+        form = VerUsuarioForm(request.POST, is_guest=is_guest)
+
+        if form.is_valid():
+            estado = form.cleaned_data.get('estado', usuario.estado)
+            nueva_pass = form.cleaned_data.get('nueva_contraseña')
+
+            # CASO INVITADO
+            if is_guest:
+                usuario.estado = estado
+                if nueva_pass:
+                    usuario.set_password(nueva_pass)
+                usuario.save()
+
+                # Registrar logs
+                ref = ReferenciasLog.objects.create(
+                    tabla='login_app_usuario',
+                    id_registro=usuario.id
+                )
+                modulo, _ = Modulo.objects.get_or_create(nombre='Usuarios')
+                accion, _ = Accion.objects.get_or_create(nombre='Editar')
+
+                LogsSistema.objects.create(
+                    id_dato=usuario.id_dato,
+                    id_modulo=modulo,
+                    id_accion=accion,
+                    id_ref_log=ref,
+                    ip_origen=request.META.get('REMOTE_ADDR')
+                )
+
+                messages.success(request, 'Usuario actualizado correctamente.', extra_tags='editar-success')
+                return redirect('usuarios:ver_usuario', pk=usuario.pk)
+
+            # CASO USUARIO NORMAL
+            nombres = form.cleaned_data['nombres']
+            ap_paterno = form.cleaned_data['apellido_paterno']
+            cambio_nombres = nombres != datos.nombres or ap_paterno != datos.apellido_paterno
+
+            ap_materno = form.cleaned_data['apellido_materno']
+            correo = form.cleaned_data['correo']
+            num_emp = form.cleaned_data['numero_empleado']
+            telefono = form.cleaned_data['telefono']
+            rol = form.cleaned_data.get('id_rol') or usuario.id_rol
+
+            # Validaciones personalizadas
+            if not validate_letters(nombres):
+                messages.error(request, 'Nombres solo puede contener letras', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if not validate_letters(ap_paterno):
+                messages.error(request, 'Apellido paterno solo puede contener letras', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if ap_materno and not validate_letters(ap_materno, required=False):
+                messages.error(request, 'Apellido materno solo puede contener letras', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if not validate_correo(correo):
+                messages.error(request, 'El correo debe ser institucional: @imssbienestar.gob.mx', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if not validate_telefono(telefono):
+                messages.error(request, 'El teléfono debe tener exactamente 10 dígitos', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if not validate_numero_empleado(num_emp):
+                messages.error(request, 'Número de empleado inválido. Debe tener 3 letras + 8 números.', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if num_emp != datos.numero_empleado and DatosPersonales.objects.filter(numero_empleado=num_emp).exists():
+                messages.error(request, 'Número de empleado ya registrado.', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if correo != datos.correo and DatosPersonales.objects.filter(correo=correo).exists():
+                messages.error(request, 'Correo ya registrado.', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            if telefono != datos.telefono and DatosPersonales.objects.filter(telefono=telefono).exists():
+                messages.error(request, 'Teléfono ya registrado.', extra_tags='editar-error')
+                return render(request, 'usuarios/ver_usuario.html', {'form': form, 'usuario': usuario, 'is_guest': is_guest})
+
+            # Guardar datos personales
+            datos.nombres = nombres
+            datos.apellido_paterno = ap_paterno
+            datos.apellido_materno = ap_materno
+            datos.correo = correo
+            datos.numero_empleado = num_emp
+            datos.telefono = telefono
+            datos.save()
+
+            if cambio_nombres:
+                primer_nombre = nombres.split()[0]
+                usuario.nombre_usuario = generar_nombre_usuario_unico(primer_nombre, ap_paterno)
+
+            usuario.id_rol = rol
+            usuario.estado = estado
+            if nueva_pass:
+                usuario.set_password(nueva_pass)
+            usuario.save()
+
+            # Log para usuarios normales
+            ref = ReferenciasLog.objects.create(
+                tabla='login_app_usuario',
+                id_registro=usuario.id
+            )
+            modulo, _ = Modulo.objects.get_or_create(nombre='Usuarios')
+            accion, _ = Accion.objects.get_or_create(nombre='Editar')
+
+            LogsSistema.objects.create(
+                id_dato=usuario.id_dato,
+                id_modulo=modulo,
+                id_accion=accion,
+                id_ref_log=ref,
+                ip_origen=request.META.get('REMOTE_ADDR')
+            )
+
+            messages.success(request, 'Usuario actualizado correctamente.', extra_tags='editar-success')
+            return redirect('usuarios:ver_usuario', pk=usuario.pk)
+
+        else:
+            for campo, errores in form.errors.items():
+                for err in errores:
+                    messages.error(request, f'{campo}: {err}', extra_tags='editar-error')
+
+    else:
+        form = VerUsuarioForm(initial={
+            'nombres': datos.nombres,
+            'apellido_paterno': datos.apellido_paterno,
+            'apellido_materno': datos.apellido_materno,
+            'correo': datos.correo,
+            'telefono': datos.telefono,
+            'numero_empleado': datos.numero_empleado,
+            'id_rol': usuario.id_rol,
+            'estado': usuario.estado,
+        }, is_guest=is_guest)
+
     return render(request, 'usuarios/ver_usuario.html', {
-        'usuario': u,
-        'datos':    dp,
+        'form': form,
+        'usuario': usuario,
+        'is_guest': is_guest
     })
+
 
 # Perfil de Usuario
 @login_required

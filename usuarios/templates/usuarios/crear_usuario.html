@@ -89,9 +89,10 @@
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Guardar</button>
-    
-    <a href="{% url 'usuarios:listar_usuarios' %}" class="btn btn-success mt-3"> Lista de Usuarios </a>
+    <div class="d-flex justify-content-between mt-4">
+    <a href="{% url 'usuarios:listar_usuarios' %}" class="btn btn-outline-secondary">Regresar a la lista</a>    
+    <button type="submit" class="btn btn-success">Guardar</button>
+    </div>
     </form>
 </div>
 {% endblock %}
