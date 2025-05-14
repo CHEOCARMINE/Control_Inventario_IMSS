@@ -18,6 +18,7 @@
 
 <!-- Estilos personalizados para esta plantilla -->
 <link href="{% static 'base/css/sb-admin-2.css' %}" rel="stylesheet">
+<link href="{% static 'base/css/personalizado.css' %}" rel="stylesheet">
 
 </head>
 
@@ -31,30 +32,42 @@
 
             <!-- Barra lateral - Marca -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'index' %}">
-                <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-laugh-wink"></i>
+                <div class="sidebar-brand-icon">
+                    <img src="{% static 'base/img/imss-logo.png' %}"
+                        alt="IMSS Bienestar"
+                        class="sidebar-brand-logo">
                 </div>
                 <div class="sidebar-brand-text mx-3">IMSS Bienestar</div>
             </a>
-
+            
+            {% if usuario_actual %}
+            <!-- Fuenciones de administrador -->
+            {% if is_superadmin %}
             <!-- Divisor -->
-            <hr class="sidebar-divider my-0">
-
-            <!-- Elemento de navegación - Panel de control se debe de cambiar ejmplo para uno -->
-            <!-- Inicio -->
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'index' %}">
-                    <i class="fas fa-home"></i>
-                    <span>Inicio</span>
-                </a>
-            </li>            
-
-            <!-- Divisor ejemplo-->
             <hr class="sidebar-divider">
 
             <!-- Título ejemplo-->
             <div class="sidebar-heading">
-                Interface
+                Usuario
+            </div>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'usuarios:listar_usuarios' %}">
+                    <i class="fas fa-users"></i>
+                    <span>Usuarios</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- Funciones de Encargado de almacen -->
+            {% if is_almacen_admin %}
+
+            <!-- Divisor -->
+            <hr class="sidebar-divider">
+
+            <!-- Título ejemplo-->
+            <div class="sidebar-heading">
+                Encargado de almacén
             </div>
 
             <!-- Elemento de navegación - Contraer menú de páginas ejemplo para mas para selecionar -->
@@ -73,7 +86,71 @@
                 </div>
             </li>
 
-            <!-- Debes de agregar mas elememntos de na vegacion aqui usando de ejemplo los de arriba -->
+            <!-- Agregar mas Funciones -->
+
+            {% endif %}
+
+            <!-- Funciones para el supervisor de almacen -->
+            {% if is_supervisor %}
+
+            <!-- Divisor -->
+            <hr class="sidebar-divider">
+
+            <!-- Título ejemplo-->
+            <div class="sidebar-heading">
+                Supervisor de almacén
+            </div>
+
+            <!-- Elemento de navegación - Contraer menú de páginas ejemplo para mas para selecionar -->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                    aria-expanded="true" aria-controls="collapseTwo">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>Components</span>
+                </a>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Custom Components:</h6>
+                        <a class="collapse-item" href="buttons.html">Buttons</a>
+                        <a class="collapse-item" href="cards.html">Cards</a>
+                    </div>
+                </div>
+            </li>
+
+            <!-- Agregar mas Funciones -->
+
+            {% endif %}
+
+            <!-- Funciones para el Salida de almacén -->
+            {% if can_salida %}
+
+            <!-- Divisor -->
+            <hr class="sidebar-divider">
+
+            <!-- Título ejemplo-->
+            <div class="sidebar-heading">
+                Salida de almacén
+            </div>
+
+            <!-- Elemento de navegación - Contraer menú de páginas ejemplo para mas para selecionar -->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                    aria-expanded="true" aria-controls="collapseTwo">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>Components</span>
+                </a>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Custom Components:</h6>
+                        <a class="collapse-item" href="buttons.html">Buttons</a>
+                        <a class="collapse-item" href="cards.html">Cards</a>
+                    </div>
+                </div>
+            </li>
+
+            <!-- Agregar mas Funciones -->
+
+            {% endif %}
 
             <!-- Divisor -->
             <hr class="sidebar-divider d-none d-md-block">
@@ -84,6 +161,7 @@
             </div>
 
         </ul>
+        {% endif %}
         <!-- Fin de la barra lateral -->
 
         <!-- Envoltorio de contenido -->
@@ -108,13 +186,22 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user_full_name|default:"Invitado" }}</span>
+                                <img src="{% static 'base/img/logo_blanco.svg' %}" 
+                                    alt="Logo Mexico" 
+                                    class="img-fluid" 
+                                    style="max-height:40px; width:auto;"
+                                >
+                            </a>
+                            <!-- <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user_full_name|default:"Invitado" }}</span>
                                 <img class="img-profile rounded-circle"
                                     src="{% static 'base/img/undraw_profile.svg' %}">
-                            </a>
+                            </a> -->
                             <!-- Menú desplegable - Información del usuario -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="{% url 'usuarios:perfil' %}">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Perfil
                                 </a>
@@ -194,6 +281,9 @@
 
 <!-- Scripts personalizados -->
 <script src="{% static 'base/js/personalizado.js' %}"></script>
+
+<!-- aquí inyectarás scripts de cada vista -->
+{% block extra_js %}{% endblock extra_js %}
 
 <!-- Scripts para Expirar Sesión -->
 <script>

@@ -1,0 +1,12 @@
+.sidebar-brand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .sidebar-brand-logo {
+    width: 5rem;   /* igual que el tamaño de un fa-icon (aprox 24px) */
+    height: auto;
+    object-fit: block;
+  }
+  

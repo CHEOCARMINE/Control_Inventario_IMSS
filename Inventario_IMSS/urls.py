@@ -29,7 +29,7 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
 
     # CRUD usuarios (solo accesible a SuperAdmin)
-    path('usuarios/', include('usuarios.urls')),
+    path('usuarios/', include('usuarios.urls', namespace='usuarios')),
 
     # Rutas de la app base (donde está tu index)
     path('home/', include('base.urls')),

@@ -1,0 +1,189 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Ver Usuario</h2>
+
+<!-- Mensajes de editar -->
+<div id="editar-mensajes">
+    {% for message in messages %}
+        {% if 'editar-error' in message.tags %}
+        <div id="editar-error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        {% elif 'editar-success' in message.tags %}
+        <div id="editar-success" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- Fila 1: Nombre de Usuario -->
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Nombre de Usuario</label>
+                <input type="text" class="form-control bg-light" value="{{ usuario.nombre_usuario }}" readonly>
+            </div>
+        </div>
+
+        <!-- Fila 2: Nombres, Apellido Paterno, Apellido Materno -->
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="id_nombres" class="form-label">Nombres</label>
+                <div class="input-group">
+                    {{ form.nombres }}
+                    <button type="button" class="btn btn-outline-secondary" onclick="enableField('id_nombres')" {% if is_guest %}disabled{% endif %}>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="id_apellido_paterno" class="form-label">Apellido Paterno</label>
+                <div class="input-group">
+                    {{ form.apellido_paterno }}
+                    <button type="button" class="btn btn-outline-secondary" onclick="enableField('id_apellido_paterno')" {% if is_guest %}disabled{% endif %}>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="id_apellido_materno" class="form-label">Apellido Materno</label>
+                <div class="input-group">
+                    {{ form.apellido_materno }}
+                    <button type="button" class="btn btn-outline-secondary" onclick="enableField('id_apellido_materno')" {% if is_guest %}disabled{% endif %}>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 3: Número de Empleado, Teléfono, Correo -->
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="id_numero_empleado" class="form-label">Número de Empleado</label>
+                <div class="input-group">
+                    {{ form.numero_empleado }}
+                    <button type="button" class="btn btn-outline-secondary" onclick="enableField('id_numero_empleado')" {% if is_guest %}disabled{% endif %}>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="id_telefono" class="form-label">Teléfono</label>
+                <div class="input-group">
+                    {{ form.telefono }}
+                    <button type="button" class="btn btn-outline-secondary" onclick="enableField('id_telefono')" {% if is_guest %}disabled{% endif %}>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="id_correo" class="form-label">Correo Institucional</label>
+                <div class="input-group">
+                    {{ form.correo }}
+                    <button type="button" class="btn btn-outline-secondary" onclick="enableField('id_correo')" {% if is_guest %}disabled{% endif %}>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 4: Rol y Estado -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="id_id_rol" class="form-label">Rol</label>
+                <div class="input-group">
+                    {{ form.id_rol }}
+                    {% if not is_guest %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="enableSelect('id_id_rol')">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="id_estado" class="form-label">Estado</label>
+                <div class="d-flex align-items-center gap-2">
+                    {{ form.estado }}
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="enableCheckbox('id_estado')">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 5: Contraseña -->
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" id="passwordField" class="form-control bg-light" value="********" readonly>
+                    <div class="input-group-append">
+                        <button id="editPasswordBtn" class="btn btn-outline-secondary" type="button">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campos ocultos de nueva contraseña -->
+            <div id="passwordInputs" class="row d-none">
+                <div class="col-md-6 mb-3">
+                    <label for="id_nueva_contraseña" class="form-label">Nueva Contraseña</label>
+                    {{ form.nueva_contraseña }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_confirmar_contraseña" class="form-label">Confirmar Contraseña</label>
+                    {{ form.confirmar_contraseña }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'usuarios:listar_usuarios' %}" class="btn btn-outline-secondary">Regresar a la lista</a>
+            <button type="submit" class="btn btn-success">Guardar cambios</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function enableField(id) {
+        const field = document.getElementById(id);
+        field.removeAttribute('readonly');
+        field.classList.add('bg-light');
+        field.focus();
+    }
+
+    function enableSelect(id) {
+        const select = document.getElementById(id);
+        select.removeAttribute('disabled');
+        select.classList.add('bg-light');
+        select.focus();
+    }
+
+    function enableCheckbox(id) {
+        const checkbox = document.getElementById(id);
+        checkbox.removeAttribute('disabled');
+    }
+
+    const editBtn = document.getElementById('editPasswordBtn');
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            document.getElementById('passwordInputs').classList.remove('d-none');
+            document.querySelector('input[name="nueva_contraseña"]').removeAttribute('readonly');
+            document.querySelector('input[name="confirmar_contraseña"]').removeAttribute('readonly');
+            document.querySelector('input[name="nueva_contraseña"]').focus();
+        });
+    }
+</script>
+{% endblock %}

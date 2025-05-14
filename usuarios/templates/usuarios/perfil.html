@@ -1,0 +1,106 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+<h2>Mi Perfil</h2>
+
+<!-- Mensajes de Perfil -->
+<div id="perfil-mensajes">
+    {% for message in messages %}
+        {% if 'perfil-error' in message.tags %}
+        <div id="perfil-error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        {% elif 'perfil-success' in message.tags %}
+        <div id="perfil-success" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+    <!-- Datos de usuario -->
+    <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" class="form-control" value="{{ usuario.nombre_usuario }}" readonly>
+    </div>
+    <div class="form-group">
+        <label>Nombres</label>
+        <input type="text" class="form-control" value="{{ datos.nombres }}" readonly>
+    </div>
+    <div class="form-group">
+        <label>Apellido Paterno</label>
+        <input type="text" class="form-control" value="{{ datos.apellido_paterno }}" readonly>
+    </div>
+    <div class="form-group">
+        <label>Apellido Materno</label>
+        <input type="text" class="form-control" value="{{ datos.apellido_materno }}" readonly>
+    </div>
+    <div class="form-group">
+        <label>Correo</label>
+        <input type="text" class="form-control" value="{{ datos.correo }}" readonly>
+    </div>
+    <div class="form-group">
+        <label>Número de Empleado</label>
+        <input type="text" class="form-control" value="{{ datos.numero_empleado }}" readonly>
+    </div>
+
+    <!-- Cambio de contraseña -->
+    <div class="form-group">
+        <label>Contraseña</label>
+        <div class="input-group">
+        <input type="password" id="passwordField" class="form-control" value="********" readonly>
+        {% if not is_guest %}
+        <div class="input-group-append">
+            <button id="editPasswordBtn" class="btn btn-outline-secondary" type="button">
+            <i class="fas fa-pencil-alt"></i>
+            </button>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+
+    {% if not is_guest %}
+    <form method="post" id="passwordForm">
+        {% csrf_token %}
+        <div id="passwordInputs" class="d-none">
+        <div class="form-group">
+            <label>Nueva Contraseña</label>
+            <input type="password" name="nueva_contrasena" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Confirmar Contraseña</label>
+            <input type="password" name="confirm_contrasena" class="form-control">
+        </div>
+        </div>
+        <button id="savePasswordBtn" type="submit"
+                class="btn btn-primary d-none">
+        Guardar Contraseña
+        </button>
+    </form>
+    {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const editBtn = document.getElementById('editPasswordBtn');
+if (editBtn) {
+    editBtn.addEventListener('click', () => {
+    document.getElementById('passwordInputs').classList.remove('d-none');
+    document.getElementById('savePasswordBtn').classList.remove('d-none');
+      // opcional: focus en el primer campo de contraseña
+    document.querySelector('input[name="nueva_contrasena"]').focus();
+    });
+}
+</script>
+{% endblock %}
