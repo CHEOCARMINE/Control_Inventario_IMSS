@@ -14,6 +14,7 @@ def insertar_datos_base(sender, **kwargs):
         if not Modulo.objects.exists():
             Modulo.objects.create(nombre="Login")        
             Modulo.objects.create(nombre="Usuarios")
+            Modulo.objects.create(nombre="Auxiliares")
             Modulo.objects.create(nombre="Productos")
             Modulo.objects.create(nombre="Entradas")
             Modulo.objects.create(nombre="Salidas")

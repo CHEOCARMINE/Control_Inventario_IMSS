@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'base',
     'login_app.apps.LoginAppConfig',
-    'usuarios', 
+    'usuarios',
+    'solicitantes', 
 ]
 
 AUTH_USER_MODEL = 'login_app.Usuario'
