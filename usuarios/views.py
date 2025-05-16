@@ -106,8 +106,8 @@ def registrar_usuario(request):
             )
 
             # Registrar Log de Creación
-            modulo = Modulo.objects.get(pk=2)   # 2 = Usuarios
-            accion = Accion.objects.get(pk=3)   # 3 = Crear
+            modulo = Modulo.objects.get(nombre="Usuarios")   
+            accion = Accion.objects.get(nombre="Crear")   
             LogsSistema.objects.create(
                 id_dato = datos.id,
                 id_modulo = modulo,
@@ -234,8 +234,8 @@ def ver_usuario(request, pk):
                     tabla='login_app_usuario',
                     id_registro=usuario.id
                 )
-                modulo, _ = Modulo.objects.get_or_create(nombre='Usuarios')
-                accion, _ = Accion.objects.get_or_create(nombre='Editar')
+                modulo, _ = Modulo.objects.get_or_create(nombre="Usuarios")
+                accion, _ = Accion.objects.get_or_create(nombre="Editar")
 
                 LogsSistema.objects.create(
                     id_dato=usuario.id_dato,

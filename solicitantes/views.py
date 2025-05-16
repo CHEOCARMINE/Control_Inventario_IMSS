@@ -2,6 +2,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
+from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
 from .models import Departamento
 from login_app.decorators import login_required, almacen_required
 from .forms import DepartamentoForm
@@ -73,13 +74,29 @@ def agregar_departamento(request):
             departamento = form.save(commit=False)
             departamento.estado = True
             departamento.save()
+
+            # Registrar Log de creación
+            ref = ReferenciasLog.objects.create(tabla="departamento", id_registro=departamento.id)
+            modulo = Modulo.objects.get(nombre='Auxiliares')
+            accion = Accion.objects.get(nombre='Crear')
+            LogsSistema.objects.create(
+                id_dato=request.user.id_dato,
+                id_modulo=modulo,
+                id_accion=accion,
+                id_ref_log=ref,
+                ip_origen=request.META.get('REMOTE_ADDR')
+            )
+
             request.session['departamento-success'] = 'Departamento agregado correctamente.'
             return JsonResponse({'success': True})
         else:
-            errores = form.errors.get_json_data()
-            mensaje = ' '.join([v[0]['message'] for v in errores.values()])
-            request.session['departamento-error'] = 'Hubo un error al guardar el departamento.'
-            return JsonResponse({'success': False})
+            from django.template.loader import render_to_string
+            html_form = render_to_string(
+                'solicitantes/modales/fragmento_form_departamento.html',
+                {'form': form},
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html_form})
     else:
         form = DepartamentoForm()
         form.fields.pop('estado')
@@ -95,13 +112,29 @@ def editar_departamento(request, id):
         form = DepartamentoForm(request.POST, instance=departamento)
         if form.is_valid():
             form.save()
+
+            # Registrar Log de edición
+            ref = ReferenciasLog.objects.create(tabla="departamento", id_registro=departamento.id)
+            modulo = Modulo.objects.get(nombre='Auxiliares')
+            accion = Accion.objects.get(nombre='Editar')
+            LogsSistema.objects.create(
+                id_dato=request.user.id_dato,
+                id_modulo=modulo,
+                id_accion=accion,
+                id_ref_log=ref,
+                ip_origen=request.META.get('REMOTE_ADDR')
+            )
+
             request.session['departamento-success'] = 'Departamento actualizado correctamente.'
             return JsonResponse({'success': True})
         else:
-            errores = form.errors.get_json_data()
-            mensaje = ' '.join([v[0]['message'] for v in errores.values()])
-            request.session['departamento-error'] = 'Hubo un error al guardar el departamento.'
-            return JsonResponse({'success': False}, status=400)
+            from django.template.loader import render_to_string
+            html_form = render_to_string(
+                'solicitantes/modales/fragmento_form_departamento.html',
+                {'form': form, 'departamento': departamento},
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html_form})
     else:
         form = DepartamentoForm(instance=departamento)
         return render(request, 'solicitantes/modales/modal_editar_departamento.html', {

@@ -1,5 +1,6 @@
 from django import forms
 from .models import Departamento
+import re
 
 class DepartamentoForm(forms.ModelForm):
     class Meta:
@@ -20,3 +21,8 @@ class DepartamentoForm(forms.ModelForm):
             'estado': 'Estado'
         }
 
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', nombre):
+            raise forms.ValidationError('El nombre solo puede contener letras y espacios.')
+        return nombre

@@ -1,38 +1,32 @@
-<!-- Modal para agregar departamento -->
 <div class="modal-header">
   <h5 class="modal-title">Agregar Departamento</h5>
-  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
+  <button type="button" class="close" data-dismiss="modal">&times;</button>
 </div>
 
-<div class="modal-body">
-  <form id="form-agregar-departamento" method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <div class="text-right">
-      <button type="submit" class="btn btn-primary">Guardar</button>
-    </div>
-  </form>
+<div class="modal-body" id="modal-body-form">
+  {% include 'solicitantes/modales/fragmento_form_departamento.html' %}
 </div>
 
 <script>
-  $('#form-agregar-departamento').on('submit', function(e) {
-    e.preventDefault();
-    $.ajax({
-      type: 'POST',
-      url: "{% url 'departamentos_agregar' %}",
-      data: $(this).serialize(),
-      success: function(response) {
-        if (response.success) {
-          $('#modal').modal('hide');
-          location.reload();  // Se mostrará mensaje desde session
+  function bindFormDepartamento() {
+    $('#form-departamento').on('submit', function(e) {
+      e.preventDefault();
+      $.ajax({
+        type: 'POST',
+        url: "{% url 'departamentos_agregar' %}",
+        data: $(this).serialize(),
+        success: function(response) {
+          if (response.success) {
+            $('#modal').modal('hide');
+            location.reload();
+          } else {
+            $('#modal-body-form').html(response.html_form);
+            bindFormDepartamento(); // volver a vincular el evento
+          }
         }
-      },
-      error: function(xhr) {
-        const errors = xhr.responseJSON.errors;
-        alert(Object.values(errors).flat().join("\\n"));
-      }
+      });
     });
-  });
+  }
+
+  bindFormDepartamento();
 </script>
