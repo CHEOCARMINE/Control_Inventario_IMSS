@@ -20,6 +20,9 @@
 <link href="{% static 'base/css/sb-admin-2.css' %}" rel="stylesheet">
 <link href="{% static 'base/css/personalizado.css' %}" rel="stylesheet">
 
+<!-- Estilos Externos -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 </head>
 
 <body id="page-top">
@@ -81,6 +84,7 @@
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Elementos:</h6>
                         <a class="collapse-item" href="{% url 'departamentos_lista' %}">Departamentos</a>
+                        <a class="collapse-item" href="{% url 'unidades_lista' %}">Unidades</a>
 
                     </div>
                 </div>
@@ -275,6 +279,9 @@
 
 <!-- Scripts personalizados -->
 <script src="{% static 'base/js/personalizado.js' %}"></script>
+
+<!-- Scripts Externos -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- aquí inyectarás scripts de cada vista -->
 {% block extra_js %}{% endblock extra_js %}

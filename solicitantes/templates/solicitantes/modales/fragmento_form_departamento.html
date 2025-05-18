@@ -1,25 +1,19 @@
-<form id="form-departamento" method="post">
-    {% csrf_token %}
+{% csrf_token %}
 
-    <div class="form-group">
-        <label for="{{ form.nombre.id_for_label }}">Nombre del departamento</label>
-        {{ form.nombre }}
-        {% if form.nombre.errors %}
+<div class="form-group">
+    <label for="{{ form.nombre.id_for_label }}">Nombre del departamento</label>
+    {{ form.nombre }}
+    {% if form.nombre.errors %}
         <div class="text-danger small">{{ form.nombre.errors.0 }}</div>
-        {% endif %}
-    </div>
-
-    {% if form.fields.estado %}
-    <div class="form-group">
-        <label for="{{ form.estado.id_for_label }}">Estado</label>
-        {{ form.estado }}
-        {% if form.estado.errors %}
-        <div class="text-danger small">{{ form.estado.errors.0 }}</div>
-        {% endif %}
-    </div>
     {% endif %}
+</div>
 
-    <div class="text-right">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-    </div>
-</form>
+{% if form.fields.estado %}
+<div class="form-group">
+    <label for="{{ form.estado.id_for_label }}">Estado</label>
+    {{ form.estado }}
+    {% if form.estado.errors %}
+        <div class="text-danger small">{{ form.estado.errors.0 }}</div>
+    {% endif %}
+</div>
+{% endif %}

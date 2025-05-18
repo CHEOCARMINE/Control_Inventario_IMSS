@@ -8,49 +8,55 @@
 
     <div class="d-flex align-items-center mb-3">
         <h2 class="mr-auto">Departamentos</h2>
-        <button class="btn btn-success" data-toggle="modal" data-target="#modal"
+        <button class="btn btn-success"
+                data-toggle="modal"
+                data-target="#modal"
                 data-remote="{% url 'departamentos_agregar' %}">
         <i class="fas fa-plus"></i> Agregar Departamento
         </button>
     </div>
 
-    <!-- Mensajes -->
+    <div id="departamento-messages">
     {% if mensaje_error %}
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{ mensaje_error }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
-        <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
     {% endif %}
-
     {% if mensaje_exito %}
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ mensaje_exito }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
-        <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
     {% endif %}
+    </div>
 
     <!-- Filtros -->
     <div class="card mb-4">
         <div class="card-body">
-        <form method="get" action="{% url 'departamentos_lista' %}" id="filterForm">
+        <form method="get"
+                action="{% url 'departamentos_lista' %}"
+                id="filterForm">
             <div class="form-row">
             <div class="col-md-3 mb-2">
-                <input type="text" name="nombre" class="form-control auto-submit"
-                    placeholder="Nombre del departamento" value="{{ filter.nombre }}">
+                <input type="text"
+                    name="nombre"
+                    class="form-control auto-submit"
+                    placeholder="Nombre del departamento"
+                    value="{{ filter.nombre }}">
             </div>
             <div class="col-md-3 mb-2">
-                <select name="estado" class="form-control auto-submit">
+                <select name="estado"
+                        class="form-control auto-submit">
                 <option value="">-- Estado --</option>
-                <option value="activo" {% if filter.estado == "activo" %}selected{% endif %}>Activo</option>
+                <option value="activo"   {% if filter.estado == "activo"   %}selected{% endif %}>Activo</option>
                 <option value="inactivo" {% if filter.estado == "inactivo" %}selected{% endif %}>Inactivo</option>
                 </select>
             </div>
             <div class="col-md-3 mb-2">
-                <button type="button" class="btn btn-outline-secondary btn-block" onclick="clearFilters()">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-block"
+                        onclick="clearFilters()">
                 <i class="fas fa-eraser"></i> Limpiar
                 </button>
             </div>
@@ -81,9 +87,11 @@
                 {% endif %}
             </td>
             <td>
-                <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#modal"
+                <button class="btn btn-sm btn-primary"
+                        data-toggle="modal"
+                        data-target="#modal"
                         data-remote="{% url 'departamentos_editar' d.id %}">
-                <i class="fas fa-pencil-alt"></i>
+                <i class="fas fa-edit"></i>
                 </button>
             </td>
             </tr>
@@ -96,59 +104,78 @@
         </table>
     </div>
 
-    <!-- Paginación -->
+    <!-- Paginación corregida -->
     {% if page_obj.paginator.num_pages > 1 %}
     <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">
+
+        <!-- Anterior -->
         <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
             {% if page_obj.has_previous %}
-            <a class="page-link" href="{{ qs_prefix }}page={{ page_obj.previous_page_number }}">&laquo;</a>
+            <a class="page-link"
+            href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}"
+            aria-label="Previous">&laquo;</a>
             {% else %}
             <span class="page-link disabled">&laquo;</span>
             {% endif %}
         </li>
 
+        <!-- Números de página -->
         {% for p in page_obj.paginator.page_range %}
         <li class="page-item {% if p == page_obj.number %}active{% endif %}">
-            <a class="page-link" href="{{ qs_prefix }}page={{ p }}">{{ p }}</a>
+            <a class="page-link"
+            href="?page={{ p }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            {{ p }}
+            </a>
         </li>
         {% endfor %}
 
+        <!-- Siguiente -->
         <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
             {% if page_obj.has_next %}
-            <a class="page-link" href="{{ qs_prefix }}page={{ page_obj.next_page_number }}">&raquo;</a>
+            <a class="page-link"
+            href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}"
+            aria-label="Next">&raquo;</a>
             {% else %}
             <span class="page-link disabled">&raquo;</span>
             {% endif %}
         </li>
+
         </ul>
     </nav>
     {% endif %}
+
 </div>
 
 <!-- Modal global para Ver/Editar o Agregar -->
 <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-        <!-- Contenido cargado vía AJAX -->
-        </div>
+        <div class="modal-content"><!-- AJAX carga aquí --></div>
     </div>
-</div>
-{% endblock content %}
+    </div>
+    {% endblock content %}
 
-{% block extra_js %}
-<script src="{% static 'solicitantes/js/lista_departamentos.js' %}"></script>
-<script>
-    // Modal dinámico (Ver/Editar/Agregar)
-    $('#modal').on('show.bs.modal', function (e) {
-        var url = $(e.relatedTarget).data('remote');
+    {% block extra_js %}
+    <script src="{% static 'solicitantes/js/lista_departamentos.js' %}"></script>
+    <script>
+    $(function() {
+        // Abrir modal y cargar el fragmento
+        $('#modal').on('show.bs.modal', function(e) {
+        const url = $(e.relatedTarget).data('remote');
         $(this).find('.modal-content').load(url);
+        });
+
+        // Filtros con debounce
+        const filterForm = $('#filterForm');
+        let timer;
+        $('.auto-submit').on('keyup', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => filterForm.submit(), 500);
+        }).on('change', () => filterForm.submit());
+        window.clearFilters = () => {
+        filterForm[0].reset();
+        window.location = window.location.pathname;
+        };
     });
-
-        setTimeout(() => {
-        $('.alert').alert('close');
-    }, 5000); 
-    
-</script>
-
+    </script>
 {% endblock extra_js %}
