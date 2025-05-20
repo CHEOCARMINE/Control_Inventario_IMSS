@@ -2,18 +2,17 @@ from django.db.models import Q
 from django.urls import reverse
 from .models import Departamento
 from django.http import JsonResponse
-from .models import Departamento, Unidad
 from django.core.paginator import Paginator
-from .forms import DepartamentoForm, UnidadForm
 from django.template.loader import render_to_string
 from django.shortcuts import render, get_object_or_404
+from .models import Departamento, Unidad, Solicitante, Cargo
+from .forms import DepartamentoForm, UnidadForm, SolicitanteForm
 from login_app.decorators import login_required, almacen_required
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
 
 # Helper de logs
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
     try:
-        # Prioriza el campo id_dato si existe, sino usa pk
         user_id_dato = getattr(request.user, 'id_dato', None) or request.user.pk
         ref = ReferenciasLog.objects.create(tabla=tabla, id_registro=id_registro)
         modulo = Modulo.objects.get(nombre=nombre_modulo)
@@ -26,7 +25,6 @@ def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
             ip_origen  = request.META.get('REMOTE_ADDR')
         )
     except Exception:
-        # Loguea si quieres: logger.exception("Error al guardar log")
         pass
 
 # Inicio de Departamentos
@@ -248,3 +246,129 @@ def editar_unidad(request, id):
             'unidad': unidad
         })
 # Fin de Unidad
+
+# Inicio de Solicitantes
+# Lista
+@login_required
+@almacen_required
+def lista_solicitantes(request):
+    nombre       = request.GET.get('nombre', '')
+    cargo = request.GET.get('cargo', '')
+    unidad_id    = request.GET.get('unidad', '')
+    depto_id     = request.GET.get('departamento', '')
+    estado       = request.GET.get('estado', '')
+
+    qs = Solicitante.objects.select_related('cargo', 'unidad', 'departamento')
+    if nombre:
+        qs = qs.filter(nombre__icontains=nombre)
+    if cargo:
+        qs = qs.filter(cargo__id=cargo)
+    if unidad_id:
+        qs = qs.filter(unidad_id=unidad_id)
+    if depto_id:
+        qs = qs.filter(departamento_id=depto_id)
+    if estado:
+        qs = qs.filter(estado=(estado == 'activo'))
+
+    page_obj = Paginator(qs.order_by('nombre'), 10).get_page(request.GET.get('page'))
+
+    cargos        = Cargo.objects.order_by('nombre')
+    unidades      = Unidad.objects.filter(estado=True).order_by('nombre')
+    departamentos = Departamento.objects.filter(estado=True).order_by('nombre')
+
+    mensaje_exito = request.session.pop('solicitante-success', None)
+    mensaje_error = request.session.pop('solicitante-error',   None)
+
+    return render(request, 'solicitantes/solicitantes.html', {
+        'page_obj': page_obj,
+        'filter': {
+            'nombre':       nombre,
+            'cargo':        cargo,
+            'unidad':       unidad_id,
+            'departamento': depto_id,
+            'estado':       estado,
+        },
+        'cargos':        cargos,
+        'unidades':      unidades,
+        'departamentos': departamentos,
+        'mensaje_exito': mensaje_exito,
+        'mensaje_error': mensaje_error,
+    })
+
+# Agregar
+@login_required
+@almacen_required
+def agregar_solicitante(request):
+    if request.method == 'POST':
+        form = SolicitanteForm(request.POST, crear=True)
+        if form.is_valid():
+            solicitante = form.save()
+            _registrar_log(
+                request,
+                tabla='solicitante',
+                id_registro=solicitante.id,
+                nombre_modulo='Auxiliares',
+                nombre_accion='Crear'
+            )
+            request.session['solicitante-success'] = 'Solicitante agregado correctamente.'
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('solicitantes_lista')
+            })
+        # Si hay errores, devolvemos sólo el fragmento del form
+        html_form = render_to_string(
+            'solicitantes/modales/fragmento_form_solicitante.html',
+            {'form': form, 'cargos': Cargo.objects.order_by('nombre'),},
+            request=request
+        )
+        return JsonResponse({'success': False, 'html_form': html_form})
+    else:
+        # GET: sólo render del modal con el form vacío
+        form = SolicitanteForm(crear=True)
+        return render(request, 'solicitantes/modales/modal_agregar_solicitante.html', {'form': form})
+
+# Editar
+@login_required
+@almacen_required
+def editar_solicitante(request, id):
+    sol = get_object_or_404(Solicitante, id=id)
+    if request.method == 'POST':
+        form = SolicitanteForm(request.POST, instance=sol)
+        if form.is_valid():
+            sol = form.save()
+            _registrar_log(
+                request,
+                tabla='solicitante',
+                id_registro=sol.id,
+                nombre_modulo='Auxiliares',
+                nombre_accion='Editar'
+            )
+            request.session['solicitante-success'] = 'Solicitante actualizado correctamente.'
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('solicitantes_lista')
+            })
+        html_form = render_to_string(
+            'solicitantes/modales/fragmento_form_solicitante.html',
+            {'form': form, 'solicitante': sol, 'cargos': Cargo.objects.order_by('nombre'),},
+            request=request
+        )
+        return JsonResponse({'success': False, 'html_form': html_form})
+    else:
+        form = SolicitanteForm(instance=sol)
+        return render(request, 'solicitantes/modales/modal_editar_solicitante.html', {'form': form, 'solicitante': sol})
+
+# Endpoint AJAX para Departamentos
+@login_required
+@almacen_required
+def ajax_departamentos_por_unidad(request):
+    unidad_id = request.GET.get('unidad_id')
+    qs = Departamento.objects.none()
+    if unidad_id:
+        qs = Departamento.objects.filter(
+            unidades__id=unidad_id,
+            estado=True
+        ).order_by('nombre')
+    data = [{'id': d.id, 'nombre': d.nombre} for d in qs]
+    return JsonResponse(data, safe=False)
+# Fin de Solicitante

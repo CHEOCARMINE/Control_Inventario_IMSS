@@ -24,10 +24,12 @@ class Cargo(models.Model):
         return self.nombre
 
 class Solicitante(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
-    cargo = models.ForeignKey(Cargo, on_delete=models.PROTECT)
-    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE)
-    estado = models.BooleanField(default=True)
+    nombre     = models.CharField(max_length=100, unique=True)
+    cargo      = models.ForeignKey(Cargo, on_delete=models.PROTECT)
+    unidad     = models.ForeignKey(Unidad, on_delete=models.CASCADE)
+    departamento = models.ForeignKey(Departamento, on_delete=models.PROTECT, help_text="Departamento dentro de la unidad seleccionada")
+    estado     = models.BooleanField(default=True)
 
     def __str__(self):
         return self.nombre
+

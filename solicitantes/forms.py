@@ -1,6 +1,6 @@
 import re
 from django import forms
-from .models import Departamento, Unidad
+from .models import Departamento, Unidad, Solicitante, Cargo
 
 # Formulario Departamentos
 class DepartamentoForm(forms.ModelForm):
@@ -87,3 +87,57 @@ class UnidadForm(forms.ModelForm):
         if not re.match(r'^[A-Z]{5}\d{6}$', clues):
             raise forms.ValidationError('Formato CLUES inválido (ej: ABCDE123456).')
         return clues
+
+# Formulario Solicitantes
+class SolicitanteForm(forms.ModelForm):
+    class Meta:
+        model = Solicitante
+        fields = ['nombre', 'cargo', 'unidad', 'departamento', 'estado']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre completo'
+            }),
+            'cargo': forms.Select(attrs={'class': 'form-control'}),
+            'unidad': forms.Select(attrs={'class': 'form-control'}),
+            'departamento': forms.Select(attrs={'class': 'form-control'}),
+            # aquí definimos el select de estado con sus choices
+            'estado': forms.Select(choices=[
+                (True, 'Activo'),
+                (False, 'Inactivo')
+            ], attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'nombre': 'Nombre completo',
+            'cargo': 'Cargo',
+            'unidad': 'Unidad',
+            'departamento': 'Departamento',
+            'estado': 'Estado'
+        }
+
+    def __init__(self, *args, **kwargs):
+        crear = kwargs.pop('crear', False)
+        super().__init__(*args, **kwargs)
+
+        # si estamos en modo "crear", ocultamos el campo estado
+        if crear:
+            self.fields.pop('estado')
+
+        # departamentos vacíos hasta que elija unidad
+        self.fields['departamento'].queryset = Departamento.objects.none()
+        if self.instance.pk:
+            # al editar, precargar departamentos de la unidad actual
+            self.fields['departamento'].queryset = self.instance.unidad.departamentos.all()
+        elif 'unidad' in self.data:
+            # en AJAX POST, recargar departamentos para la unidad seleccionada
+            try:
+                uid = int(self.data.get('unidad'))
+                self.fields['departamento'].queryset = Unidad.objects.get(pk=uid).departamentos.all()
+            except (ValueError, Unidad.DoesNotExist):
+                pass
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre', '')
+        if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', nombre):
+            raise forms.ValidationError('El nombre sólo puede contener letras y espacios.')
+        return nombre
