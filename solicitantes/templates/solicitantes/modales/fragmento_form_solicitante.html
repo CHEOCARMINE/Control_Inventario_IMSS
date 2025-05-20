@@ -1,43 +1,43 @@
 {% csrf_token %}
 
 <div class="form-group">
-  <label for="{{ form.nombre.id_for_label }}">Nombre completo</label>
-  {{ form.nombre }}
-  {% for e in form.nombre.errors %}
-    <div class="text-danger small">{{ e }}</div>
-  {% endfor %}
+    <label for="{{ form.nombre.id_for_label }}">Nombre completo</label>
+    {{ form.nombre }}
+    {% for e in form.nombre.errors %}
+        <div class="text-danger small">{{ e }}</div>
+    {% endfor %}
 </div>
 
 <div class="form-group">
-  <label for="{{ form.cargo.id_for_label }}">Cargo</label>
-  {{ form.cargo }}
-  {% for e in form.cargo.errors %}
-    <div class="text-danger small">{{ e }}</div>
-  {% endfor %}
+    <label for="{{ form.cargo.id_for_label }}">Cargo</label>
+    {{ form.cargo }}
+    {% for e in form.cargo.errors %}
+        <div class="text-danger small">{{ e }}</div>
+    {% endfor %}
 </div>
 
 <div class="form-group">
-  <label for="{{ form.unidad.id_for_label }}">Unidad</label>
-  {{ form.unidad }}
-  {% for e in form.unidad.errors %}
-    <div class="text-danger small">{{ e }}</div>
-  {% endfor %}
+    <label for="{{ form.unidad.id_for_label }}">Unidad</label>
+    {{ form.unidad }}
+    {% for e in form.unidad.errors %}
+        <div class="text-danger small">{{ e }}</div>
+    {% endfor %}
 </div>
 
 <div class="form-group">
-  <label for="{{ form.departamento.id_for_label }}">Departamento</label>
-  {{ form.departamento }}
-  {% for e in form.departamento.errors %}
-    <div class="text-danger small">{{ e }}</div>
-  {% endfor %}
+    <label for="{{ form.departamento.id_for_label }}">Departamento</label>
+    {{ form.departamento }}
+    {% for e in form.departamento.errors %}
+        <div class="text-danger small">{{ e }}</div>
+    {% endfor %}
 </div>
 
 {% if form.fields.estado %}
-  <div class="form-group">
-    {{ form.estado.label_tag }}
-    {{ form.estado }}
-    {% for err in form.estado.errors %}
-      <div class="text-danger small">{{ err }}</div>
-    {% endfor %}
-  </div>
+    <div class="form-group">
+        {{ form.estado.label_tag }}
+        {{ form.estado }}
+        {% for err in form.estado.errors %}
+        <div class="text-danger small">{{ err }}</div>
+        {% endfor %}
+    </div>
 {% endif %}

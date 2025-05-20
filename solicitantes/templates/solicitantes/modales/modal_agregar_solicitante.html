@@ -1,66 +1,66 @@
 <div class="modal-header">
-  <h5 class="modal-title">Agregar Solicitante</h5>
-  <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <h5 class="modal-title">Agregar Solicitante</h5>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
 </div>
 
 <div class="modal-body">
-  <form id="form-solicitante" method="post" action="{% url 'solicitantes_agregar' %}">
-    <div id="sol-form-fields">
-      {% include 'solicitantes/modales/fragmento_form_solicitante.html' %}
-    </div>
-    <div class="text-right mt-3">
-      <button type="submit" class="btn btn-primary">Guardar</button>
-    </div>
-  </form>
+    <form id="form-solicitante" method="post" action="{% url 'solicitantes_agregar' %}">
+        <div id="sol-form-fields">
+        {% include 'solicitantes/modales/fragmento_form_solicitante.html' %}
+        </div>
+        <div class="text-right mt-3">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
 </div>
 
 <script>
-  function bindFormSol() {
-    $('#form-solicitante').off('submit').on('submit', function(e) {
-      e.preventDefault();
-      const form = $(this);
-      $.ajax({
-        type: 'POST',
-        url: form.attr('action'),
-        data: form.serialize(),
-        success(resp) {
-          if (resp.success) {
-            $('#modal').modal('hide');
-            window.location = resp.redirect_url;
-          } else {
-            $('#sol-form-fields').html(resp.html_form);
-            bindFormSol();
-            initDepartamento();
-          }
-        },
-        error() {
-          alert('Error de red, intenta nuevamente.');
-        }
-      });
-    });
-  }
+    function bindFormSol() {
+        $('#form-solicitante').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            success(resp) {
+            if (resp.success) {
+                $('#modal').modal('hide');
+                window.location = resp.redirect_url;
+            } else {
+                $('#sol-form-fields').html(resp.html_form);
+                bindFormSol();
+                initDepartamento();
+            }
+            },
+            error() {
+            alert('Error de red, intenta nuevamente.');
+            }
+        });
+        });
+    }
 
-  function initDepartamento() {
-    $('#id_unidad').off('change').on('change', function() {
-      const uid = $(this).val();
-      const $dep = $('#id_departamento')
-        .prop('disabled', true)
-        .empty()
-        .append('<option>Cargando…</option>');
-      $.get("{% url 'ajax_departamentos_por_unidad' %}", { unidad_id: uid })
-        .done(items => {
-          $dep.empty().append('<option value="">-- Departamento --</option>');
-          items.forEach(d => {
-            $dep.append(`<option value="${d.id}">${d.nombre}</option>`);
-          });
-        })
-        .always(() => $dep.prop('disabled', false));
-    });
-  }
+    function initDepartamento() {
+        $('#id_unidad').off('change').on('change', function() {
+        const uid = $(this).val();
+        const $dep = $('#id_departamento')
+            .prop('disabled', true)
+            .empty()
+            .append('<option>Cargando…</option>');
+        $.get("{% url 'ajax_departamentos_por_unidad' %}", { unidad_id: uid })
+            .done(items => {
+            $dep.empty().append('<option value="">-- Departamento --</option>');
+            items.forEach(d => {
+                $dep.append(`<option value="${d.id}">${d.nombre}</option>`);
+            });
+            })
+            .always(() => $dep.prop('disabled', false));
+        });
+    }
 
-  $(function(){
-    bindFormSol();
-    initDepartamento();
-  });
+    $(function(){
+        bindFormSol();
+        initDepartamento();
+    });
 </script>
 

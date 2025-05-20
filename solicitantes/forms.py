@@ -39,6 +39,13 @@ class UnidadForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         crear = kwargs.pop('crear', False)
         super().__init__(*args, **kwargs)
+
+        # Sólo departamentos activos
+        self.fields['departamentos'].queryset = Departamento.objects.filter(
+            estado=True
+        ).order_by('nombre')
+
+        # Oculta estado al crear
         if crear:
             self.fields.pop('estado')
 
@@ -57,10 +64,16 @@ class UnidadForm(forms.ModelForm):
             }),
             'clues': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Formato ABCD123456'
+                'placeholder': 'Formato ABCDE123456'
             }),
-            'departamentos':  forms.SelectMultiple(attrs={'class': 'form-control select2', 'style': 'width:100%'}),
-            'estado': forms.Select(choices=[(True, 'Activo'), (False, 'Inactivo')], attrs={'class': 'form-control'})
+            'departamentos': forms.SelectMultiple(attrs={
+                'class': 'form-control select2',
+                'style': 'width:100%'
+            }),
+            'estado': forms.Select(choices=[
+                (True, 'Activo'),
+                (False, 'Inactivo')
+            ], attrs={'class': 'form-control'})
         }
         labels = {
             'departamentos': 'Departamentos asignados',
@@ -77,16 +90,16 @@ class UnidadForm(forms.ModelForm):
 
     def clean_direccion(self):
         direccion = self.cleaned_data.get('direccion', '')
-        if not re.match(r'^[a-zA-Z0-9\s\.,#\-áéíóúÁÉÍÓÚñÑ]+$', direccion):
+        if not re.match(r'^[a-zA-Z0-9\s\.,#\-\áéíóúÁÉÍÓÚñÑ]+$', direccion):
             raise forms.ValidationError('La dirección contiene caracteres inválidos.')
         return direccion
 
     def clean_clues(self):
         clues = self.cleaned_data.get('clues', '')
-        # Validación del formato: 5 letras mayúsculas + 6 dígitos (ej: ABCDE123456)
         if not re.match(r'^[A-Z]{5}\d{6}$', clues):
             raise forms.ValidationError('Formato CLUES inválido (ej: ABCDE123456).')
         return clues
+
 
 # Formulario Solicitantes
 class SolicitanteForm(forms.ModelForm):
@@ -101,7 +114,6 @@ class SolicitanteForm(forms.ModelForm):
             'cargo': forms.Select(attrs={'class': 'form-control'}),
             'unidad': forms.Select(attrs={'class': 'form-control'}),
             'departamento': forms.Select(attrs={'class': 'form-control'}),
-            # aquí definimos el select de estado con sus choices
             'estado': forms.Select(choices=[
                 (True, 'Activo'),
                 (False, 'Inactivo')
@@ -119,20 +131,28 @@ class SolicitanteForm(forms.ModelForm):
         crear = kwargs.pop('crear', False)
         super().__init__(*args, **kwargs)
 
-        # si estamos en modo "crear", ocultamos el campo estado
+        # Ocultar estado al crear
         if crear:
             self.fields.pop('estado')
 
-        # departamentos vacíos hasta que elija unidad
+        # Sólo unidades activas
+        self.fields['unidad'].queryset = Unidad.objects.filter(
+            estado=True
+        ).order_by('nombre')
+
+        # Departamento inicialmente vacío
         self.fields['departamento'].queryset = Departamento.objects.none()
+
         if self.instance.pk:
-            # al editar, precargar departamentos de la unidad actual
-            self.fields['departamento'].queryset = self.instance.unidad.departamentos.all()
+            # al editar: departamentos activos de la unidad
+            self.fields['departamento'].queryset = (
+                self.instance.unidad.departamentos.filter(estado=True).order_by('nombre'))
         elif 'unidad' in self.data:
-            # en AJAX POST, recargar departamentos para la unidad seleccionada
+            # AJAX POST
             try:
                 uid = int(self.data.get('unidad'))
-                self.fields['departamento'].queryset = Unidad.objects.get(pk=uid).departamentos.all()
+                unidad = Unidad.objects.get(pk=uid, estado=True)
+                self.fields['departamento'].queryset = (unidad.departamentos.filter(estado=True).order_by('nombre'))
             except (ValueError, Unidad.DoesNotExist):
                 pass
 
