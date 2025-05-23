@@ -1,0 +1,53 @@
+<div class="modal-header">
+    <h5 class="modal-title">Editar Departamento</h5>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+<div class="modal-body">
+    <form id="form-departamento"
+            method="post"
+            action="{% url 'departamentos_editar' departamento.id %}">
+        {# Contenedor de campos, recargado en caso de error #}
+        <div id="departamento-form-fields">
+        {% include 'solicitantes/modales/fragmento_form_departamento.html' %}
+        </div>
+        <div class="text-right mt-3">
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function bindFormDepartamento() {
+        $('#form-departamento')
+        .off('submit')
+        .on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                // Cerrar modal y redirigir a la lista
+                $('#modal').modal('hide');
+                window.location = response.redirect_url;
+                } else {
+                // Solo recargamos los campos con errores
+                $('#departamento-form-fields').html(response.html_form);
+                bindFormDepartamento();
+                }
+            },
+            error: function() {
+                alert('Error de red. Intenta de nuevo.');
+            }
+            });
+        });
+    }
+
+    // Inicializa el binding cuando se carga el modal
+    bindFormDepartamento();
+</script>

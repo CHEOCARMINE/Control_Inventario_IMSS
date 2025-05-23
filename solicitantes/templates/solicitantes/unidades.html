@@ -1,0 +1,198 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Unidades{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <div class="d-flex align-items-center mb-3">
+        <h2 class="mr-auto">Unidades</h2>
+        <button class="btn btn-success"
+                data-toggle="modal"
+                data-target="#modal"
+                data-remote="{% url 'unidades_agregar' %}">
+        <i class="fas fa-plus"></i> Agregar Unidad
+        </button>
+    </div>
+
+    <!-- Mensajes de sesión -->
+    {% if mensaje_error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ mensaje_error }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    {% endif %}
+    {% if mensaje_exito %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ mensaje_exito }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    {% endif %}
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+        <form method="get" action="{% url 'unidades_lista' %}" id="filterForm">
+            <div class="form-row">
+            <div class="col-md-3 mb-2">
+                <input type="text" name="nombre" class="form-control auto-submit"
+                    placeholder="Nombre" value="{{ filter.nombre }}">
+            </div>
+            <div class="col-md-2 mb-2">
+                <input type="text" name="clues" class="form-control auto-submit"
+                    placeholder="CLUES" value="{{ filter.clues }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="departamento" class="form-control auto-submit">
+                <option value="">-- Departamento --</option>
+                {% for d in departamentos %}
+                    <option value="{{ d.id }}"
+                    {% if filter.departamento == d.id|stringformat:"s" %}selected{% endif %}>
+                    {{ d.nombre }}
+                    </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 mb-2">
+                <select name="estado" class="form-control auto-submit">
+                <option value="">-- Estado --</option>
+                <option value="activo"   {% if filter.estado == "activo"   %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if filter.estado == "inactivo" %}selected{% endif %}>Inactivo</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-block" onclick="clearFilters()">
+                <i class="fas fa-eraser"></i> Limpiar
+                </button>
+            </div>
+            </div>
+        </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Unidades -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+        <thead class="thead-light">
+            <tr>
+            <th>Nombre</th>
+            <th>CLUES</th>
+            <th>Dirección</th>
+            <th>Departamentos</th>
+            <th>Estado</th>
+            <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in page_obj.object_list %}
+            <tr>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.clues }}</td>
+                <td>{{ u.direccion }}</td>
+                <td>
+                {% for d in u.departamentos.all %}
+                    <span class="badge badge-info">{{ d.nombre }}</span>
+                {% empty %}
+                    —
+                {% endfor %}
+                </td>
+                <td>
+                {% if u.estado %}
+                    <span class="badge badge-success">Activo</span>
+                {% else %}
+                    <span class="badge badge-danger">Inactivo</span>
+                {% endif %}
+                </td>
+                <td>
+                <button class="btn btn-sm btn-primary"
+                        data-toggle="modal"
+                        data-target="#modal"
+                        data-remote="{% url 'unidades_editar' u.id %}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">No hay unidades.</td></tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {# Anterior #}
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+                <a class="page-link"
+                href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.clues %}&clues={{ filter.clues }}{% endif %}{% if filter.departamento %}&departamento={{ filter.departamento }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+                &laquo;
+                </a>
+            {% else %}
+                <span class="page-link disabled">&laquo;</span>
+            {% endif %}
+            </li>
+            {# Números #}
+            {% for p in page_obj.paginator.page_range %}
+            <li class="page-item {% if p == page_obj.number %}active{% endif %}">
+                <a class="page-link"
+                href="?page={{ p }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.clues %}&clues={{ filter.clues }}{% endif %}{% if filter.departamento %}&departamento={{ filter.departamento }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+                {{ p }}
+                </a>
+            </li>
+            {% endfor %}
+            {# Siguiente #}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+                <a class="page-link"
+                href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.clues %}&clues={{ filter.clues }}{% endif %}{% if filter.departamento %}&departamento={{ filter.departamento }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+                &raquo;
+                </a>
+            {% else %}
+                <span class="page-link disabled">&raquo;</span>
+            {% endif %}
+            </li>
+        </ul>
+        </nav>
+    {% endif %}
+
+</div>
+
+<!-- Modal global -->
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+        {# Ajax carga aquí #}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'solicitantes/js/lista_unidades.js' %}"></script>
+<script>
+    $(function(){
+    // Modal dinámico
+    $('#modal').on('show.bs.modal', function(e){
+        $(this).find('.modal-content').load($(e.relatedTarget).data('remote'));
+    });
+
+    // Filtros con debounce
+    const filterForm = $('#filterForm');
+    let timer;
+    $('.auto-submit').on('keyup change', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => filterForm.submit(), 500);
+    });
+
+    // Limpiar filtros
+    window.clearFilters = () => {
+        filterForm[0].reset();
+        window.location = window.location.pathname;
+    };
+    });
+</script>
+{% endblock extra_js %}

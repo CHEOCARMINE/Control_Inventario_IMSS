@@ -33,5 +33,8 @@ urlpatterns = [
 
     # Rutas de la app base (donde está tu index)
     path('home/', include('base.urls')),
+
+    # Ruta para los Datos de los Solicitantes
+    path('solicitantes/', include('solicitantes.urls')),
 ]
 

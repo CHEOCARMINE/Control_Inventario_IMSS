@@ -57,16 +57,13 @@ def login_view(request):
         u.session_key = request.session.session_key
         u.save(update_fields=['session_key'])
 
-        # Expiración automática (usa tu configuración de settings.SESSION_COOKIE_AGE)
-        # request.session.set_expiry(settings.SESSION_COOKIE_AGE)
-
         # Registrar log de “Iniciar Sesión”
-        mod_login = Modulo.objects.get(nombre='Login')
-        act_login = Accion.objects.get(nombre='Iniciar Sesión')
+        modulo = Modulo.objects.get(nombre="Login")
+        accion = Accion.objects.get(nombre="Iniciar Sesión")
         LogsSistema.objects.create(
             id_dato    = u.id_dato,
-            id_modulo  = mod_login,
-            id_accion  = act_login,
+            id_modulo  = modulo,
+            id_accion  = accion,
             id_ref_log = None,
             fecha_evento = None,                 # si usas auto_now_add, lo omites
             ip_origen  = request.META.get('REMOTE_ADDR'),
@@ -84,12 +81,12 @@ def logout_view(request):
     if usuario_id:
         try:
             u = Usuario.objects.get(pk=usuario_id)
-            mod_login = Modulo.objects.get(nombre='Login')
-            act_logout = Accion.objects.get(nombre='Cerrar Sesión')
+            modulo = Modulo.objects.get(nombre="Login")
+            accion = Accion.objects.get(nombre="Cerrar Sesión")
             LogsSistema.objects.create(
                 id_dato    = u.id_dato,
-                id_modulo  = mod_login,
-                id_accion  = act_logout,
+                id_modulo  = modulo,
+                id_accion  = accion,
                 id_ref_log = None,
                 ip_origen  = request.META.get('REMOTE_ADDR'),
             )
