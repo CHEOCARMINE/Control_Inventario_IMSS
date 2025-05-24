@@ -1,6 +1,6 @@
+from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import redirect
-from django.utils import timezone
 
 class SessionIdleTimeout:
     def __init__(self, get_response):

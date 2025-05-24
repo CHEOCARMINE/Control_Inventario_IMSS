@@ -1,11 +1,10 @@
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth.hashers import check_password
 from django.conf import settings
-from django.contrib.sessions.models import Session
+from django.contrib import messages
 from login_app.models import Usuario
+from django.shortcuts import render, redirect
+from django.contrib.sessions.models import Session
 from base.models import Modulo, Accion, LogsSistema
-
+from django.contrib.auth.hashers import check_password
 
 def login_view(request):
     # si la URL llega con expired=1, lanza tu alerta de expiración

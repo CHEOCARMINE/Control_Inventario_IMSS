@@ -36,5 +36,8 @@ urlpatterns = [
 
     # Ruta para los Datos de los Solicitantes
     path('solicitantes/', include('solicitantes.urls')),
+
+    # Ruta para los Auxiliares de Inventario
+    path('', include('auxiliares_inventario.urls')),
 ]
 

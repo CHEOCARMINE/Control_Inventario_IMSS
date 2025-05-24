@@ -1,0 +1,47 @@
+<div class="modal-header">
+    <h5 class="modal-title">Agregar Categoría</h5>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
+<div class="modal-body">
+    <form id="form-catalogo" method="post" action="{% url 'catalogo_create' %}">
+        <div id="catalogo-form-fields">
+            {% include 'auxiliares_inventario/modales/fragmento_form_catalogo.html' %}
+        </div>
+        <div class="text-right mt-3">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function bindFormCatalogo() {
+        $('#form-catalogo')
+        .off('submit')
+        .on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                // Cerrar modal y recargar lista
+                $('#modal').modal('hide');
+                window.location = response.redirect_url;
+                } else {
+                // Solo recargar el bloque de campos con errores
+                $('#catalogo-form-fields').html(response.html_form);
+                bindFormCatalogo();
+                }
+            },
+            error: function() {
+                alert('Error de red. Intenta de nuevo.');
+            }
+            });
+        });
+    }
+    // Inicializa el handler la primera vez
+    bindFormCatalogo();
+</script>
+

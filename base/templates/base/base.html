@@ -73,7 +73,7 @@
                 Auxiliares
             </div>
 
-            <!-- Grupo desplegable: Solicitudes -->
+            <!-- Solicitantes -->
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseSolicitantes"
                     aria-expanded="false" aria-controls="collapseSolicitantes">
@@ -86,6 +86,21 @@
                         <a class="collapse-item" href="{% url 'departamentos_lista' %}">Departamentos</a>
                         <a class="collapse-item" href="{% url 'unidades_lista' %}">Unidades</a>
                         <a class="collapse-item" href="{% url 'solicitantes_lista' %}">Solicitantes</a>
+                    </div>
+                </div>
+            </li>
+
+            <!-- Auxiliares de Inventario -->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventario"
+                    aria-expanded="false" aria-controls="collapseInventario">
+                    <i class="fas fa-boxes"></i>
+                    <span>Axiliares de Inventario</span>
+                </a>
+                <div id="collapseInventario" class="collapse" aria-labelledby="headingSolicitantes" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Elementos:</h6>
+                        <a class="collapse-item" href="{% url 'catalogo_list' %}">Catalogo</a>
                     </div>
                 </div>
             </li>
