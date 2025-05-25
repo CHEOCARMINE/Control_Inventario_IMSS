@@ -18,6 +18,7 @@ def insertar_datos_base(sender, **kwargs):
         from .models import UnidadDeMedida
         if not UnidadDeMedida.objects.exists():
             unidades = [
+                # Métricas
                 ('Milímetro', 'mm'),
                 ('Centímetro', 'cm'),
                 ('Metro', 'm'),
@@ -38,6 +39,16 @@ def insertar_datos_base(sender, **kwargs):
                 ('Paquete', 'pqt'),
                 ('Caja', 'cja'),
                 ('Conjunto', 'cjt'),
+                # Imperiales
+                ('Pulgada',     'in'),
+                ('Pie',         'ft'),
+                ('Yarda',       'yd'),
+                ('Milla',       'mi'),
+                ('Onza',        'oz'),
+                ('Libra',       'lb'),
+                ('Pinta',       'pt'),
+                ('Cuarto',      'qt'),
+                ('Galón',       'gal'),
             ]
             for nombre, abreviatura in unidades:
                 UnidadDeMedida.objects.create(nombre=nombre, abreviatura=abreviatura)
