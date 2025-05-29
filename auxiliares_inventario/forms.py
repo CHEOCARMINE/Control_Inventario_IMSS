@@ -2,6 +2,7 @@ import re
 from django import forms
 from .models import Catalogo, Subcatalogo
 
+# Categoria
 class CatalogoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         crear = kwargs.pop('crear', False)
@@ -41,6 +42,7 @@ class CatalogoForm(forms.ModelForm):
             raise forms.ValidationError('Ya existe una categoría con ese nombre.')
         return nombre
 
+# Subcategoria
 class SubcatalogoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         crear = kwargs.pop('crear', False)

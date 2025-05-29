@@ -39,5 +39,8 @@ urlpatterns = [
 
     # Ruta para los Auxiliares de Inventario
     path('', include('auxiliares_inventario.urls')),
+
+    # Ruta para Inventario
+    path('inventario/', include('inventario.urls', namespace='inventario')),
 ]
 

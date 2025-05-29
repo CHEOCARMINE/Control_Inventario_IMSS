@@ -1,0 +1,33 @@
+{% csrf_token %}
+<div class="form-group">
+    <label for="id_nombre">Nombre</label>
+    {{ form.nombre }}
+    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors.0 }}</div>{% endif %}
+</div>
+
+<div class="form-group">
+    <label for="id_Subcatalogo">Subcategoría</label>
+    {{ form.Subcatalogo }}
+    {% if form.Subcatalogo.errors %}<div class="text-danger small">{{ form.Subcatalogo.errors.0 }}</div>{% endif %}
+</div>
+
+<div class="form-group">
+    <label for="id_unidad_medida">Unidad de medida</label>
+    {{ form.unidad_medida }}
+    {% if form.unidad_medida.errors %}<div class="text-danger small">{{ form.unidad_medida.errors.0 }}</div>{% endif %}
+</div>
+
+<div class="form-group">
+    <label for="id_stock_minimo">Stock mínimo</label>
+    {{ form.stock_minimo }}
+    {% if form.stock_minimo.errors %}<div class="text-danger small">{{ form.stock_minimo.errors.0 }}</div>{% endif %}
+</div>
+
+{# Sólo muestro Estado si no es creación #}
+{% if not crear and form.fields.estado %}
+<div class="form-group">
+    <label for="id_estado">Estado</label>
+    {{ form.estado }}
+    {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors.0 }}</div>{% endif %}
+</div>
+{% endif %}

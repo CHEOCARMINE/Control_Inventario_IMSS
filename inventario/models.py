@@ -1,0 +1,49 @@
+from django.db import models
+from auxiliares_inventario.models import Catalogo, Subcatalogo, UnidadDeMedida
+
+class Herencia(models.Model):
+    nombre        = models.CharField(max_length=100)
+    Subcatalogo  = models.ForeignKey(Subcatalogo,   on_delete=models.CASCADE)
+    unidad_medida = models.ForeignKey(UnidadDeMedida,   on_delete=models.CASCADE)
+    stock_minimo  = models.PositiveIntegerField()
+    estado        = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nombre
+
+    @property
+    def categoria(self):
+        return self.Subcatalogo.catalogo
+
+class Producto(models.Model):
+    herencia       = models.ForeignKey(Herencia, on_delete=models.CASCADE)
+    nombre         = models.CharField(max_length=100)
+    modelo         = models.CharField(max_length=50)
+    marca          = models.CharField(max_length=50)
+    color          = models.CharField(max_length=30)
+    numero_serie   = models.CharField(max_length=50, blank=True, null=True)
+    descripcion    = models.TextField(blank=True)
+    nota           = models.TextField(blank=True)
+    costo_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    estado         = models.BooleanField(default=True)
+    stock          = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.herencia.nombre} – {self.nombre}"
+
+class Entrada(models.Model):
+    folio         = models.CharField(max_length=30)
+    fecha_folio   = models.DateField()
+    fecha_entrada = models.DateField(auto_now_add=True)
+    producto      = models.ForeignKey(Producto, on_delete=models.PROTECT)
+    cantidad      = models.PositiveIntegerField()
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            # Sumar al stock del producto
+            self.producto.stock = models.F('stock') + self.cantidad
+            self.producto.save(update_fields=['stock'])
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.folio} – {self.producto}"

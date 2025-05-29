@@ -1,0 +1,184 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Herencias{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <div class="d-flex align-items-center mb-3">
+    <h2 class="mr-auto">Herencias</h2>
+    <button class="btn btn-success"
+            data-bs-toggle="modal"
+            data-bs-target="#modal"
+            data-remote="{% url 'inventario:agregar_herencia' %}">
+      <i class="fas fa-plus"></i> Agregar Herencia
+    </button>
+  </div>
+
+  <!-- Mensajes de sesión -->
+  {% if mensaje_error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ mensaje_error }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  {% endif %}
+  {% if mensaje_exito %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ mensaje_exito }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  {% endif %}
+
+  <!-- Filtros -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <form id="filterForm" method="get">
+        <div class="form-row align-items-end">
+          <div class="col-md-2 mb-2">
+            <input type="text"
+                   name="nombre"
+                   class="form-control auto-submit"
+                   placeholder="Nombre"
+                   value="{{ filter.nombre }}">
+          </div>
+          <div class="col-md-2 mb-2">
+            <select name="categoria" class="form-control auto-submit">
+              <option value="">-- Categoría --</option>
+              {% for c in catalogos %}
+              <option value="{{ c.pk }}"
+                      {% if c.pk|stringformat:"s" == filter.categoria %}selected{% endif %}>
+                {{ c.nombre }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2 mb-2">
+            <select name="subcategoria" class="form-control auto-submit">
+              <option value="">-- Subcategoría --</option>
+              {% for s in subcatalogos %}
+              <option value="{{ s.pk }}"
+                      {% if s.pk|stringformat:"s" == filter.subcategoria %}selected{% endif %}>
+                {{ s.nombre }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2 mb-2">
+            <select name="estado" class="form-control auto-submit">
+              <option value="">-- Estado --</option>
+              <option value="activo"   {% if filter.estado == "activo"   %}selected{% endif %}>Activo</option>
+              <option value="inactivo" {% if filter.estado == "inactivo" %}selected{% endif %}>Inactivo</option>
+            </select>
+          </div>
+          <div class="col-md-2 mb-2">
+            <button type="button"
+                    class="btn btn-outline-secondary btn-block"
+                    onclick="clearFilters()">
+              <i class="fas fa-eraser"></i> Limpiar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabla de Herencias -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="thead-light">
+        <tr>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Subcategoría</th>
+          <th>Unidad</th>
+          <th>Stock mínimo</th>
+          <th>Estado</th>
+          <th>Editar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in page_obj.object_list %}
+        <tr>
+          <td>{{ h.nombre }}</td>
+          <td>{{ h.categoria.nombre }}</td>
+          <td>{{ h.Subcatalogo.nombre }}</td>
+          <td>{{ h.unidad_medida.nombre }}</td>
+          <td>{{ h.stock_minimo }}</td>
+          <td>
+            {% if h.estado %}
+              <span class="badge badge-success">Activo</span>
+            {% else %}
+              <span class="badge badge-danger">Inactivo</span>
+            {% endif %}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modal"
+                    data-remote="{% url 'inventario:editar_herencia' h.pk %}">
+              <i class="fas fa-edit"></i>
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center">No hay herencias registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="Paginación">
+    <ul class="pagination justify-content-center">
+      <!-- Anterior -->
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        {% if page_obj.has_previous %}
+        <a class="page-link"
+           href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+          &laquo;
+        </a>
+        {% else %}
+        <span class="page-link disabled">&laquo;</span>
+        {% endif %}
+      </li>
+      <!-- Números de página -->
+      {% for p in page_obj.paginator.page_range %}
+      <li class="page-item {% if p == page_obj.number %}active{% endif %}">
+        <a class="page-link"
+           href="?page={{ p }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+          {{ p }}
+        </a>
+      </li>
+      {% endfor %}
+      <!-- Siguiente -->
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        {% if page_obj.has_next %}
+        <a class="page-link"
+           href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+          &raquo;
+        </a>
+        {% else %}
+        <span class="page-link disabled">&raquo;</span>
+        {% endif %}
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
+
+<!-- Modal global -->
+<div class="modal fade" id="modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content"><!-- Ajax carga aquí --></div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'inventario/js/lista_herencias.js' %}"></script>
+{% endblock extra_js %}

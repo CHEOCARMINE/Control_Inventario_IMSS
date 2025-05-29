@@ -92,12 +92,12 @@
 
             <!-- Auxiliares de Inventario -->
             <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventario"
-                    aria-expanded="false" aria-controls="collapseInventario">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAuxiliaresInventario"
+                    aria-expanded="false" aria-controls="collapseAuxiliaresInventario">
                     <i class="fas fa-boxes"></i>
                     <span>Axiliares de Inventario</span>
                 </a>
-                <div id="collapseInventario" class="collapse" aria-labelledby="headingSolicitantes" data-parent="#accordionSidebar">
+                <div id="collapseAuxiliaresInventario" class="collapse" aria-labelledby="headingSolicitantes" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Elementos:</h6>
                         <a class="collapse-item" href="{% url 'catalogo_list' %}">Catalogo</a>
@@ -118,23 +118,21 @@
 
             <!-- Título ejemplo-->
             <div class="sidebar-heading">
-                Supervisor de almacén
+                Gestión de Inventario
             </div>
 
-            <!-- Elemento de navegación - Contraer menú de páginas ejemplo para mas para selecionar -->
             <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-cog"></i>
-                    <span>Components</span>
-                </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Custom Components:</h6>
-                        <a class="collapse-item" href="buttons.html">Buttons</a>
-                        <a class="collapse-item" href="cards.html">Cards</a>
-                    </div>
+            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventario"
+                aria-expanded="true" aria-controls="collapseInventario">
+                <i class="fas fa-fw fa-boxes"></i>
+                <span>Inventario</span>
+            </a>
+            <div id="collapseInventario" class="collapse" aria-labelledby="headingInventario" data-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Módulos Inventario:</h6>
+                <a class="collapse-item" href="{% url 'inventario:lista_herencias' %}">Herencias</a>
                 </div>
+            </div>
             </li>
 
             <!-- Agregar mas Funciones -->
