@@ -30,12 +30,16 @@
                 console.log('[modal_crear_producto] Producto creado. ID:', response.producto_id);
 
                 // Disparamos evento global “submitSuccess”
-                $(document).trigger('submitSuccess', {
-                producto_id: response.producto_id,
-                producto_label: response.producto_label
+            $(document).trigger('submitSuccess', {
+                producto_id:     response.producto_id,
+                producto_label:  response.producto_label,
+                producto_marca:  response.producto_marca,
+                producto_color:  response.producto_color,
+                producto_modelo: response.producto_modelo,
+                producto_serie:  response.producto_serie
                 });
             } else {
-                // Si hay errores de validación, recargamos solo los campos
+                // Si hay errores de validación: recargamos SOLO el fragmento con errores
                 $('#producto-form-fields').html(response.html_form);
                 console.log('[modal_crear_producto] Errores de validación, formulario recargado.');
             }

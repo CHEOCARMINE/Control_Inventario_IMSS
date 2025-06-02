@@ -285,11 +285,11 @@ def editar_producto(request, pk):
                         'inventario/modales/modal_editar_producto.html',
                         {'form': form, 'producto': prod})
 
-# CREAR “AL VUELO”
+# CREAR
 @login_required
 @supervisor_required
 def crear_producto(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = ProductoForm(request.POST, crear=True)
         if form.is_valid():
             producto = form.save(commit=False)
@@ -304,23 +304,27 @@ def crear_producto(request):
                 nombre_accion = "Crear"
             )
             return JsonResponse({
-                'success':       True,
-                'producto_id':   producto.id,
-                'producto_label': str(producto)
+                "success":         True,
+                "producto_id":     producto.id,
+                "producto_label":  producto.nombre,           
+                "producto_marca":  producto.marca.nombre,    
+                "producto_color":  producto.color,          
+                "producto_modelo": producto.modelo,        
+                "producto_serie":  producto.numero_serie or ""  
             })
         else:
             html = render_to_string(
-                'inventario/modales/fragmento_form_producto.html',
-                {'form': form},
+                "inventario/modales/fragmento_form_producto.html",
+                {"form": form},
                 request=request
             )
-            return JsonResponse({'success': False, 'html_form': html})
+            return JsonResponse({"success": False, "html_form": html})
     else:
         form = ProductoForm(crear=True)
         return render(
             request,
-            'inventario/modales/modal_crear_producto.html',
-            {'form': form}
+            "inventario/modales/modal_crear_producto.html",
+            {"form": form}
         )
 
 # ENTRADAS

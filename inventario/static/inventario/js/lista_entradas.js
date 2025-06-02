@@ -1,64 +1,63 @@
 $(function() {
-  // Ocultar la fila “template-row” al cargar la página
+  // 1) Al cargar la página, ocultamos #template-row
   $('#template-row').hide();
   console.log('[lista_entradas] template-row oculto al cargar.');
 
-  // Función para clonar la plantilla de fila (#template-row) y rellenar Marca/Color/Modelo/Serie si se pasan datos.
+  // 2) Función para clonar “template-row” y rellenar datos si vienen
   function agregarFilaEntrada(productoId, productoLabel, productoMarca, productoColor, productoModelo, productoSerie) {
-    console.log('[lista_entradas] agregarFilaEntrada llamado con:', 
+    console.log('[lista_entradas] agregarFilaEntrada llamado con:',
       productoId, productoLabel, productoMarca, productoColor, productoModelo, productoSerie
     );
 
-    // Calcular el índice de la nueva fila
+    // Índice de la nueva fila
     const totalFilas = $('#tabla-entradas tbody tr.linea-form').length;
     const nuevoIndex = totalFilas;
 
-    // Tomar el <tr id="template-row">, convertirlo a cadena, reemplazar "__INDEX__" y crear el elemento
+    // Clonamos la fila oculta
     const $template = $('#template-row');
     const htmlRaw = $template.prop('outerHTML').replace(/__INDEX__/g, nuevoIndex);
     const $nuevaFila = $(htmlRaw);
 
-    // Añadir la nueva fila al <tbody>
     $('#tabla-entradas tbody').append($nuevaFila);
     console.log('[lista_entradas] Fila clonada e insertada con índice:', nuevoIndex);
 
-    // Si vienen datos de un producto recién creado, inyectarlos en el <select> y en las celdas
+    // Si vienen datos desde el “Crear Producto”:
     if (productoId) {
       const $select = $nuevaFila.find('select.select-producto-auto');
 
-      // Si el <select> no tiene ya esa opción, la creamos
+      // 2.a) Si no existía esta <option> en el <select>, la agregamos:
       if ($select.find(`option[value="${productoId}"]`).length === 0) {
         const $opt = $('<option>', {
           value: productoId,
           text: productoLabel,
-          'data-marca': productoMarca,
-          'data-color': productoColor,
+          'data-marca':  productoMarca,
+          'data-color':  productoColor,
           'data-modelo': productoModelo,
-          'data-serie': productoSerie
+          'data-serie':  productoSerie
         });
         $select.append($opt);
         console.log('[lista_entradas] Nueva <option> agregada al select:', productoLabel);
       }
 
-      // Marcar el <select> en ese producto y disparar el cambio para llenar las celdas
+      // 2.b) Seleccionamos esa opción y disparamos “change” para rellenar las celdas
       $select.val(productoId);
       $select.trigger('change');
     }
 
-    // Poner el foco en la columna de cantidad de la nueva fila
+    // 2.c) Poner foco en “cantidad” de la fila creada
     $nuevaFila.find(`input[name="form-${nuevoIndex}-cantidad"]`).focus();
   }
 
-  // Al cambiar cualquier select de producto (“.select-producto-auto”), actualizar Marca/Color/Modelo/Serie en esa fila.
+  // 3) Cuando cambie cualquier <select class="select-producto-auto">, rellenar Marca/Color/Modelo/Serie
   $('body').on('change', '.select-producto-auto', function() {
-    const $select   = $(this);
-    const $fila     = $select.closest('tr.linea-form');
-    const selected  = $select.find('option:selected');
+    const $select = $(this);
+    const $fila   = $select.closest('tr.linea-form');
+    const sel     = $select.find('option:selected');
 
-    const marca  = selected.data('marca')  || '';
-    const color  = selected.data('color')  || '';
-    const modelo = selected.data('modelo') || '';
-    const serie  = selected.data('serie')  || '';
+    const marca  = sel.data('marca')  || '';
+    const color  = sel.data('color')  || '';
+    const modelo = sel.data('modelo') || '';
+    const serie  = sel.data('serie')  || '';
 
     $fila.find('.marca-cell').text(marca);
     $fila.find('.color-cell').text(color);
@@ -66,18 +65,19 @@ $(function() {
     $fila.find('.serie-cell').text(serie);
   });
 
-  // Al pulsar “+ Agregar Producto” (botón #btn-agregar-fila), clonamos una fila vacía (sin seleccionar producto).
+  // 4) Al pulsar “+ Agregar Producto” (botón #btn-agregar-fila), clonamos una fila vacía
   $('body').on('click', '#btn-agregar-fila', function(e) {
     e.preventDefault();
     console.log('[lista_entradas] Botón +Agregar Producto clickeado.');
-    agregarFilaEntrada();
+    agregarFilaEntrada(); // sin parámetros → fila vacía
   });
 
-  // Capturar el evento “submitSuccess” proveniente del modal de “Crear Producto al vuelo” (#modalCrearProducto). El modal debe hacer: $('#modalCrearProducto').trigger('submitSuccess', {...});
-  $('#modalCrearProducto').on('submitSuccess', function(event, data) {
+  // 5) Escuchar evento “submitSuccess” disparado desde el modal “Crear Producto”
+  //    NOTA: este evento debe dispararse desde el propio modal de creación de producto:
+  //          $('#modalCrearProducto').trigger('submitSuccess', {...});
+  $(document).on('submitSuccess', function(event, data) {
     console.log('[lista_entradas] evento submitSuccess capturado. Data:', data);
 
-    // Obtenemos todos los datos que devolvió la vista:
     const productoId     = data.producto_id;
     const productoLabel  = data.producto_label;
     const productoMarca  = data.producto_marca;
@@ -85,22 +85,22 @@ $(function() {
     const productoModelo = data.producto_modelo;
     const productoSerie  = data.producto_serie;
 
-    // Añadimos esa <option> al último <select> existente (si no estaba ya)
+    // 5.a) Insertar la nueva <option> en cada <select> que aún no la tenga
     $('.select-producto-auto').each(function() {
       if ($(this).find(`option[value="${productoId}"]`).length === 0) {
         $(this).append($('<option>', {
           value: productoId,
           text: productoLabel,
-          'data-marca': productoMarca,
-          'data-color': productoColor,
+          'data-marca':  productoMarca,
+          'data-color':  productoColor,
           'data-modelo': productoModelo,
-          'data-serie': productoSerie
+          'data-serie':  productoSerie
         }));
-        console.log('[lista_entradas] Nueva <option> agregado a un select existente:', productoLabel);
+        console.log('[lista_entradas] <option> agregado a select existente:', productoLabel);
       }
     });
 
-    // Finalmente, agregamos una fila nueva **seleccionada** en ese producto
+    // 5.b) Finalmente, crear una nueva fila **ya seleccionada** en ese producto
     agregarFilaEntrada(
       productoId,
       productoLabel,
@@ -111,7 +111,7 @@ $(function() {
     );
   });
 
-  // Al pulsar la “×” dentro de una fila, marcamos DELETE y eliminamos la fila
+  // 6) “×” elimina la fila (marca DELETE y la quita del DOM)
   $('body').on('click', '.btn-eliminar-fila', function(e) {
     e.preventDefault();
     const $fila = $(this).closest('tr.linea-form');
