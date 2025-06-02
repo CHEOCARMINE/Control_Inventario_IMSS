@@ -124,13 +124,14 @@
             <li class="nav-item">
             <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventario"
                 aria-expanded="true" aria-controls="collapseInventario">
-                <i class="fas fa-fw fa-boxes"></i>
+                <i class="fas fa-fw fa-layer-group"></i>
                 <span>Inventario</span>
             </a>
             <div id="collapseInventario" class="collapse" aria-labelledby="headingInventario" data-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Módulos Inventario:</h6>
                 <a class="collapse-item" href="{% url 'inventario:lista_herencias' %}">Herencias</a>
+                <a class="collapse-item" href="{% url 'inventario:lista_productos' %}">Productos</a>
                 </div>
             </div>
             </li>

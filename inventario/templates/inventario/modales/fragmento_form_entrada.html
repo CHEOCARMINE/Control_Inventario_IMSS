@@ -1,0 +1,183 @@
+{% csrf_token %}
+
+<!-- Cabecera de la Entrada (Folio + Fecha) -->
+<div class="form-row mb-3">
+    <div class="col-md-6">
+        <div class="form-group">
+        <label for="id_folio">Folio</label>
+        {{ form_entrada.folio }}
+        {% if form_entrada.folio.errors %}
+            <div class="text-danger small">{{ form_entrada.folio.errors.0 }}</div>
+        {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
+        <label for="id_fecha_folio">Fecha de Folio</label>
+        {{ form_entrada.fecha_folio }}
+        {% if form_entrada.fecha_folio.errors %}
+            <div class="text-danger small">{{ form_entrada.fecha_folio.errors.0 }}</div>
+        {% endif %}
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- Management form del formset -->
+{{ formset_lineas.management_form }}
+
+<!-- Template Row Oculto (para clonar) -->
+<table style="display:none;">
+    <tbody>
+        <tr id="template-row" class="linea-form" data-index="__INDEX__">
+        <td>
+            <select name="form-__INDEX__-producto" class="form-control select-producto-auto">
+            <option value="">---------</option>
+            {% for prod in todos_productos %}
+                <option
+                value="{{ prod.id }}"
+                data-marca="{{ prod.marca.nombre }}"
+                data-color="{{ prod.color }}"
+                data-modelo="{{ prod.modelo }}"
+                data-serie="{% if prod.numero_serie %}{{ prod.numero_serie }}{% endif %}">
+                {{ prod.nombre }}
+                </option>
+            {% endfor %}
+            </select>
+        </td>
+
+        <td class="marca-cell"></td>
+
+        <td class="color-cell"></td>
+
+        <td class="modelo-cell"></td>
+
+        <td class="serie-cell"></td>
+
+        <td>
+            <input
+            type="number"
+            name="form-__INDEX__-cantidad"
+            min="1"
+            class="form-control"
+            placeholder="Cantidad">
+        </td>
+
+        <td class="text-center align-middle">
+            <div style="display:none;">
+            <input type="checkbox" name="form-__INDEX__-DELETE">
+            </div>
+            <button
+            type="button"
+            class="btn btn-sm btn-danger btn-eliminar-fila"
+            title="Eliminar fila">
+            &times;
+            </button>
+        </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- Filas existentes del formset -->
+<div class="table-responsive">
+    <table class="table table-bordered" id="tabla-entradas">
+        <thead class="thead-light">
+        <tr>
+            <th>Producto</th>
+            <th>Marca</th>
+            <th>Color</th>
+            <th>Modelo</th>
+            <th>N.º Serie</th>
+            <th style="width:120px;">Cantidad</th>
+            <th style="width:80px;">Acción</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for form_linea in formset_lineas %}
+            <tr class="linea-form" data-index="{{ forloop.counter0 }}">
+            <td>
+                <select name="{{ form_linea.prefix }}-producto"
+                        class="form-control select-producto-auto">
+                <option value="">---------</option>
+                {% for prod in todos_productos %}
+                    {% 
+                    selected_attr = ""
+                    if form_linea.initial.producto and form_linea.initial.producto.id == prod.id:
+                        selected_attr = "selected"
+                    %}
+                    <option
+                    value="{{ prod.id }}"
+                    data-marca="{{ prod.marca.nombre }}"
+                    data-color="{{ prod.color }}"
+                    data-modelo="{{ prod.modelo }}"
+                    data-serie="{% if prod.numero_serie %}{{ prod.numero_serie }}{% endif %}"
+                    {{ selected_attr }}>
+                    {{ prod.nombre }}
+                    </option>
+                {% endfor %}
+                </select>
+                {% if form_linea.producto.errors %}
+                <div class="text-danger small">{{ form_linea.producto.errors.0 }}</div>
+                {% endif %}
+            </td>
+
+            <td class="marca-cell">
+                {% if form_linea.initial.producto %}
+                {{ form_linea.initial.producto.marca.nombre }}
+                {% endif %}
+            </td>
+            <td class="color-cell">
+                {% if form_linea.initial.producto %}
+                {{ form_linea.initial.producto.color }}
+                {% endif %}
+            </td>
+            <td class="modelo-cell">
+                {% if form_linea.initial.producto %}
+                {{ form_linea.initial.producto.modelo }}
+                {% endif %}
+            </td>
+            <td class="serie-cell">
+                {% if form_linea.initial.producto and form_linea.initial.producto.numero_serie %}
+                {{ form_linea.initial.producto.numero_serie }}
+                {% endif %}
+            </td>
+
+            <td>
+                {{ form_linea.cantidad }}
+                {% if form_linea.cantidad.errors %}
+                <div class="text-danger small">{{ form_linea.cantidad.errors.0 }}</div>
+                {% endif %}
+            </td>
+
+            <td class="text-center align-middle">
+                <div style="display:none;">
+                {{ form_linea.DELETE }}
+                </div>
+                <button
+                type="button"
+                class="btn btn-sm btn-danger btn-eliminar-fila"
+                title="Eliminar fila">
+                &times;
+                </button>
+            </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Botones debajo de la tabla -->
+<div class="d-flex justify-content-between mt-3">
+    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-agregar-fila">
+        + Agregar Producto
+    </button>
+    <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        data-bs-toggle="modal"
+        data-bs-target="#modalCrearProducto"
+        data-remote="{% url 'inventario:crear_producto' %}">
+        + Nuevo Producto
+    </button>
+</div>

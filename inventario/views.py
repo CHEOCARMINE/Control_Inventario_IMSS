@@ -1,14 +1,17 @@
+from django.db.models import F
 from django.urls import reverse
-from .models import Herencia
+from django.db import transaction
 from django.http import JsonResponse
-from .forms import HerenciaForm
-from django.views.decorators.http import require_POST
+from django.forms import formset_factory
+from django.core.paginator import Paginator
 from django.template.loader import render_to_string
-from login_app.decorators import login_required, supervisor_required
+from django.views.decorators.http import require_POST
+from .models import Herencia, Producto, Entrada, EntradaLinea
 from django.shortcuts import render, get_object_or_404, redirect
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
-from django.core.paginator import Paginator
-from auxiliares_inventario.models import Catalogo, Subcatalogo
+from login_app.decorators import login_required, supervisor_required
+from auxiliares_inventario.models import Catalogo, Subcatalogo, Marca
+from .forms import (HerenciaForm, ProductoForm, EntradaForm, EntradaLineaFormSet)
 
 # Helper para registrar logs 
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
@@ -28,23 +31,18 @@ def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
         pass
 
 # HERENCIA
+
 # LISTADO
 @login_required
 @supervisor_required
 def lista_herencias(request):
-    # Capturar filtros de GET
-    nombre         = request.GET.get('nombre', '').strip()
-    categoria_id   = request.GET.get('categoria', '').strip()
-    subcategoria_id= request.GET.get('subcategoria', '').strip()
-    estado         = request.GET.get('estado', '').strip()
+    nombre          = request.GET.get('nombre', '').strip()
+    categoria_id    = request.GET.get('categoria', '').strip()
+    subcategoria_id = request.GET.get('subcategoria', '').strip()
+    estado          = request.GET.get('estado', '').strip()
 
-    # QuerySet base con relaciones para optimizar
-    qs = Herencia.objects.select_related(
-        'Subcatalogo__catalogo',
-        'unidad_medida'
-    ).all()
+    qs = Herencia.objects.select_related('Subcatalogo__catalogo', 'unidad_medida').all()
 
-    # Aplicar filtros si vienen
     if nombre:
         qs = qs.filter(nombre__icontains=nombre)
     if categoria_id.isdigit():
@@ -54,12 +52,10 @@ def lista_herencias(request):
     if estado in ['activo', 'inactivo']:
         qs = qs.filter(estado=(estado == 'activo'))
 
-    # Ordenar y paginar (10 por página)
     qs = qs.order_by('nombre')
     page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
 
-    # Listas para los selects de filtro
-    catalogos    = Catalogo.objects.filter(estado=True).order_by('nombre')
+    catalogos = Catalogo.objects.filter(estado=True).order_by('nombre')
     if categoria_id.isdigit():
         subcatalogos = Subcatalogo.objects.filter(
             catalogo_id=int(categoria_id), estado=True
@@ -67,23 +63,21 @@ def lista_herencias(request):
     else:
         subcatalogos = Subcatalogo.objects.filter(estado=True).order_by('nombre')
 
-    # Mensajes flash
     mensaje_exito = request.session.pop('herencia_success', None)
     mensaje_error = request.session.pop('herencia_error', None)
 
-    # Render con contexto
     return render(request, 'inventario/herencias.html', {
-        'page_obj':      page_obj,
+        'page_obj':       page_obj,
         'filter': {
-            'nombre':      nombre,
-            'categoria':   categoria_id,
-            'subcategoria':subcategoria_id,
-            'estado':      estado,
+            'nombre':       nombre,
+            'categoria':    categoria_id,
+            'subcategoria': subcategoria_id,
+            'estado':       estado,
         },
-        'catalogos':     catalogos,
-        'subcatalogos':  subcatalogos,
-        'mensaje_exito': mensaje_exito,
-        'mensaje_error': mensaje_error,
+        'catalogos':      catalogos,
+        'subcatalogos':   subcatalogos,
+        'mensaje_exito':  mensaje_exito,
+        'mensaje_error':  mensaje_error,
     })
 
 # AGREGAR
@@ -96,7 +90,6 @@ def agregar_herencia(request):
             h = form.save(commit=False)
             h.estado = True
             h.save()
-
             _registrar_log(
                 request,
                 tabla         = "herencia",
@@ -121,7 +114,6 @@ def agregar_herencia(request):
         return render(request,
                         'inventario/modales/modal_agregar_herencia.html',
                         {'form': form, 'crear': True})
-
 
 # EDITAR
 @login_required
@@ -177,4 +169,225 @@ def inhabilitar_herencia(request, pk):
         'success':      True,
         'redirect_url': reverse('inventario:lista_herencias')
     })
-# FIN HERENCIA
+# FIN DE HERENCUAS
+
+# PRODUCTOS
+
+# LISTADO
+@login_required
+@supervisor_required
+def lista_productos(request):
+    nombre          = request.GET.get('nombre', '').strip()
+    categoria_id    = request.GET.get('categoria', '').strip()
+    subcategoria_id = request.GET.get('subcategoria', '').strip()
+    herencia_id     = request.GET.get('herencia', '').strip()
+    estado          = request.GET.get('estado', '').strip()
+
+    qs = Producto.objects.select_related(
+        'herencia__Subcatalogo__catalogo',
+        'marca'
+    ).all()
+
+    if nombre:
+        qs = qs.filter(nombre__icontains=nombre)
+    if herencia_id.isdigit():
+        qs = qs.filter(herencia_id=int(herencia_id))
+    if estado in ['activo', 'inactivo']:
+        qs = qs.filter(estado=(estado == 'activo'))
+
+    if categoria_id.isdigit():
+        qs = qs.filter(herencia__Subcatalogo__catalogo_id=int(categoria_id))
+    if subcategoria_id.isdigit():
+        qs = qs.filter(herencia__Subcatalogo_id=int(subcategoria_id))
+
+    qs = qs.order_by(
+        'herencia__Subcatalogo__catalogo__nombre',
+        'herencia__Subcatalogo__nombre',
+        'herencia__nombre',
+        'nombre'
+    )
+
+    page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
+
+    catalogos = Catalogo.objects.filter(estado=True).order_by('nombre')
+
+    if categoria_id.isdigit():
+        subcatalogos = Subcatalogo.objects.filter(
+            catalogo_id=int(categoria_id),
+            estado=True
+        ).order_by('nombre')
+    else:
+        subcatalogos = Subcatalogo.objects.filter(estado=True).order_by('nombre')
+
+    herencias_qs = Herencia.objects.filter(estado=True).select_related(
+        'Subcatalogo__catalogo'
+    )
+    if subcategoria_id.isdigit():
+        herencias_qs = herencias_qs.filter(Subcatalogo_id=int(subcategoria_id))
+    elif categoria_id.isdigit():
+        herencias_qs = herencias_qs.filter(Subcatalogo__catalogo_id=int(categoria_id))
+    herencias = herencias_qs.order_by(
+        'Subcatalogo__catalogo__nombre',
+        'Subcatalogo__nombre',
+        'nombre'
+    )
+
+    mensaje_exito = request.session.pop('producto_success', None)
+    mensaje_error = request.session.pop('producto_error', None)
+
+    return render(request, 'inventario/productos.html', {
+        'page_obj':      page_obj,
+        'filter': {
+            'nombre':       nombre,
+            'categoria':    categoria_id,
+            'subcategoria': subcategoria_id,
+            'herencia':     herencia_id,
+            'estado':       estado,
+        },
+        'catalogos':     catalogos,
+        'subcatalogos':  subcatalogos,
+        'herencias':     herencias,
+        'mensaje_exito': mensaje_exito,
+        'mensaje_error': mensaje_error,
+    })
+
+# EDITAR
+@login_required
+@supervisor_required
+def editar_producto(request, pk):
+    prod = get_object_or_404(Producto, pk=pk)
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=prod)
+        if form.is_valid():
+            form.save()
+            _registrar_log(
+                request,
+                tabla         = "producto",
+                id_registro   = prod.id,
+                nombre_modulo = "Inventario",
+                nombre_accion = "Editar"
+            )
+            request.session['producto_success'] = 'Producto actualizado correctamente.'
+            return JsonResponse({
+                'success':      True,
+                'redirect_url': reverse('inventario:lista_productos')
+            })
+        else:
+            html = render_to_string(
+                'inventario/modales/fragmento_form_producto.html',
+                {'form': form, 'producto': prod},
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html})
+    else:
+        form = ProductoForm(instance=prod)
+        return render(request,
+                        'inventario/modales/modal_editar_producto.html',
+                        {'form': form, 'producto': prod})
+
+# CREAR “AL VUELO”
+@login_required
+@supervisor_required
+def crear_producto(request):
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, crear=True)
+        if form.is_valid():
+            producto = form.save(commit=False)
+            producto.estado = True
+            producto.stock = 0
+            producto.save()
+            _registrar_log(
+                request,
+                tabla         = "producto",
+                id_registro   = producto.id,
+                nombre_modulo = "Inventario",
+                nombre_accion = "Crear"
+            )
+            return JsonResponse({
+                'success':       True,
+                'producto_id':   producto.id,
+                'producto_label': str(producto)
+            })
+        else:
+            html = render_to_string(
+                'inventario/modales/fragmento_form_producto.html',
+                {'form': form},
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html})
+    else:
+        form = ProductoForm(crear=True)
+        return render(
+            request,
+            'inventario/modales/modal_crear_producto.html',
+            {'form': form}
+        )
+
+# ENTRADAS
+
+@login_required
+@supervisor_required
+def registrar_entrada(request):
+    if request.method == 'POST':
+        form_entrada   = EntradaForm(request.POST)
+        formset_lineas = EntradaLineaFormSet(request.POST)
+
+        if form_entrada.is_valid() and formset_lineas.is_valid():
+            entrada = form_entrada.save()
+
+            for form_linea in formset_lineas:
+                if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
+                    producto = form_linea.cleaned_data['producto']
+                    cantidad = form_linea.cleaned_data['cantidad']
+
+                    EntradaLinea.objects.create(
+                        entrada=entrada,
+                        producto=producto,
+                        cantidad=cantidad
+                    )
+
+                    producto.stock = producto.stock + cantidad
+                    producto.save(update_fields=['stock'])
+
+            return JsonResponse({
+                'success':      True,
+                'redirect_url': reverse('inventario:lista_productos')
+            })
+
+        else:
+            html_form = render_to_string(
+                'inventario/modales/fragmento_form_entrada.html',
+                {
+                    'form_entrada':   form_entrada,
+                    'formset_lineas': formset_lineas,
+                    'todos_productos': Producto.objects.all().order_by(
+                        'herencia__Subcatalogo__catalogo__nombre',
+                        'herencia__Subcatalogo__nombre',
+                        'herencia__nombre',
+                        'nombre'
+                    )
+                },
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html_form})
+
+    else:
+        form_entrada   = EntradaForm()
+        formset_lineas = EntradaLineaFormSet()
+
+        todos_productos = Producto.objects.all().order_by(
+            'herencia__Subcatalogo__catalogo__nombre',
+            'herencia__Subcatalogo__nombre',
+            'herencia__nombre',
+            'nombre'
+        )
+
+        return render(
+            request,
+            'inventario/modales/modal_registrar_entrada.html',
+            {
+                'form_entrada':   form_entrada,
+                'formset_lineas': formset_lineas,
+                'todos_productos': todos_productos
+            }
+        )

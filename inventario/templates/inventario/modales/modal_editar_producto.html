@@ -1,0 +1,41 @@
+<div class="modal-header">
+    <h5 class="modal-title">Editar Producto</h5>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
+<div class="modal-body">
+    <form id="form-editar-producto" method="post" action="{% url 'inventario:editar_producto' producto.id %}">
+        {% csrf_token %}
+        {% include 'inventario/modales/fragmento_form_producto.html' %}
+        <div class="text-right mt-3">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+$(function() {
+    $('#form-editar-producto').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // Cerrar modal y redirigir a la lista de productos
+                    $('#modalEditarProducto').modal('hide');
+                    window.location = response.redirect_url;
+                } else {
+                    // Recargar solo los campos con los errores
+                    $('#producto-form-fields').html(response.html_form);
+                }
+            },
+            error: function() {
+                alert('Error de red al editar producto. Intenta de nuevo.');
+            }
+        });
+    });
+});
+</script>
+
