@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import F
 from auxiliares_inventario.models import Catalogo, Subcatalogo, UnidadDeMedida, Marca
 
-class Herencia(models.Model):
+class Tipo(models.Model):
     nombre        = models.CharField(max_length=100)
     Subcatalogo   = models.ForeignKey(Subcatalogo, on_delete=models.CASCADE)
     unidad_medida = models.ForeignKey(UnidadDeMedida, on_delete=models.CASCADE)
@@ -17,7 +17,7 @@ class Herencia(models.Model):
         return self.Subcatalogo.catalogo
 
 class Producto(models.Model):
-    herencia        = models.ForeignKey(Herencia, on_delete=models.CASCADE)
+    tipo        = models.ForeignKey(Tipo, on_delete=models.CASCADE)
     nombre          = models.CharField(max_length=100)
     modelo          = models.CharField(max_length=50)
     marca           = models.ForeignKey(Marca, on_delete=models.PROTECT)
@@ -30,7 +30,7 @@ class Producto(models.Model):
     stock           = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return f"{self.herencia.nombre} – {self.nombre}"
+        return f"{self.tipo.nombre} – {self.nombre}"
 
 class Entrada(models.Model):
     folio         = models.CharField(max_length=30)

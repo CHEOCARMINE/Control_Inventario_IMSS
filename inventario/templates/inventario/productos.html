@@ -68,13 +68,13 @@
                 {% endfor %}
                 </select>
             </div>
-            <!-- Herencia -->
+            <!-- Tipo -->
             <div class="col-md-3 mb-2">
-                <select name="herencia" class="form-control auto-submit">
-                <option value="">-- Herencia --</option>
-                {% for h in herencias %}
+                <select name="tipo" class="form-control auto-submit">
+                <option value="">-- Tipo --</option>
+                {% for h in tipos %}
                     <option value="{{ h.id }}"
-                    {% if filter.herencia|add:'' == h.id|stringformat:"s" %}selected{% endif %}>
+                    {% if filter.tipo|add:'' == h.id|stringformat:"s" %}selected{% endif %}>
                     {{ h.nombre }}
                     </option>
                 {% endfor %}
@@ -104,7 +104,7 @@
         <table class="table table-bordered table-hover">
         <thead class="thead-light">
             <tr>
-            <th>Herencia</th>
+            <th>Tipo</th>
             <th>Nombre</th>
             <th>Modelo</th>
             <th>Marca</th>
@@ -119,12 +119,12 @@
             {% for p in page_obj.object_list %}
             <tr class="
                 {% if p.stock == 0 %}table-danger
-                {% elif p.stock < p.herencia.stock_minimo %}table-warning
+                {% elif p.stock < p.tipo.stock_minimo %}table-warning
                 {% endif %}">
             <td>
-                {{ p.herencia.Subcatalogo.catalogo.nombre }} /
-                {{ p.herencia.Subcatalogo.nombre }} /
-                {{ p.herencia.nombre }}
+                {{ p.tipo.Subcatalogo.catalogo.nombre }} /
+                {{ p.tipo.Subcatalogo.nombre }} /
+                {{ p.tipo.nombre }}
             </td>
             <td>{{ p.nombre }}</td>
             <td>{{ p.modelo }}</td>
@@ -165,7 +165,7 @@
         <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
             {% if page_obj.has_previous %}
             <a class="page-link"
-            href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.herencia %}&herencia={{ filter.herencia }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.tipo %}&tipo={{ filter.tipo }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
             &laquo;
             </a>
             {% else %}
@@ -176,7 +176,7 @@
         {% for pnum in page_obj.paginator.page_range %}
         <li class="page-item {% if pnum == page_obj.number %}active{% endif %}">
             <a class="page-link"
-            href="?page={{ pnum }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.herencia %}&herencia={{ filter.herencia }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            href="?page={{ pnum }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.tipo %}&tipo={{ filter.tipo }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
             {{ pnum }}
             </a>
         </li>
@@ -185,7 +185,7 @@
         <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
             {% if page_obj.has_next %}
             <a class="page-link"
-            href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.herencia %}&herencia={{ filter.herencia }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.tipo %}&tipo={{ filter.tipo }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
             &raquo;
             </a>
             {% else %}

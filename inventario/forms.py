@@ -2,11 +2,11 @@ import re
 from django import forms
 from django.forms import formset_factory
 from django.utils.html import format_html
-from .models import Herencia, Producto, Entrada, EntradaLinea
+from .models import Tipo, Producto, Entrada, EntradaLinea
 from auxiliares_inventario.models import Subcatalogo, UnidadDeMedida, Marca
 
-# HERENCIA FORM
-class HerenciaForm(forms.ModelForm):
+# Tipo FORM
+class TipoForm(forms.ModelForm):
 
     def __init__(self, *args, crear=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,12 +25,12 @@ class HerenciaForm(forms.ModelForm):
             )
 
     class Meta:
-        model  = Herencia
+        model  = Tipo
         fields = ['nombre', 'Subcatalogo', 'unidad_medida', 'stock_minimo', 'estado']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nombre de la herencia'
+                'placeholder': 'Nombre de la tipo'
             }),
             'Subcatalogo':   forms.Select(attrs={'class': 'form-control'}),
             'unidad_medida': forms.Select(attrs={'class': 'form-control'}),
@@ -49,11 +49,11 @@ class HerenciaForm(forms.ModelForm):
         nombre = self.cleaned_data['nombre'].strip()
         if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ]+$', nombre):
             raise forms.ValidationError("Sólo letras, números y espacios.")
-        qs = Herencia.objects.filter(nombre__iexact=nombre)
+        qs = Tipo.objects.filter(nombre__iexact=nombre)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError("Ya existe una herencia con ese nombre.")
+            raise forms.ValidationError("Ya existe una tipo con ese nombre.")
         return nombre
 
 # FORMULARIO PARA CREAR / EDITAR UN PRODUCTO
@@ -61,7 +61,7 @@ class ProductoForm(forms.ModelForm):
     def __init__(self, *args, crear=False, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['herencia'].queryset = Herencia.objects.filter(
+        self.fields['tipo'].queryset = Tipo.objects.filter(
             estado=True
         ).select_related('Subcatalogo__catalogo').order_by(
             'Subcatalogo__catalogo__nombre',
@@ -89,7 +89,7 @@ class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
         fields = [
-            'herencia',
+            'tipo',
             'nombre',
             'modelo',
             'marca',
@@ -100,7 +100,7 @@ class ProductoForm(forms.ModelForm):
             'costo_unitario',
         ]
         labels = {
-            'herencia':       'Herencia',
+            'tipo':           'Tipo',
             'nombre':         'Nombre',
             'modelo':         'Modelo',
             'marca':          'Marca',
@@ -118,17 +118,17 @@ class ProductoForm(forms.ModelForm):
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre', '').strip()
-        herencia = self.cleaned_data.get('herencia')
+        tipo = self.cleaned_data.get('tipo')
         if not nombre:
             raise forms.ValidationError("El nombre es obligatorio.")
         if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ]+$', nombre):
             raise forms.ValidationError("Sólo letras, números y espacios.")
-        qs = Producto.objects.filter(nombre__iexact=nombre, herencia=herencia)
+        qs = Producto.objects.filter(nombre__iexact=nombre, tipo=tipo)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise forms.ValidationError(
-                "Ya existe un producto con ese nombre en la misma herencia."
+                "Ya existe un producto con ese nombre con el tipo."
             )
         return nombre
 

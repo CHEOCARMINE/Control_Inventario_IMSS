@@ -1,18 +1,18 @@
 {% extends 'base/base.html' %}
 {% load static %}
 
-{% block title %}Lista de Herencias{% endblock %}
+{% block title %}Lista de Tipos{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
 
   <div class="d-flex align-items-center mb-3">
-    <h2 class="mr-auto">Herencias</h2>
+    <h2 class="mr-auto">Tipos</h2>
     <button class="btn btn-success"
             data-bs-toggle="modal"
             data-bs-target="#modal"
-            data-remote="{% url 'inventario:agregar_herencia' %}">
-      <i class="fas fa-plus"></i> Agregar Herencia
+            data-remote="{% url 'inventario:agregar_tipo' %}">
+      <i class="fas fa-plus"></i> Agregar Tipo
     </button>
   </div>
 
@@ -37,10 +37,10 @@
         <div class="form-row align-items-end">
           <div class="col-md-2 mb-2">
             <input type="text"
-                   name="nombre"
-                   class="form-control auto-submit"
-                   placeholder="Nombre"
-                   value="{{ filter.nombre }}">
+                    name="nombre"
+                    class="form-control auto-submit"
+                    placeholder="Nombre"
+                    value="{{ filter.nombre }}">
           </div>
           <div class="col-md-2 mb-2">
             <select name="categoria" class="form-control auto-submit">
@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <!-- Tabla de Herencias -->
+  <!-- Tabla de Tipos -->
   <div class="table-responsive">
     <table class="table table-bordered table-hover">
       <thead class="thead-light">
@@ -116,14 +116,14 @@
             <button class="btn btn-sm btn-primary"
                     data-bs-toggle="modal"
                     data-bs-target="#modal"
-                    data-remote="{% url 'inventario:editar_herencia' h.pk %}">
+                    data-remote="{% url 'inventario:editar_tipo' h.pk %}">
               <i class="fas fa-edit"></i>
             </button>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" class="text-center">No hay herencias registradas.</td>
+          <td colspan="7" class="text-center">No hay tipos registradas.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -138,7 +138,7 @@
       <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
         {% if page_obj.has_previous %}
         <a class="page-link"
-           href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            href="?page={{ page_obj.previous_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
           &laquo;
         </a>
         {% else %}
@@ -149,7 +149,7 @@
       {% for p in page_obj.paginator.page_range %}
       <li class="page-item {% if p == page_obj.number %}active{% endif %}">
         <a class="page-link"
-           href="?page={{ p }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            href="?page={{ p }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
           {{ p }}
         </a>
       </li>
@@ -158,7 +158,7 @@
       <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
         {% if page_obj.has_next %}
         <a class="page-link"
-           href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
+            href="?page={{ page_obj.next_page_number }}{% if filter.nombre %}&nombre={{ filter.nombre }}{% endif %}{% if filter.categoria %}&categoria={{ filter.categoria }}{% endif %}{% if filter.subcategoria %}&subcategoria={{ filter.subcategoria }}{% endif %}{% if filter.estado %}&estado={{ filter.estado }}{% endif %}">
           &raquo;
         </a>
         {% else %}
@@ -180,5 +180,5 @@
 {% endblock content %}
 
 {% block extra_js %}
-<script src="{% static 'inventario/js/lista_herencias.js' %}"></script>
+<script src="{% static 'inventario/js/lista_tipos.js' %}"></script>
 {% endblock extra_js %}

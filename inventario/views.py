@@ -6,12 +6,12 @@ from django.forms import formset_factory
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
-from .models import Herencia, Producto, Entrada, EntradaLinea
+from .models import Tipo, Producto, Entrada, EntradaLinea
 from django.shortcuts import render, get_object_or_404, redirect
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
 from login_app.decorators import login_required, supervisor_required
 from auxiliares_inventario.models import Catalogo, Subcatalogo, Marca
-from .forms import (HerenciaForm, ProductoForm, EntradaForm, EntradaLineaFormSet)
+from .forms import (TipoForm, ProductoForm, EntradaForm, EntradaLineaFormSet)
 
 # Helper para registrar logs 
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
@@ -30,18 +30,18 @@ def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
     except Exception:
         pass
 
-# HERENCIA
+# Tipo
 
 # LISTADO
 @login_required
 @supervisor_required
-def lista_herencias(request):
+def lista_tipo(request):
     nombre          = request.GET.get('nombre', '').strip()
     categoria_id    = request.GET.get('categoria', '').strip()
     subcategoria_id = request.GET.get('subcategoria', '').strip()
     estado          = request.GET.get('estado', '').strip()
 
-    qs = Herencia.objects.select_related('Subcatalogo__catalogo', 'unidad_medida').all()
+    qs = Tipo.objects.select_related('Subcatalogo__catalogo', 'unidad_medida').all()
 
     if nombre:
         qs = qs.filter(nombre__icontains=nombre)
@@ -63,10 +63,10 @@ def lista_herencias(request):
     else:
         subcatalogos = Subcatalogo.objects.filter(estado=True).order_by('nombre')
 
-    mensaje_exito = request.session.pop('herencia_success', None)
-    mensaje_error = request.session.pop('herencia_error', None)
+    mensaje_exito = request.session.pop('tipo_success', None)
+    mensaje_error = request.session.pop('tipo_error', None)
 
-    return render(request, 'inventario/herencias.html', {
+    return render(request, 'inventario/tipos.html', {
         'page_obj':       page_obj,
         'filter': {
             'nombre':       nombre,
@@ -83,93 +83,93 @@ def lista_herencias(request):
 # AGREGAR
 @login_required
 @supervisor_required
-def agregar_herencia(request):
+def agregar_tipo(request):
     if request.method == 'POST':
-        form = HerenciaForm(request.POST, crear=True)
+        form = TipoForm(request.POST, crear=True)
         if form.is_valid():
             h = form.save(commit=False)
             h.estado = True
             h.save()
             _registrar_log(
                 request,
-                tabla         = "herencia",
+                tabla         = "tipo",
                 id_registro   = h.id,
                 nombre_modulo = "Inventario",
                 nombre_accion = "Crear"
             )
-            request.session['herencia_success'] = 'Herencia creada correctamente.'
+            request.session['tipo_success'] = 'Tipo creada correctamente.'
             return JsonResponse({
                 'success':      True,
-                'redirect_url': reverse('inventario:lista_herencias')
+                'redirect_url': reverse('inventario:lista_tipos')
             })
         else:
             html_form = render_to_string(
-                'inventario/modales/fragmento_form_herencia.html',
+                'inventario/modales/fragmento_form_tipo.html',
                 {'form': form},
                 request=request
             )
             return JsonResponse({'success': False, 'html_form': html_form})
     else:
-        form = HerenciaForm(crear=True)
+        form = TipoForm(crear=True)
         return render(request,
-                        'inventario/modales/modal_agregar_herencia.html',
+                        'inventario/modales/modal_agregar_tipo.html',
                         {'form': form, 'crear': True})
 
 # EDITAR
 @login_required
 @supervisor_required
-def editar_herencia(request, pk):
-    h = get_object_or_404(Herencia, pk=pk)
+def editar_tipo(request, pk):
+    h = get_object_or_404(Tipo, pk=pk)
     if request.method == 'POST':
-        form = HerenciaForm(request.POST, instance=h)
+        form = TipoForm(request.POST, instance=h)
         if form.is_valid():
             form.save()
             _registrar_log(
                 request,
-                tabla         = "herencia",
+                tabla         = "tipo",
                 id_registro   = h.id,
                 nombre_modulo = "Inventario",
                 nombre_accion = "Editar"
             )
-            request.session['herencia_success'] = 'Herencia actualizada correctamente.'
+            request.session['tipo_success'] = 'Tipo actualizada correctamente.'
             return JsonResponse({
                 'success':      True,
-                'redirect_url': reverse('inventario:lista_herencias')
+                'redirect_url': reverse('inventario:lista_tipos')
             })
         else:
             html_form = render_to_string(
-                'inventario/modales/fragmento_form_herencia.html',
-                {'form': form, 'herencia': h},
+                'inventario/modales/fragmento_form_tipo.html',
+                {'form': form, 'tipo': h},
                 request=request
             )
             return JsonResponse({'success': False, 'html_form': html_form})
     else:
-        form = HerenciaForm(instance=h)
+        form = TipoForm(instance=h)
         return render(request,
-                        'inventario/modales/modal_editar_herencia.html',
-                        {'form': form, 'herencia': h})
+                        'inventario/modales/modal_editar_tipo.html',
+                        {'form': form, 'tipo': h})
 
 # INHABILITAR
 @login_required
 @supervisor_required
 @require_POST
-def inhabilitar_herencia(request, pk):
-    h = get_object_or_404(Herencia, pk=pk)
+def inhabilitar_tipo(request, pk):
+    h = get_object_or_404(Tipo, pk=pk)
     h.estado = False
     h.save(update_fields=['estado'])
     _registrar_log(
         request,
-        tabla         = "herencia",
+        tabla         = "tipo",
         id_registro   = h.id,
         nombre_modulo = "Inventario",
         nombre_accion = "Inhabilitar"
     )
-    request.session['herencia_success'] = 'Herencia inhabilitada correctamente.'
+    request.session['tipo_success'] = 'Tipo inhabilitada correctamente.'
     return JsonResponse({
         'success':      True,
-        'redirect_url': reverse('inventario:lista_herencias')
+        'redirect_url': reverse('inventario:lista_tipos')
     })
-# FIN DE HERENCUAS
+# FIN DE tipo
 
 # PRODUCTOS
 
@@ -180,30 +180,30 @@ def lista_productos(request):
     nombre          = request.GET.get('nombre', '').strip()
     categoria_id    = request.GET.get('categoria', '').strip()
     subcategoria_id = request.GET.get('subcategoria', '').strip()
-    herencia_id     = request.GET.get('herencia', '').strip()
+    tipo_id     = request.GET.get('tipo', '').strip()
     estado          = request.GET.get('estado', '').strip()
 
     qs = Producto.objects.select_related(
-        'herencia__Subcatalogo__catalogo',
+        'tipo__Subcatalogo__catalogo',
         'marca'
     ).all()
 
     if nombre:
         qs = qs.filter(nombre__icontains=nombre)
-    if herencia_id.isdigit():
-        qs = qs.filter(herencia_id=int(herencia_id))
+    if tipo_id.isdigit():
+        qs = qs.filter(tipo_id=int(tipo_id))
     if estado in ['activo', 'inactivo']:
         qs = qs.filter(estado=(estado == 'activo'))
 
     if categoria_id.isdigit():
-        qs = qs.filter(herencia__Subcatalogo__catalogo_id=int(categoria_id))
+        qs = qs.filter(tipo__Subcatalogo__catalogo_id=int(categoria_id))
     if subcategoria_id.isdigit():
-        qs = qs.filter(herencia__Subcatalogo_id=int(subcategoria_id))
+        qs = qs.filter(tipo__Subcatalogo_id=int(subcategoria_id))
 
     qs = qs.order_by(
-        'herencia__Subcatalogo__catalogo__nombre',
-        'herencia__Subcatalogo__nombre',
-        'herencia__nombre',
+        'tipo__Subcatalogo__catalogo__nombre',
+        'tipo__Subcatalogo__nombre',
+        'tipo__nombre',
         'nombre'
     )
 
@@ -219,14 +219,14 @@ def lista_productos(request):
     else:
         subcatalogos = Subcatalogo.objects.filter(estado=True).order_by('nombre')
 
-    herencias_qs = Herencia.objects.filter(estado=True).select_related(
+    tipo_qs = Tipo.objects.filter(estado=True).select_related(
         'Subcatalogo__catalogo'
     )
     if subcategoria_id.isdigit():
-        herencias_qs = herencias_qs.filter(Subcatalogo_id=int(subcategoria_id))
+        tipo_qs = tipo_qs.filter(Subcatalogo_id=int(subcategoria_id))
     elif categoria_id.isdigit():
-        herencias_qs = herencias_qs.filter(Subcatalogo__catalogo_id=int(categoria_id))
-    herencias = herencias_qs.order_by(
+        tipo_qs = tipo_qs.filter(Subcatalogo__catalogo_id=int(categoria_id))
+    tipo = tipo_qs.order_by(
         'Subcatalogo__catalogo__nombre',
         'Subcatalogo__nombre',
         'nombre'
@@ -241,12 +241,12 @@ def lista_productos(request):
             'nombre':       nombre,
             'categoria':    categoria_id,
             'subcategoria': subcategoria_id,
-            'herencia':     herencia_id,
+            'tipo':     tipo_id,
             'estado':       estado,
         },
         'catalogos':     catalogos,
         'subcatalogos':  subcatalogos,
-        'herencias':     herencias,
+        'tipo':     tipo,
         'mensaje_exito': mensaje_exito,
         'mensaje_error': mensaje_error,
     })
@@ -365,9 +365,9 @@ def registrar_entrada(request):
                     'form_entrada':   form_entrada,
                     'formset_lineas': formset_lineas,
                     'todos_productos': Producto.objects.all().order_by(
-                        'herencia__Subcatalogo__catalogo__nombre',
-                        'herencia__Subcatalogo__nombre',
-                        'herencia__nombre',
+                        'tipo__Subcatalogo__catalogo__nombre',
+                        'tipo__Subcatalogo__nombre',
+                        'tipo__nombre',
                         'nombre'
                     )
                 },
@@ -380,9 +380,9 @@ def registrar_entrada(request):
         formset_lineas = EntradaLineaFormSet()
 
         todos_productos = Producto.objects.all().order_by(
-            'herencia__Subcatalogo__catalogo__nombre',
-            'herencia__Subcatalogo__nombre',
-            'herencia__nombre',
+            'tipo__Subcatalogo__catalogo__nombre',
+            'tipo__Subcatalogo__nombre',
+            'tipo__nombre',
             'nombre'
         )
 

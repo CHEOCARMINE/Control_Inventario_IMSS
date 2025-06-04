@@ -1,9 +1,9 @@
 from django.urls import path
 from .views import (
-    lista_herencias,
-    agregar_herencia,
-    editar_herencia,
-    inhabilitar_herencia,
+    lista_tipo,
+    agregar_tipo,
+    editar_tipo,
+    inhabilitar_tipo,
     lista_productos,
     editar_producto,
     crear_producto,
@@ -14,12 +14,12 @@ app_name = 'inventario'
 
 urlpatterns = [
     # ---------------------------------------------------
-    # Rutas para HERENCIAS
+    # Rutas para TIPOS
     # ---------------------------------------------------
-    path('herencias/', lista_herencias, name='lista_herencias'),
-    path('herencias/create/', agregar_herencia, name='agregar_herencia'),
-    path('herencias/<int:pk>/edit/', editar_herencia, name='editar_herencia'),
-    path('herencias/<int:pk>/deactivate/', inhabilitar_herencia, name='inhabilitar_herencia'),
+    path('tipos/', lista_tipo, name='lista_tipos'),
+    path('tipos/create/', agregar_tipo, name='agregar_tipo'),
+    path('tipos/<int:pk>/edit/', editar_tipo, name='editar_tipo'),
+    path('tipos/<int:pk>/deactivate/', inhabilitar_tipo, name='inhabilitar_tipo'),
 
     # ---------------------------------------------------
     # Rutas para PRODUCTOS

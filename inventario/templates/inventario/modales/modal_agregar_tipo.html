@@ -1,11 +1,11 @@
 <div class="modal-header">
-    <h5 class="modal-title">Editar Herencia</h5>
+    <h5 class="modal-title">Agregar Tipo</h5>
     <button type="button" class="close" data-dismiss="modal">&times;</button>
 </div>
 <div class="modal-body">
-    <form id="form-herencia" method="post" action="{% url 'inventario:editar_herencia' herencia.pk %}">
-        <div id="herencia-form-fields">
-            {% include 'inventario/modales/fragmento_form_herencia.html' %}
+    <form id="form-tipo" method="post" action="{% url 'inventario:agregar_tipo' %}">
+        <div id="tipo-form-fields">
+            {% include 'inventario/modales/fragmento_form_tipo.html' with crear=True %}
         </div>
         <div class="text-right mt-3">
             <button type="submit" class="btn btn-primary">Guardar</button>
@@ -14,8 +14,8 @@
 </div>
 
 <script>
-function bindFormHerencia() {
-    $('#form-herencia')
+function bindFormTipo() {
+    $('#form-tipo')
       .off('submit')
       .on('submit', function(e) {
           e.preventDefault();
@@ -29,8 +29,8 @@ function bindFormHerencia() {
                       $('#modal').modal('hide');
                       window.location = response.redirect_url;
                   } else {
-                      $('#herencia-form-fields').html(response.html_form);
-                      bindFormHerencia();
+                      $('#tipo-form-fields').html(response.html_form);
+                      bindFormTipo();
                   }
               },
               error: function() {
@@ -40,5 +40,5 @@ function bindFormHerencia() {
       });
 }
 // Inicializa el handler
-bindFormHerencia();
+bindFormTipo();
 </script>
