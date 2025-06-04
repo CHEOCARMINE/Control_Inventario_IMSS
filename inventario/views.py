@@ -275,15 +275,17 @@ def editar_producto(request, pk):
         else:
             html = render_to_string(
                 'inventario/modales/fragmento_form_producto.html',
-                {'form': form, 'producto': prod},
+                {'form': form},
                 request=request
             )
             return JsonResponse({'success': False, 'html_form': html})
     else:
         form = ProductoForm(instance=prod)
-        return render(request,
-                        'inventario/modales/modal_editar_producto.html',
-                        {'form': form, 'producto': prod})
+        return render(
+            request,
+            'inventario/modales/modal_editar_producto.html',
+            {'form': form, 'producto': prod}
+        )
 
 # CREAR
 @login_required
@@ -306,11 +308,11 @@ def crear_producto(request):
             return JsonResponse({
                 "success":         True,
                 "producto_id":     producto.id,
-                "producto_label":  producto.nombre,           
-                "producto_marca":  producto.marca.nombre,    
-                "producto_color":  producto.color,          
-                "producto_modelo": producto.modelo,        
-                "producto_serie":  producto.numero_serie or ""  
+                "producto_label":  producto.nombre,
+                "producto_marca":  producto.marca.nombre,
+                "producto_color":  producto.color,
+                "producto_modelo": producto.modelo,
+                "producto_serie":  producto.numero_serie or ""
             })
         else:
             html = render_to_string(
