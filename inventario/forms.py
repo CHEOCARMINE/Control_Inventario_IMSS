@@ -113,7 +113,7 @@ class ProductoForm(forms.ModelForm):
         widgets = {
             'descripcion':    forms.Textarea(attrs={'rows': 3}),
             'nota':           forms.Textarea(attrs={'rows': 2}),
-            'costo_unitario': forms.NumberInput(attrs={'step': '0.01'}),
+            'costo_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
 
     def clean_nombre(self):
@@ -131,6 +131,14 @@ class ProductoForm(forms.ModelForm):
                 "Ya existe un producto con ese nombre con el tipo."
             )
         return nombre
+    
+    def clean_costo_unitario(self):
+        costo = self.cleaned_data.get('costo_unitario')
+        if costo is None:
+            return costo 
+        if costo < 0:
+            raise forms.ValidationError("El costo unitario no puede ser negativo.")
+        return costo
 
 # FORMULARIO PARA LA CABECERA DE ENTRADA
 class EntradaForm(forms.ModelForm):
@@ -159,8 +167,6 @@ class EntradaForm(forms.ModelForm):
         pattern = r'^[A-Za-z0-9\-]+$'
         if not re.match(pattern, folio):
             raise forms.ValidationError(
-                "El folio solo puede contener letras, números y guiones. "
-                "Ajusta este patrón según el formato definitivo."
             )
         return folio
 
@@ -190,9 +196,6 @@ class EntradaLineaForm(forms.ModelForm):
         )
 
     def clean_cantidad(self):
-        """
-        Validación de 'cantidad': debe ser un entero mayor que cero.
-        """
         cantidad = self.cleaned_data.get('cantidad')
         if cantidad is None or cantidad <= 0:
             raise forms.ValidationError("La cantidad debe ser mayor que cero.")
