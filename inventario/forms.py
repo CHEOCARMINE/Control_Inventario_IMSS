@@ -2,6 +2,7 @@ import re
 from django import forms
 from django.forms import formset_factory
 from django.utils.html import format_html
+from django.core.exceptions import ValidationError
 from .models import Tipo, Producto, Entrada, EntradaLinea
 from auxiliares_inventario.models import Subcatalogo, UnidadDeMedida, Marca
 
@@ -63,27 +64,25 @@ class ProductoForm(forms.ModelForm):
 
         self.fields['tipo'].queryset = Tipo.objects.filter(
             estado=True
-        ).select_related('Subcatalogo__catalogo').order_by(
-            'Subcatalogo__catalogo__nombre',
-            'Subcatalogo__nombre',
-            'nombre'
-        )
-
+        ).order_by('nombre')
         self.fields['marca'].queryset = Marca.objects.all().order_by('nombre')
 
         for nombre_campo, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
 
         if crear:
-            if 'estado' in self.fields:
-                self.fields['estado'].widget = forms.HiddenInput()
-            if 'stock' in self.fields:
-                self.fields['stock'].widget = forms.HiddenInput()
+            self.fields['estado'].initial = True
+            self.fields['estado'].widget = forms.HiddenInput()
+            self.fields['stock'].widget = forms.HiddenInput()
         else:
-            # Al editar: tampoco mostramos 'estado' ni 'stock'
-            if 'stock' in self.fields:
-                self.fields['stock'].widget = forms.HiddenInput()
-            if 'estado' in self.fields:
+            self.fields['stock'].widget = forms.HiddenInput()
+
+            if self.instance and self.instance.pk and self.instance.stock == 0:
+                self.fields['estado'].widget = forms.Select(
+                    choices=[(True, 'Activo'), (False, 'Inactivo')],
+                    attrs={'class': 'form-control'}
+                )
+            else:
                 self.fields['estado'].widget = forms.HiddenInput()
 
     class Meta:
@@ -98,6 +97,8 @@ class ProductoForm(forms.ModelForm):
             'descripcion',
             'nota',
             'costo_unitario',
+            'estado',
+            'stock',
         ]
         labels = {
             'tipo':           'Tipo',
@@ -109,6 +110,8 @@ class ProductoForm(forms.ModelForm):
             'descripcion':    'Descripción',
             'nota':           'Nota',
             'costo_unitario': 'Costo unitario',
+            'estado':         'Estado',
+            'stock':          'Stock',
         }
         widgets = {
             'descripcion':    forms.Textarea(attrs={'rows': 3}),
@@ -127,15 +130,13 @@ class ProductoForm(forms.ModelForm):
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError(
-                "Ya existe un producto con ese nombre con el tipo."
-            )
+            raise forms.ValidationError("Ya existe un producto con ese nombre y tipo.")
         return nombre
-    
+
     def clean_costo_unitario(self):
         costo = self.cleaned_data.get('costo_unitario')
         if costo is None:
-            return costo 
+            return costo
         if costo < 0:
             raise forms.ValidationError("El costo unitario no puede ser negativo.")
         return costo
