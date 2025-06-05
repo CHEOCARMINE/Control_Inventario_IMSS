@@ -366,7 +366,7 @@ def registrar_entrada(request):
                 {
                     'form_entrada':   form_entrada,
                     'formset_lineas': formset_lineas,
-                    'todos_productos': Producto.objects.all().order_by(
+                    'todos_productos': Producto.objects.filter(estado=True).order_by(
                         'tipo__Subcatalogo__catalogo__nombre',
                         'tipo__Subcatalogo__nombre',
                         'tipo__nombre',
@@ -381,7 +381,7 @@ def registrar_entrada(request):
         form_entrada   = EntradaForm()
         formset_lineas = EntradaLineaFormSet()
 
-        todos_productos = Producto.objects.all().order_by(
+        todos_productos = Producto.objects.filter(estado=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
             'tipo__nombre',
