@@ -331,63 +331,21 @@ def crear_producto(request):
 
 # ENTRADAS
 
-@login_required
+login_required
 @supervisor_required
 def registrar_entrada(request):
-    if request.method == 'POST':
-        form_entrada   = EntradaForm(request.POST)
-        formset_lineas = EntradaLineaFormSet(request.POST)
-
-        if form_entrada.is_valid() and formset_lineas.is_valid():
-            entrada = form_entrada.save()
-
-            for form_linea in formset_lineas:
-                if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
-                    producto = form_linea.cleaned_data['producto']
-                    cantidad = form_linea.cleaned_data['cantidad']
-
-                    EntradaLinea.objects.create(
-                        entrada=entrada,
-                        producto=producto,
-                        cantidad=cantidad
-                    )
-
-                    producto.stock = producto.stock + cantidad
-                    producto.save(update_fields=['stock'])
-
-            return JsonResponse({
-                'success':      True,
-                'redirect_url': reverse('inventario:lista_productos')
-            })
-
-        else:
-            html_form = render_to_string(
-                'inventario/modales/fragmento_form_entrada.html',
-                {
-                    'form_entrada':   form_entrada,
-                    'formset_lineas': formset_lineas,
-                    'todos_productos': Producto.objects.filter(estado=True).order_by(
-                        'tipo__Subcatalogo__catalogo__nombre',
-                        'tipo__Subcatalogo__nombre',
-                        'tipo__nombre',
-                        'nombre'
-                    )
-                },
-                request=request
-            )
-            return JsonResponse({'success': False, 'html_form': html_form})
-
-    else:
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    if request.method == 'GET':
+        if not is_ajax:
+            return redirect('inventario:lista_productos')
         form_entrada   = EntradaForm()
         formset_lineas = EntradaLineaFormSet()
-
         todos_productos = Producto.objects.filter(estado=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
             'tipo__nombre',
             'nombre'
         )
-
         return render(
             request,
             'inventario/modales/modal_registrar_entrada.html',
@@ -397,3 +355,35 @@ def registrar_entrada(request):
                 'todos_productos': todos_productos
             }
         )
+    form_entrada   = EntradaForm(request.POST)
+    formset_lineas = EntradaLineaFormSet(request.POST)
+    if form_entrada.is_valid() and formset_lineas.is_valid():
+        entrada = form_entrada.save()
+        for form_linea in formset_lineas:
+            if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
+                producto = form_linea.cleaned_data['producto']
+                cantidad = form_linea.cleaned_data['cantidad']
+                EntradaLinea.objects.create(
+                    entrada=entrada,
+                    producto=producto,
+                    cantidad=cantidad
+                )
+        return JsonResponse({
+            'success':      True,
+            'redirect_url': reverse('inventario:lista_productos')
+        })
+    html_form = render_to_string(
+        'inventario/modales/fragmento_form_entrada.html',
+        {
+            'form_entrada':   form_entrada,
+            'formset_lineas': formset_lineas,
+            'todos_productos': Producto.objects.filter(estado=True).order_by(
+                'tipo__Subcatalogo__catalogo__nombre',
+                'tipo__Subcatalogo__nombre',
+                'tipo__nombre',
+                'nombre'
+            )
+        },
+        request=request
+    )
+    return JsonResponse({'success': False, 'html_form': html_form})
