@@ -102,6 +102,7 @@
                         <h6 class="collapse-header">Elementos:</h6>
                         <a class="collapse-item" href="{% url 'catalogo_list' %}">Catalogo</a>
                         <a class="collapse-item" href="{% url 'subcatalogo_list' %}">Subcatalogo</a>
+                        <a class="collapse-item" href="{% url 'inventario:lista_tipos' %}">Tipos</a>                        
                     </div>
                 </div>
             </li>
@@ -118,22 +119,14 @@
 
             <!-- Título ejemplo-->
             <div class="sidebar-heading">
-                Gestión de Inventario
+                Inventario
             </div>
 
-            <li class="nav-item">
-            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventario"
-                aria-expanded="true" aria-controls="collapseInventario">
-                <i class="fas fa-fw fa-layer-group"></i>
-                <span>Inventario</span>
-            </a>
-            <div id="collapseInventario" class="collapse" aria-labelledby="headingInventario" data-parent="#accordionSidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Módulos Inventario:</h6>
-                <a class="collapse-item" href="{% url 'inventario:lista_tipos' %}">Tipos</a>
-                <a class="collapse-item" href="{% url 'inventario:lista_productos' %}">Productos</a>
-                </div>
-            </div>
+                        <li class="nav-item">
+                <a class="nav-link" href="{% url 'inventario:lista_productos' %}">
+                    <i class="fas fa-fw fa-layer-group"></i>
+                    <span>Inventario</span>
+                </a>
             </li>
 
             <!-- Agregar mas Funciones -->
