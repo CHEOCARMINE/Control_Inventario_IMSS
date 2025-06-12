@@ -10,3 +10,6 @@
     object-fit: block;
   }
   
+#template-row button {
+  display: none;
+}

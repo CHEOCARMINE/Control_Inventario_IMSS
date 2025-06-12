@@ -24,15 +24,17 @@
 
 <hr>
 
-<!-- Management form del formset (IMPORTANTE) -->
+<!-- Management form del formset -->
 {{ formset_lineas.management_form }}
 
 <!-- Plantilla oculta para clonar filas -->
 <table style="display:none;">
   <tbody>
-    <tr id="template-row" class="linea-form" data-index="__INDEX__">
+    <tr id="template-row" class="linea-form" data-index="__INDEX__" style="display:none;">
+      <!-- Celda de Producto con select -->
       <td>
-        <select name="form-__INDEX__-producto" class="form-control select-producto-auto">
+        <select name="form-__INDEX__-producto"
+                class="form-control select-producto-auto">
           <option value="">---------</option>
           {% for prod in todos_productos %}
             <option
@@ -45,6 +47,14 @@
             </option>
           {% endfor %}
         </select>
+        {# Botón al vuelo: oculto en la plantilla #}
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary btn-nuevo-producto"
+          data-remote="{% url 'inventario:crear_producto' %}"
+          style="display:none; margin-top: .25rem;">
+          + Nuevo Producto
+        </button>
       </td>
       <td class="marca-cell"></td>
       <td class="color-cell"></td>
@@ -59,12 +69,11 @@
           placeholder="Cantidad">
       </td>
       <td class="text-center align-middle">
-        <div style="display:none;">
-          <input type="checkbox" name="form-__INDEX__-DELETE">
-        </div>
+        {# Solo botón eliminar, oculto en la plantilla #}
         <button
           type="button"
           class="btn btn-sm btn-danger btn-eliminar-fila"
+          style="display:none;"
           title="Eliminar fila">
           &times;
         </button>
@@ -84,12 +93,13 @@
         <th>Modelo</th>
         <th>N.º Serie</th>
         <th style="width:120px;">Cantidad</th>
-        <th style="width:80px;">Acción</th>
+        <th style="width:160px;">Acción</th>
       </tr>
     </thead>
     <tbody>
       {% for form_linea in formset_lineas %}
         <tr class="linea-form" data-index="{{ forloop.counter0 }}">
+          <!-- Producto + Botón “Nuevo Producto” -->
           <td>
             <select name="{{ form_linea.prefix }}-producto"
                     class="form-control select-producto-auto">
@@ -111,11 +121,15 @@
                 </option>
               {% endfor %}
             </select>
-            {% if form_linea.producto.errors %}
-              <div class="text-danger small">{{ form_linea.producto.errors.0 }}</div>
-            {% endif %}
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary btn-nuevo-producto"
+              data-remote="{% url 'inventario:crear_producto' %}"
+              style="margin-top: .25rem;">
+              + Nuevo Producto
+            </button>
           </td>
-
+          <!-- Columnas de datos -->
           <td class="marca-cell">
             {% if form_linea.initial.producto %}
               {{ form_linea.initial.producto.marca.nombre }}
@@ -136,14 +150,14 @@
               {{ form_linea.initial.producto.numero_serie }}
             {% endif %}
           </td>
-
+          <!-- Cantidad -->
           <td>
             {{ form_linea.cantidad }}
             {% if form_linea.cantidad.errors %}
               <div class="text-danger small">{{ form_linea.cantidad.errors.0 }}</div>
             {% endif %}
           </td>
-
+          <!-- Acción: solo eliminar -->
           <td class="text-center align-middle">
             <div style="display:none;">
               {{ form_linea.DELETE }}
@@ -161,17 +175,12 @@
   </table>
 </div>
 
-<!-- Botones debajo de la tabla -->
+<!-- Botón para agregar más filas -->
 <div class="d-flex justify-content-between mt-3">
-  <button type="button" class="btn btn-sm btn-outline-primary" id="btn-agregar-fila">
-    + Agregar Producto
-  </button>
   <button
     type="button"
-    class="btn btn-sm btn-outline-secondary"
-    data-bs-toggle="modal"
-    data-bs-target="#modalCrearProducto"
-    data-remote="{% url 'inventario:crear_producto' %}">
-    + Nuevo Producto
+    id="btn-agregar-fila"
+    class="btn btn-sm btn-outline-primary">
+    + Agregar fila
   </button>
 </div>
