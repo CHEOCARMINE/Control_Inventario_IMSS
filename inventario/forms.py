@@ -1,5 +1,6 @@
 import re
 from django import forms
+from datetime import date
 from django.forms import formset_factory
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
@@ -147,13 +148,13 @@ class EntradaForm(forms.ModelForm):
         model = Entrada
         fields = ['folio', 'fecha_folio']
         labels = {
-            'folio':       'Folio',
-            'fecha_folio': 'Fecha de Folio',
+            'folio':       'Folio (opcional)',
+            'fecha_folio': 'Fecha de Recepción',
         }
         widgets = {
             'folio': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Folio de la entrada'
+                'placeholder': 'AAAA/BBB/0001/2025 (opcional)'
             }),
             'fecha_folio': forms.DateInput(attrs={
                 'type': 'date',
@@ -161,14 +162,31 @@ class EntradaForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacer folio opcional
+        self.fields['folio'].required = False
+
     def clean_folio(self):
-        folio = self.cleaned_data.get('folio', '').strip()
+        folio = (self.cleaned_data.get('folio') or '').strip()
+        # Si está vacío, lo permitimos (se mostrará "Pendiente" luego)
         if not folio:
-            raise forms.ValidationError("El folio es obligatorio.")
-        pattern = r'^[A-Za-z0-9\-]+$'
+            return ''
+
+        # Validación: 4 letras mayúsculas / 3 letras mayúsculas / 4 dígitos / año actual
+        año_actual = date.today().year
+        pattern = rf'^[A-Z]{{4}}/[A-Z]{{3}}/[0-9]{{4}}/{año_actual}$'
         if not re.match(pattern, folio):
             raise forms.ValidationError(
+                f"El folio debe tener el formato AAAA/BBB/0001/{año_actual} "
+                "con letras mayúsculas y dígitos según corresponda."
             )
+        # validación de unicidad
+        qs = Entrada.objects.filter(folio=folio)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError("Ya existe una entrada con este folio.")
         return folio
 
 # FORMULARIO PARA CADA LÍNEA DE ENTRADA

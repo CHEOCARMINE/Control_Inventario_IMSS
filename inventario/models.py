@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q, UniqueConstraint
 from auxiliares_inventario.models import Catalogo, Subcatalogo, UnidadDeMedida, Marca
 
 class Tipo(models.Model):
@@ -33,12 +33,22 @@ class Producto(models.Model):
         return f"{self.tipo.nombre} – {self.nombre}"
 
 class Entrada(models.Model):
-    folio         = models.CharField(max_length=30)
+    folio         = models.CharField(max_length=30, blank=True)
     fecha_folio   = models.DateField()
     fecha_entrada = models.DateField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=['folio'],
+                condition=~Q(folio=''),
+                name='unique_folio_nonblank'
+            ),
+        ]
+
     def __str__(self):
-        return f"{self.folio} – {self.fecha_entrada}"
+        folio_display = self.folio or 'Pendiente'
+        return f"{folio_display} – {self.fecha_entrada}"
 
 class EntradaLinea(models.Model):
     entrada  = models.ForeignKey(Entrada, on_delete=models.CASCADE, related_name='lineas')
