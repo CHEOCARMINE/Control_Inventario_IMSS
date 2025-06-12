@@ -72,10 +72,10 @@
             <div class="col-md-3 mb-2">
                 <select name="tipo" class="form-control auto-submit">
                 <option value="">-- Tipo --</option>
-                {% for h in tipos %}
-                    <option value="{{ h.id }}"
-                    {% if filter.tipo|add:'' == h.id|stringformat:"s" %}selected{% endif %}>
-                    {{ h.nombre }}
+                {% for t in tipos %}
+                    <option value="{{ t.id }}"
+                    {% if filter.tipo|add:'' == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t.nombre }}
                     </option>
                 {% endfor %}
                 </select>

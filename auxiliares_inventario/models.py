@@ -29,4 +29,4 @@ class UnidadDeMedida(models.Model):
     abreviatura = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
-        return self.abreviatura
+        return self.nombre

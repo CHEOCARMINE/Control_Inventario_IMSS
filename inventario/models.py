@@ -51,10 +51,6 @@ class EntradaLinea(models.Model):
             self.producto.stock = F('stock') + self.cantidad
             self.producto.save(update_fields=['stock'])
             self.producto.refresh_from_db()
-            # Si stock resultante es 0, marcar producto como inactivo
-            if self.producto.stock == 0:
-                self.producto.estado = False
-                self.producto.save(update_fields=['estado'])
         super().save(*args, **kwargs)
 
     def __str__(self):

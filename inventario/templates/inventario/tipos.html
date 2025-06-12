@@ -98,15 +98,15 @@
         </tr>
       </thead>
       <tbody>
-        {% for h in page_obj.object_list %}
+        {% for t in page_obj.object_list %}
         <tr>
-          <td>{{ h.nombre }}</td>
-          <td>{{ h.categoria.nombre }}</td>
-          <td>{{ h.Subcatalogo.nombre }}</td>
-          <td>{{ h.unidad_medida.nombre }}</td>
-          <td>{{ h.stock_minimo }}</td>
+          <td>{{ t.nombre }}</td>
+          <td>{{ t.categoria.nombre }}</td>
+          <td>{{ t.Subcatalogo.nombre }}</td>
+          <td>{{ t.unidad_medida.nombre }}</td>
+          <td>{{ t.stock_minimo }}</td>
           <td>
-            {% if h.estado %}
+            {% if t.estado %}
               <span class="badge badge-success">Activo</span>
             {% else %}
               <span class="badge badge-danger">Inactivo</span>
@@ -116,7 +116,7 @@
             <button class="btn btn-sm btn-primary"
                     data-bs-toggle="modal"
                     data-bs-target="#modal"
-                    data-remote="{% url 'inventario:editar_tipo' h.pk %}">
+                    data-remote="{% url 'inventario:editar_tipo' t.pk %}">
               <i class="fas fa-edit"></i>
             </button>
           </td>

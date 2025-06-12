@@ -10,7 +10,6 @@ from django.shortcuts import render, get_object_or_404
 from login_app.decorators import login_required, almacen_required
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
 
-
 # Helper para registrar logs 
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
     try:

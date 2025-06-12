@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 from .models import Tipo, Producto, Entrada, EntradaLinea
 from django.shortcuts import render, get_object_or_404, redirect
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
-from login_app.decorators import login_required, supervisor_required
+from login_app.decorators import login_required, supervisor_required, almacen_required
 from auxiliares_inventario.models import Catalogo, Subcatalogo, Marca
 from .forms import (TipoForm, ProductoForm, EntradaForm, EntradaLineaFormSet)
 
@@ -34,7 +34,7 @@ def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
 
 # LISTADO
 @login_required
-@supervisor_required
+@almacen_required
 def lista_tipo(request):
     nombre          = request.GET.get('nombre', '').strip()
     categoria_id    = request.GET.get('categoria', '').strip()
@@ -82,18 +82,18 @@ def lista_tipo(request):
 
 # AGREGAR
 @login_required
-@supervisor_required
+@almacen_required
 def agregar_tipo(request):
     if request.method == 'POST':
         form = TipoForm(request.POST, crear=True)
         if form.is_valid():
-            h = form.save(commit=False)
-            h.estado = True
-            h.save()
+            t = form.save(commit=False)
+            t.estado = True
+            t.save()
             _registrar_log(
                 request,
                 tabla         = "tipo",
-                id_registro   = h.id,
+                id_registro   = t.id,
                 nombre_modulo = "Inventario",
                 nombre_accion = "Crear"
             )
@@ -117,17 +117,17 @@ def agregar_tipo(request):
 
 # EDITAR
 @login_required
-@supervisor_required
+@almacen_required
 def editar_tipo(request, pk):
-    h = get_object_or_404(Tipo, pk=pk)
+    t = get_object_or_404(Tipo, pk=pk)
     if request.method == 'POST':
-        form = TipoForm(request.POST, instance=h)
+        form = TipoForm(request.POST, instance=t)
         if form.is_valid():
             form.save()
             _registrar_log(
                 request,
                 tabla         = "tipo",
-                id_registro   = h.id,
+                id_registro   = t.id,
                 nombre_modulo = "Inventario",
                 nombre_accion = "Editar"
             )
@@ -139,28 +139,28 @@ def editar_tipo(request, pk):
         else:
             html_form = render_to_string(
                 'inventario/modales/fragmento_form_tipo.html',
-                {'form': form, 'tipo': h},
+                {'form': form, 'tipo': t},
                 request=request
             )
             return JsonResponse({'success': False, 'html_form': html_form})
     else:
-        form = TipoForm(instance=h)
+        form = TipoForm(instance=t)
         return render(request,
                         'inventario/modales/modal_editar_tipo.html',
-                        {'form': form, 'tipo': h})
+                        {'form': form, 'tipo': t})
 
 # INHABILITAR
 @login_required
-@supervisor_required
+@almacen_required
 @require_POST
 def inhabilitar_tipo(request, pk):
-    h = get_object_or_404(Tipo, pk=pk)
-    h.estado = False
-    h.save(update_fields=['estado'])
+    t = get_object_or_404(Tipo, pk=pk)
+    t.estado = False
+    t.save(update_fields=['estado'])
     _registrar_log(
         request,
         tabla         = "tipo",
-        id_registro   = h.id,
+        id_registro   = t.id,
         nombre_modulo = "Inventario",
         nombre_accion = "Inhabilitar"
     )
@@ -171,7 +171,7 @@ def inhabilitar_tipo(request, pk):
     })
 # FIN DE tipo
 
-# PRODUCTOS
+# INVENTARIO
 
 # LISTADO
 @login_required
@@ -246,7 +246,7 @@ def lista_productos(request):
         },
         'catalogos':     catalogos,
         'subcatalogos':  subcatalogos,
-        'tipo':     tipo,
+        'tipos':     tipo,
         'mensaje_exito': mensaje_exito,
         'mensaje_error': mensaje_error,
     })
