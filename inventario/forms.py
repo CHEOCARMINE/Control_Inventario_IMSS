@@ -146,17 +146,17 @@ class ProductoForm(forms.ModelForm):
 class EntradaForm(forms.ModelForm):
     class Meta:
         model = Entrada
-        fields = ['folio', 'fecha_folio']
+        fields = ['folio', 'fecha_recepcion']
         labels = {
             'folio':       'Folio (opcional)',
-            'fecha_folio': 'Fecha de Recepción',
+            'fecha_recepcion': 'Fecha de Recepción',
         }
         widgets = {
             'folio': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'AAAA/BBB/0001/2025 (opcional)'
             }),
-            'fecha_folio': forms.DateInput(attrs={
+            'fecha_recepcion': forms.DateInput(attrs={
                 'type': 'date',
                 'class': 'form-control'
             }),

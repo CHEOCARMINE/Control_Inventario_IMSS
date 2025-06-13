@@ -34,7 +34,7 @@ class Producto(models.Model):
 
 class Entrada(models.Model):
     folio         = models.CharField(max_length=30, blank=True)
-    fecha_folio   = models.DateField()
+    fecha_recepcion  = models.DateField()
     fecha_entrada = models.DateField(auto_now_add=True)
 
     class Meta:
