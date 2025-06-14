@@ -8,6 +8,8 @@ from .views import (
     editar_producto,
     crear_producto,
     registrar_entrada,
+    lista_entradas,
+
 )
 
 app_name = 'inventario'
@@ -31,6 +33,7 @@ urlpatterns = [
     # ---------------------------------------------------
     # Rutas para ENTRADAS
     # ---------------------------------------------------
-    # Registrar Entrada con varias líneas (modal AJAX)
     path('entradas/registrar/', registrar_entrada, name='registrar_entrada'),
+    path('entradas/', lista_entradas, name='lista_entradas'),
+
 ]

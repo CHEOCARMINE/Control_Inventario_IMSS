@@ -169,7 +169,7 @@ def inhabilitar_tipo(request, pk):
         'success':      True,
         'redirect_url': reverse('inventario:lista_tipos')
     })
-# FIN DE tipo
+# FIN DE TIPO
 
 # INVENTARIO
 
@@ -328,9 +328,11 @@ def crear_producto(request):
             "inventario/modales/modal_crear_producto.html",
             {"form": form}
         )
+# FINDE INVENTARIO
 
 # ENTRADAS
 
+# REGISTRAR
 login_required
 @supervisor_required
 def registrar_entrada(request):
@@ -371,6 +373,7 @@ def registrar_entrada(request):
         return JsonResponse({
             'success':      True,
             'redirect_url': reverse('inventario:lista_productos')
+            #'redirect_url': reverse('inventario:lista_entradas')
         })
     html_form = render_to_string(
         'inventario/modales/fragmento_form_entrada.html',
@@ -387,3 +390,35 @@ def registrar_entrada(request):
         request=request
     )
     return JsonResponse({'success': False, 'html_form': html_form})
+
+#LISTA
+@login_required
+@almacen_required  
+def lista_entradas(request):
+    folio       = request.GET.get('folio', '').strip()
+    fecha_rec   = request.GET.get('fecha_rec', '').strip()
+    producto_id = request.GET.get('producto', '').strip()
+
+    qs = Entrada.objects.prefetch_related('lineas__producto')
+
+    if folio:
+        qs = qs.filter(folio__icontains=folio)
+    if fecha_rec:
+        qs = qs.filter(fecha_recepcion=fecha_rec)
+    if producto_id.isdigit():
+        qs = qs.filter(lineas__producto_id=int(producto_id))
+
+    qs = qs.order_by('-fecha_recepcion').distinct()
+
+    page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
+    productos = Producto.objects.filter(estado=True).order_by('nombre')
+
+    return render(request, 'inventario/entradas.html', {
+        'page_obj':  page_obj,
+        'filter': {
+            'folio':     folio,
+            'fecha_rec': fecha_rec,
+            'producto':  producto_id,
+        },
+        'productos': productos,
+    })
