@@ -9,7 +9,7 @@ from .views import (
     crear_producto,
     registrar_entrada,
     lista_entradas,
-
+    editar_entrada,
 )
 
 app_name = 'inventario'
@@ -35,5 +35,6 @@ urlpatterns = [
     # ---------------------------------------------------
     path('entradas/registrar/', registrar_entrada, name='registrar_entrada'),
     path('entradas/', lista_entradas, name='lista_entradas'),
+    path('entradas/<int:pk>/editar/', editar_entrada, name='editar_entrada'),
 
 ]

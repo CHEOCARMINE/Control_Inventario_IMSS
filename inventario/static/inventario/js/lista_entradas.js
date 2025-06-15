@@ -43,3 +43,20 @@ $(function() {
         };
     }
 });
+
+$(document).on('submit', '#form-editar-entrada', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    $.post($form.attr('action'), $form.serialize(), resp => {
+        if (resp.success) {
+        // cerrar modal y recargar lista
+        $('#modalEditarEntrada').modal('hide');
+        window.location = resp.redirect_url;
+        } else {
+        // recargar solo el contenido del modal
+        $('#editar-form-fields').html(resp.html_form);
+        }
+    }).fail(() => {
+        alert('Error al guardar. Intenta de nuevo.');
+    });
+});

@@ -148,7 +148,7 @@ class EntradaForm(forms.ModelForm):
         model = Entrada
         fields = ['folio', 'fecha_recepcion']
         labels = {
-            'folio':       'Folio (opcional)',
+            'folio':          'Folio (opcional)',
             'fecha_recepcion': 'Fecha de Recepción',
         }
         widgets = {
@@ -156,10 +156,13 @@ class EntradaForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'AAAA/BBB/0001/2025 (opcional)'
             }),
-            'fecha_recepcion': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control'
-            }),
+            'fecha_recepcion': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control'
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -177,11 +180,12 @@ class EntradaForm(forms.ModelForm):
         año_actual = date.today().year
         pattern = rf'^[A-Z]{{4}}/[A-Z]{{3}}/[0-9]{{4}}/{año_actual}$'
         if not re.match(pattern, folio):
-            raise forms.ValidationError(
+            raise ValidationError(
                 f"El folio debe tener el formato AAAA/BBB/0001/{año_actual} "
                 "con letras mayúsculas y dígitos según corresponda."
             )
-        # validación de unicidad
+
+        # Validación de unicidad (excluyendo el registro actual al editar)
         qs = Entrada.objects.filter(folio=folio)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)

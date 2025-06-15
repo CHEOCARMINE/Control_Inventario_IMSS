@@ -98,7 +98,7 @@
                 <button class="btn btn-sm btn-primary"
                         data-bs-toggle="modal"
                         data-bs-target="#modalEditarEntrada"
-    >
+                        data-remote="{% url 'inventario:editar_entrada' entrada.id %}">
                     <i class="fas fa-edit"></i>
                 </button>
                 </td>
@@ -152,6 +152,13 @@
     <div class="modal fade" id="modalCrearProducto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content"><!-- Aquí inyectamos modal_crear_producto.html vía AJAX --></div>
+    </div>
+    </div>
+
+    <!-- Modal Editar Entrada -->
+    <div class="modal fade" id="modalEditarEntrada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content"><!-- aquí cargará AJAX: modal_editar_entrada.html --></div>
     </div>
     </div>
 

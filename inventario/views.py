@@ -391,7 +391,7 @@ def registrar_entrada(request):
     )
     return JsonResponse({'success': False, 'html_form': html_form})
 
-#LISTA
+# LISTA
 @login_required
 @almacen_required  
 def lista_entradas(request):
@@ -422,3 +422,56 @@ def lista_entradas(request):
         },
         'productos': productos,
     })
+
+# EDITAR
+@login_required
+@almacen_required
+def editar_entrada(request, pk):
+    entrada = get_object_or_404(Entrada, pk=pk)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    if request.method == 'GET':
+        # Si no es AJAX, redirigimos a la lista
+        if not is_ajax:
+            return redirect('inventario:lista_entradas')
+
+        # Formulario precargado y líneas para mostrar
+        form_entrada = EntradaForm(instance=entrada)
+        lineas = entrada.lineas.select_related('producto').all()
+
+        return render(request,
+                        'inventario/modales/modal_editar_entrada.html',
+                        {
+                            'form_entrada': form_entrada,
+                            'entrada': entrada,
+                            'lineas': lineas,
+                        })
+
+    # POST AJAX: sólo actualizamos folio y fecha
+    form_entrada = EntradaForm(request.POST, instance=entrada)
+    if form_entrada.is_valid():
+        form_entrada.save()
+        _registrar_log(
+            request,
+            tabla         = "entrada",
+            id_registro   = entrada.id,
+            nombre_modulo = "Inventario",
+            nombre_accion = "Editar"
+        )
+        request.session['entrada_success'] = 'Entrada actualizada correctamente.'
+        return JsonResponse({
+            'success':      True,
+            'redirect_url': reverse('inventario:lista_entradas')
+        })
+
+    # Si hay errores de validación, devolvemos el fragmento con errores
+    html_form = render_to_string(
+        'inventario/modales/fragmento_form_editar_entrada.html',
+        {
+            'form_entrada': form_entrada,
+            'entrada': entrada,
+            'lineas': entrada.lineas.select_related('producto').all(),
+        },
+        request=request
+    )
+    return JsonResponse({'success': False, 'html_form': html_form})
