@@ -365,7 +365,7 @@ def registrar_entrada(request):
         # 1) Guardar la cabecera de la entrada
         entrada = form_entrada.save()
 
-        # 2) Registrar log de creación de entrada
+        # 2) Registrar log de creación
         _registrar_log(
             request,
             tabla         = "entrada",
@@ -390,7 +390,7 @@ def registrar_entrada(request):
             #'redirect_url': reverse('inventario:lista_entradas')
         })
 
-    # Si hay errores, recargar sólo el fragmento
+    # Si hay errores, recarga sólo el fragmento
     html_form = render_to_string(
         'inventario/modales/fragmento_form_entrada.html',
         {
@@ -415,8 +415,10 @@ def lista_entradas(request):
     fecha_rec   = request.GET.get('fecha_rec', '').strip()
     producto_id = request.GET.get('producto', '').strip()
 
+    # Pre–cargamos las entradas con sus líneas y productos
     qs = Entrada.objects.prefetch_related('lineas__producto')
 
+    # Filtros
     if folio:
         qs = qs.filter(folio__icontains=folio)
     if fecha_rec:
@@ -424,19 +426,26 @@ def lista_entradas(request):
     if producto_id.isdigit():
         qs = qs.filter(lineas__producto_id=int(producto_id))
 
+    # Ordenar y quitar duplicados por join
     qs = qs.order_by('-fecha_recepcion').distinct()
 
     page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
     productos = Producto.objects.filter(estado=True).order_by('nombre')
 
+    # Sacar mensajes de sesión
+    mensaje_exito = request.session.pop('entrada_success', None)
+    mensaje_error = request.session.pop('entrada_error', None)
+
     return render(request, 'inventario/entradas.html', {
-        'page_obj':  page_obj,
+        'page_obj':      page_obj,
         'filter': {
             'folio':     folio,
             'fecha_rec': fecha_rec,
             'producto':  producto_id,
         },
-        'productos': productos,
+        'productos':      productos,
+        'mensaje_exito':  mensaje_exito,
+        'mensaje_error':  mensaje_error,
     })
 
 # EDITAR
@@ -447,23 +456,21 @@ def editar_entrada(request, pk):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'GET':
-        # Si no es AJAX, redirigimos a la lista
         if not is_ajax:
             return redirect('inventario:lista_entradas')
-
-        # Formulario precargado y líneas para mostrar
         form_entrada = EntradaForm(instance=entrada)
         lineas = entrada.lineas.select_related('producto').all()
+        return render(
+            request,
+            'inventario/modales/modal_editar_entrada.html',
+            {
+                'form_entrada': form_entrada,
+                'entrada':      entrada,
+                'lineas':       lineas,
+            }
+        )
 
-        return render(request,
-                        'inventario/modales/modal_editar_entrada.html',
-                        {
-                            'form_entrada': form_entrada,
-                            'entrada': entrada,
-                            'lineas': lineas,
-                        })
-
-    # POST AJAX: sólo actualizamos folio y fecha
+    # POST AJAX: actualizar sólo folio y fecha
     form_entrada = EntradaForm(request.POST, instance=entrada)
     if form_entrada.is_valid():
         form_entrada.save()
@@ -480,13 +487,13 @@ def editar_entrada(request, pk):
             'redirect_url': reverse('inventario:lista_entradas')
         })
 
-    # Si hay errores de validación, devolvemos el fragmento con errores
+    # Errores de validación: devolver fragmento con errores
     html_form = render_to_string(
         'inventario/modales/fragmento_form_editar_entrada.html',
         {
             'form_entrada': form_entrada,
-            'entrada': entrada,
-            'lineas': entrada.lineas.select_related('producto').all(),
+            'entrada':      entrada,
+            'lineas':       entrada.lineas.select_related('producto').all(),
         },
         request=request
     )
