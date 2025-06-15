@@ -20,7 +20,7 @@ $(function() {
         $('#modalCrearProducto').trigger('submitSuccess', resp);
       } else {
         // Sólo recargamos el cuerpo para no perder el footer
-        $('#modalCrearProducto .modal-body').html(resp.html_form);
+        $('#modalCrearProducto #modal-body-content').html(resp.html_form);
       }
     }).fail(() => alert('Error al crear producto. Intenta de nuevo.'));
   });
