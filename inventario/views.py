@@ -333,13 +333,13 @@ def crear_producto(request):
 # ENTRADAS
 
 # REGISTRAR
-login_required
+@login_required
 @supervisor_required
 def registrar_entrada(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     if request.method == 'GET':
         if not is_ajax:
-            return redirect('inventario:lista_productos')
+            return redirect('inventario:lista_entradas')
         form_entrada   = EntradaForm()
         formset_lineas = EntradaLineaFormSet()
         todos_productos = Producto.objects.filter(estado=True).order_by(
@@ -357,24 +357,40 @@ def registrar_entrada(request):
                 'todos_productos': todos_productos
             }
         )
+
+    # POST
     form_entrada   = EntradaForm(request.POST)
     formset_lineas = EntradaLineaFormSet(request.POST)
     if form_entrada.is_valid() and formset_lineas.is_valid():
+        # 1) Guardar la cabecera de la entrada
         entrada = form_entrada.save()
+
+        # 2) Registrar log de creación de entrada
+        _registrar_log(
+            request,
+            tabla         = "entrada",
+            id_registro   = entrada.id,
+            nombre_modulo = "Inventario",
+            nombre_accion = "Crear"
+        )
+        request.session['entrada_success'] = 'Entrada registrada correctamente.'
+
+        # 3) Guardar cada línea
         for form_linea in formset_lineas:
             if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
-                producto = form_linea.cleaned_data['producto']
-                cantidad = form_linea.cleaned_data['cantidad']
                 EntradaLinea.objects.create(
                     entrada=entrada,
-                    producto=producto,
-                    cantidad=cantidad
+                    producto=form_linea.cleaned_data['producto'],
+                    cantidad=form_linea.cleaned_data['cantidad']
                 )
+
         return JsonResponse({
             'success':      True,
             'redirect_url': reverse('inventario:lista_productos')
             #'redirect_url': reverse('inventario:lista_entradas')
         })
+
+    # Si hay errores, recargar sólo el fragmento
     html_form = render_to_string(
         'inventario/modales/fragmento_form_entrada.html',
         {
