@@ -33,7 +33,7 @@ class Producto(models.Model):
         return f"{self.tipo.nombre} – {self.nombre}"
 
 class Entrada(models.Model):
-    folio         = models.CharField(max_length=30, blank=True)
+    folio         = models.CharField(max_length=30, blank=True, null=True)
     fecha_recepcion  = models.DateField()
     fecha_entrada = models.DateField(auto_now_add=True)
 

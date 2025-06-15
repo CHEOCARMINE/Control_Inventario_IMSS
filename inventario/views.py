@@ -261,38 +261,40 @@ def editar_producto(request, pk):
         if form.is_valid():
             form.save()
             _registrar_log(
-                request,
-                tabla         = "producto",
-                id_registro   = prod.id,
-                nombre_modulo = "Inventario",
-                nombre_accion = "Editar"
+                request, tabla="producto", id_registro=prod.id,
+                nombre_modulo="Inventario", nombre_accion="Editar"
             )
             request.session['producto_success'] = 'Producto actualizado correctamente.'
             return JsonResponse({
-                'success':      True,
+                'success': True,
                 'redirect_url': reverse('inventario:lista_productos')
             })
         else:
-            html = render_to_string(
-                'inventario/modales/fragmento_form_producto.html',
-                {'form': form},
-                request=request
-            )
-            return JsonResponse({'success': False, 'html_form': html})
-    else:
-        form = ProductoForm(instance=prod)
-        return render(
-            request,
-            'inventario/modales/modal_editar_producto.html',
-            {'form': form, 'producto': prod}
-        )
+            # reenviamos el fragmento con errores + la lista para el datalist
+            return JsonResponse({
+                'success': False,
+                'html_form': render_to_string(
+                    'inventario/modales/fragmento_form_producto.html',
+                    {'form': form, 'marcas_existentes': form.marcas_list},
+                    request=request
+                )
+            })
+
+    # GET: abrimos modal con formulario precargado + lista de marcas
+    form = ProductoForm(instance=prod)
+    return render(request,
+                    'inventario/modales/modal_editar_producto.html',
+                    {
+                    'form': form,
+                    'producto': prod,
+                    'marcas_existentes': form.marcas_list,
+                    })
 
 # CREAR
-@login_required
-@supervisor_required
 def crear_producto(request):
     if request.method == "POST":
         form = ProductoForm(request.POST, crear=True)
+        marcas = form.marcas_list 
         if form.is_valid():
             producto = form.save(commit=False)
             producto.estado = True
@@ -317,17 +319,22 @@ def crear_producto(request):
         else:
             html = render_to_string(
                 "inventario/modales/fragmento_form_producto.html",
-                {"form": form},
+                {
+                    "form": form,
+                    "marcas_existentes": marcas,
+                },
                 request=request
             )
             return JsonResponse({"success": False, "html_form": html})
-    else:
-        form = ProductoForm(crear=True)
-        return render(
-            request,
-            "inventario/modales/modal_crear_producto.html",
-            {"form": form}
-        )
+    form = ProductoForm(crear=True)
+    return render(
+        request,
+        "inventario/modales/modal_crear_producto.html",
+        {
+            "form": form,
+            "marcas_existentes": form.marcas_list,
+        }
+    )
 # FINDE INVENTARIO
 
 # ENTRADAS

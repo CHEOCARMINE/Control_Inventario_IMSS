@@ -60,46 +60,23 @@ class TipoForm(forms.ModelForm):
 
 # FORMULARIO PARA CREAR / EDITAR UN PRODUCTO
 class ProductoForm(forms.ModelForm):
-    def __init__(self, *args, crear=False, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields['tipo'].queryset = Tipo.objects.filter(
-            estado=True
-        ).order_by('nombre')
-        self.fields['marca'].queryset = Marca.objects.all().order_by('nombre')
-
-        for nombre_campo, field in self.fields.items():
-            field.widget.attrs.update({'class': 'form-control'})
-
-        if crear:
-            self.fields['estado'].initial = True
-            self.fields['estado'].widget = forms.HiddenInput()
-            self.fields['stock'].widget = forms.HiddenInput()
-        else:
-            self.fields['stock'].widget = forms.HiddenInput()
-
-            if self.instance and self.instance.pk and self.instance.stock == 0:
-                self.fields['estado'].widget = forms.Select(
-                    choices=[(True, 'Activo'), (False, 'Inactivo')],
-                    attrs={'class': 'form-control'}
-                )
-            else:
-                self.fields['estado'].widget = forms.HiddenInput()
+    # Convertimos el FK marca en un CharField con datalist
+    marca = forms.CharField(
+        label="Marca",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'list': 'marcas-datalist',
+            'placeholder': 'Escribe o selecciona una marca…',
+            'required': 'required',
+        })
+    )
 
     class Meta:
         model = Producto
         fields = [
-            'tipo',
-            'nombre',
-            'modelo',
-            'marca',
-            'color',
-            'numero_serie',
-            'descripcion',
-            'nota',
-            'costo_unitario',
-            'estado',
-            'stock',
+            'tipo', 'nombre', 'modelo', 'marca',
+            'color', 'numero_serie', 'descripcion',
+            'nota', 'costo_unitario', 'estado', 'stock',
         ]
         labels = {
             'tipo':           'Tipo',
@@ -115,14 +92,71 @@ class ProductoForm(forms.ModelForm):
             'stock':          'Stock',
         }
         widgets = {
-            'descripcion':    forms.Textarea(attrs={'rows': 3}),
-            'nota':           forms.Textarea(attrs={'rows': 2}),
-            'costo_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+            'tipo':           forms.Select(attrs={'class': 'form-control'}),
+            'nombre':         forms.TextInput(attrs={'class': 'form-control'}),
+            'modelo':         forms.TextInput(attrs={'class': 'form-control'}),
+            'color':          forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_serie':   forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion':    forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'nota':           forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'costo_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'estado':         forms.HiddenInput(),
+            'stock':          forms.HiddenInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        # 1) Extraemos el flag 'crear' para no pasarlo al padre
+        crear = kwargs.pop('crear', False)
+
+        # 2) Ajustamos initial para precargar marca si editamos
+        initial = kwargs.pop('initial', {}) or {}
+        instance = kwargs.get('instance', None)
+        if instance and instance.pk and instance.marca:
+            initial['marca'] = instance.marca.nombre
+        kwargs['initial'] = initial
+
+        # 3) Llamamos al init de ModelForm
+        super().__init__(*args, **kwargs)
+
+        # 4) Preparamos la lista de nombres para el datalist
+        marcas = Marca.objects.order_by('nombre').values_list('nombre', flat=True)
+        self.marcas_list = list(marcas)
+
+        # 5) Ajustes de campos restantes
+        self.fields['tipo'].queryset = Tipo.objects.filter(estado=True).order_by('nombre')
+        for fname, field in self.fields.items():
+            if fname != 'marca':
+                field.widget.attrs.update({'class': 'form-control'})
+
+        # 6) Control de ocultar/mostrar stock y estado
+        if crear:
+            self.fields['estado'].initial = True
+            self.fields['estado'].widget = forms.HiddenInput()
+            self.fields['stock'].widget  = forms.HiddenInput()
+        else:
+            self.fields['stock'].widget = forms.HiddenInput()
+            if instance and instance.pk and instance.stock == 0:
+                self.fields['estado'].widget = forms.Select(
+                    choices=[(True, 'Activo'), (False, 'Inactivo')],
+                    attrs={'class': 'form-control'}
+                )
+            else:
+                self.fields['estado'].widget = forms.HiddenInput()
+
+    def clean_marca(self):
+        texto = self.cleaned_data['marca'].strip()
+        if not texto:
+            raise forms.ValidationError("La marca es obligatoria.")
+        # Buscamos case-insensitive o creamos
+        marca_obj, _ = Marca.objects.get_or_create(
+            nombre__iexact=texto,
+            defaults={'nombre': texto}
+        )
+        return marca_obj
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre', '').strip()
-        tipo = self.cleaned_data.get('tipo')
+        tipo   = self.cleaned_data.get('tipo')
         if not nombre:
             raise forms.ValidationError("El nombre es obligatorio.")
         if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ]+$', nombre):
@@ -172,11 +206,9 @@ class EntradaForm(forms.ModelForm):
 
     def clean_folio(self):
         folio = (self.cleaned_data.get('folio') or '').strip()
-        # Si está vacío, lo permitimos (se mostrará "Pendiente" luego)
         if not folio:
-            return ''
+            return None
 
-        # Validación: 4 letras mayúsculas / 3 letras mayúsculas / 4 dígitos / año actual
         año_actual = date.today().year
         pattern = rf'^[A-Z]{{4}}/[A-Z]{{3}}/[0-9]{{4}}/{año_actual}$'
         if not re.match(pattern, folio):
@@ -185,7 +217,6 @@ class EntradaForm(forms.ModelForm):
                 "con letras mayúsculas y dígitos según corresponda."
             )
 
-        # Validación de unicidad (excluyendo el registro actual al editar)
         qs = Entrada.objects.filter(folio=folio)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
