@@ -4,13 +4,13 @@
         <span aria-hidden="true">&times;</span>
     </button>
 </div>
+
 <div class="modal-body">
     <form id="form-editar-producto"
             method="post"
             action="{% url 'inventario:editar_producto' producto.id %}">
         {% csrf_token %}
         <div id="producto-form-fields">
-        {{ marcas_existentes|json_script:"marcas-data" }}
         {% include 'inventario/modales/fragmento_form_producto.html' %}
         {% for hidden in form.hidden_fields %}
             {{ hidden }}

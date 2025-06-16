@@ -1,17 +1,16 @@
-// inventario/static/inventario/js/formulario_entradas.js
 $(function() {
   const $modal = $('#modalRegistrarEntrada');
 
-  // 1) Al abrir el modal, asegurarnos de que la plantilla oculta NO muestre botones
+  // Al abrir el modal, asegurarnos de que la plantilla oculta NO muestre botones
   $modal.on('show.bs.modal', () => {
     const $tpl = $('#template-row');
     $tpl.find('.btn-nuevo-producto, .btn-eliminar-fila').hide();
   });
 
-  // 2) Renombrar texto del botón principal
+  // Renombrar texto del botón principal
   $('#btn-agregar-fila').text('+ Agregar fila');
 
-  // 3) Capturar submit del formulario de Crear Producto
+  // Capturar submit del formulario de Crear Producto
   $(document).on('submit', '#modalCrearProducto form', function(e) {
     e.preventDefault();
     const $form = $(this);
@@ -25,7 +24,7 @@ $(function() {
     }).fail(() => alert('Error al crear producto. Intenta de nuevo.'));
   });
 
-  // 4) AJAX submit de la Entrada
+  // AJAX submit de la Entrada
   function bindFormEntrada() {
     $(document).on('submit', '#form-entrada', function(e) {
       e.preventDefault();
@@ -42,7 +41,7 @@ $(function() {
     });
   }
 
-  // 5) Agregar / eliminar filas
+  // Agregar / eliminar filas
   function bindBtnsLinea() {
     // + Agregar fila
     $(document).on('click', '#btn-agregar-fila', function(e) {
@@ -94,7 +93,7 @@ $(function() {
     });
   }
 
-  // 6) Al cambiar de producto, rellenar celdas y ocultar botón “+ Nuevo Producto”
+  // Al cambiar de producto, rellenar celdas y ocultar botón “+ Nuevo Producto”
   function bindListenerCambioProducto() {
     $(document).on('change', '.select-producto-auto', function() {
       const $sel = $(this);
@@ -116,7 +115,7 @@ $(function() {
     });
   }
 
-  // 7) “+ Nuevo Producto” por fila
+  // “+ Nuevo Producto” por fila
   function bindNuevoProductoFila() {
     $(document).on('click', '.btn-nuevo-producto', function(e) {
       e.preventDefault();
@@ -140,7 +139,7 @@ $(function() {
     });
   }
 
-  // 8) “+ Nuevo Producto” global
+  // “+ Nuevo Producto” global
   function bindNuevoProductoGeneral() {
     $(document).on('click', '#btn-nuevo-producto-general', function(e) {
       e.preventDefault();
@@ -166,7 +165,7 @@ $(function() {
     });
   }
 
-  // 9) Inicializar todos los bindings
+  // Inicializar todos los bindings
   function bindAll() {
     bindFormEntrada();
     bindBtnsLinea();
@@ -176,4 +175,16 @@ $(function() {
   }
 
   bindAll();
+});
+
+// Inicializar Select2 para el campo “Marca” al mostrar el modal Crear Producto
+$('body').on('shown.bs.modal', '#modalCrearProducto', function() {
+  $(this).find('.select2-tags').select2({
+    theme: 'bootstrap4',
+    tags: true,
+    placeholder: 'Escribe o selecciona una marca…',
+    width: '100%',
+    dropdownParent: $(this),
+    minimumResultsForSearch: 0
+  });
 });

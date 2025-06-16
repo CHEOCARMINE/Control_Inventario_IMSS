@@ -60,16 +60,7 @@ class TipoForm(forms.ModelForm):
 
 # FORMULARIO PARA CREAR / EDITAR UN PRODUCTO
 class ProductoForm(forms.ModelForm):
-    # Convertimos el FK marca en un CharField con datalist
-    marca = forms.CharField(
-        label="Marca",
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'list': 'marcas-datalist',
-            'placeholder': 'Escribe o selecciona una marca…',
-            'required': 'required',
-        })
-    )
+    marca = forms.CharField(label="Marca")
 
     class Meta:
         model = Producto
@@ -105,30 +96,38 @@ class ProductoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # 1) Extraemos el flag 'crear' para no pasarlo al padre
+        # Extraemos el flag 'crear'
         crear = kwargs.pop('crear', False)
 
-        # 2) Ajustamos initial para precargar marca si editamos
+        # Ajustamos initial para precargar marca al editar
         initial = kwargs.pop('initial', {}) or {}
-        instance = kwargs.get('instance', None)
+        instance = kwargs.get('instance')
         if instance and instance.pk and instance.marca:
             initial['marca'] = instance.marca.nombre
         kwargs['initial'] = initial
 
-        # 3) Llamamos al init de ModelForm
         super().__init__(*args, **kwargs)
 
-        # 4) Preparamos la lista de nombres para el datalist
-        marcas = Marca.objects.order_by('nombre').values_list('nombre', flat=True)
+        # Construimos la lista de nombres de Marca
+        marcas = Marca.objects.order_by('nombre')\
+            .values_list('nombre', flat=True)
         self.marcas_list = list(marcas)
 
-        # 5) Ajustes de campos restantes
-        self.fields['tipo'].queryset = Tipo.objects.filter(estado=True).order_by('nombre')
-        for fname, field in self.fields.items():
-            if fname != 'marca':
-                field.widget.attrs.update({'class': 'form-control'})
+        # Reemplazamos el widget de 'marca' por un <select>
+        choices = [('', '---------')] + [(m, m) for m in self.marcas_list]
+        self.fields['marca'].widget = forms.Select(
+            choices=choices,
+            attrs={'class': 'form-control select2-tags'}
+        )
 
-        # 6) Control de ocultar/mostrar stock y estado
+        # Ajustes de campos restantes
+        self.fields['tipo'].queryset = Tipo.objects.filter(estado=True)\
+            .order_by('nombre')
+        for fname, fld in self.fields.items():
+            if fname not in ('tipo', 'marca'):
+                fld.widget.attrs.update({'class': 'form-control'})
+
+        # Control de ocultar/mostrar stock y estado
         if crear:
             self.fields['estado'].initial = True
             self.fields['estado'].widget = forms.HiddenInput()

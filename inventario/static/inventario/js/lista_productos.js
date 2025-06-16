@@ -43,13 +43,13 @@ $(function() {
   }
 });
 
-// Al mostrar cualquier modal de productos, inicializamos Select2
-$('body').on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
-  // tag: permitimos crear nuevas opciones
+$('body').on('shown.bs.modal', '#modalEditarProducto', function() {
   $('.select2-tags').select2({
+    theme: 'bootstrap4', 
     tags: true,
     placeholder: 'Escribe o selecciona una marca…',
     width: '100%',
-    dropdownParent: $(this) // importante para que el dropdown quede dentro del modal
+    dropdownParent: $(this),
+    minimumResultsForSearch: 0
   });
 });
