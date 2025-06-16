@@ -1,1 +1,1 @@
-web: gunicorn inventario_imss.wsgi --log-file -
+web: gunicorn Control_Inventario_IMSS.wsgi --log-file -
