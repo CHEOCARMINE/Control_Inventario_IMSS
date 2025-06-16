@@ -28,14 +28,20 @@
         {% endif %}
         </div>
 
-    <div class="col-md-6 mb-3">
+        <div class="col-md-6 mb-3">
         <label for="{{ form.marca.id_for_label }}">Marca</label>
-        {{ form.marca }}
-        <datalist id="marcas-datalist">
+        <select name="marca"
+                id="{{ form.marca.id_for_label }}"
+                class="form-control select2-tags"
+                required>
+            <option value="">---------</option>
             {% for nombre in marcas_existentes %}
-            <option value="{{ nombre }}"></option>
+            <option value="{{ nombre }}"
+                {% if form.marca.value == nombre %}selected{% endif %}>
+                {{ nombre }}
+            </option>
             {% endfor %}
-        </datalist>
+        </select>
         {% for err in form.marca.errors %}
             <div class="text-danger small">{{ err }}</div>
         {% endfor %}

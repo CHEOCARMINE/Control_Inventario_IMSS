@@ -14,6 +14,7 @@
             action="{% url 'inventario:crear_producto' %}">
         {% csrf_token %}
         <div id="producto-form-fields">
+            {{ marcas_existentes|json_script:"marcas-data" }}
             {% include 'inventario/modales/fragmento_form_producto.html' %}
             {% for hidden in form.hidden_fields %}
                 {{ hidden }}

@@ -22,7 +22,6 @@ $(function() {
     });
   });
 
-
   const baseUrl = window.location.pathname;
   let typingTimer;
   const doneTypingInterval = 600; 
@@ -42,4 +41,15 @@ $(function() {
       window.location.href = baseUrl;
     };
   }
+});
+
+// Al mostrar cualquier modal de productos, inicializamos Select2
+$('body').on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
+  // tag: permitimos crear nuevas opciones
+  $('.select2-tags').select2({
+    tags: true,
+    placeholder: 'Escribe o selecciona una marca…',
+    width: '100%',
+    dropdownParent: $(this) // importante para que el dropdown quede dentro del modal
+  });
 });

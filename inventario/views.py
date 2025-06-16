@@ -261,8 +261,11 @@ def editar_producto(request, pk):
         if form.is_valid():
             form.save()
             _registrar_log(
-                request, tabla="producto", id_registro=prod.id,
-                nombre_modulo="Inventario", nombre_accion="Editar"
+                request, 
+                tabla = "producto", 
+                id_registro = prod.id,
+                nombre_modulo = "Inventario", 
+                nombre_accion = "Editar"
             )
             request.session['producto_success'] = 'Producto actualizado correctamente.'
             return JsonResponse({
@@ -302,8 +305,8 @@ def crear_producto(request):
             producto.save()
             _registrar_log(
                 request,
-                tabla         = "producto",
-                id_registro   = producto.id,
+                tabla = "producto",
+                id_registro = producto.id,
                 nombre_modulo = "Inventario",
                 nombre_accion = "Crear"
             )

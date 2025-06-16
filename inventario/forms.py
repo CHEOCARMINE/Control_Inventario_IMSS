@@ -147,7 +147,10 @@ class ProductoForm(forms.ModelForm):
         texto = self.cleaned_data['marca'].strip()
         if not texto:
             raise forms.ValidationError("La marca es obligatoria.")
-        # Buscamos case-insensitive o creamos
+        # Validar solo letras y números
+        if not re.match(r'^[A-Za-z0-9]+$', texto):
+            raise forms.ValidationError("La marca solo puede contener letras y números.")
+        # Buscamos case‐insensitive o creamos
         marca_obj, _ = Marca.objects.get_or_create(
             nombre__iexact=texto,
             defaults={'nombre': texto}
