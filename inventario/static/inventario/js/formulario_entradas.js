@@ -120,6 +120,9 @@ $(function() {
 
   // “+ Nuevo Producto” por fila
   function bindNuevoProductoFila() {
+    // Primero removemos cualquier binding anterior
+    $(document).off('click', '.btn-nuevo-producto');
+    // Luego ligamos una sola vez
     $(document).on('click', '.btn-nuevo-producto', function(e) {
       e.preventDefault();
       const $row = $(this).closest('tr.linea-form');
@@ -127,7 +130,6 @@ $(function() {
         $('#modalCrearProducto .modal-content').html(html);
         $('#modalCrearProducto').modal('show')
           .one('submitSuccess', (evt, data) => {
-            // Insertar opción y dispara change
             const opt = new Option(data.producto_label, data.producto_id, true, true);
             $(opt).attr({
               'data-marca':  data.producto_marca,
@@ -144,16 +146,17 @@ $(function() {
 
   // “+ Nuevo Producto” global
   function bindNuevoProductoGeneral() {
+    // Desmontamos binding previo
+    $(document).off('click', '#btn-nuevo-producto-general');
+    // Ligamos sólo una vez
     $(document).on('click', '#btn-nuevo-producto-general', function(e) {
       e.preventDefault();
       $.get($(this).data('remote'), html => {
         $('#modalCrearProducto .modal-content').html(html);
         $('#modalCrearProducto').modal('show')
           .one('submitSuccess', (evt, data) => {
-            // Añade fila vacía
             $('#btn-agregar-fila').click();
             const $last = $('#tabla-entradas tbody tr.linea-form:visible').last();
-            // Preseleccionar y dispara change
             const opt = new Option(data.producto_label, data.producto_id, true, true);
             $(opt).attr({
               'data-marca':  data.producto_marca,
