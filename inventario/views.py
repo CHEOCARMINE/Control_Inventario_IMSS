@@ -396,8 +396,7 @@ def registrar_entrada(request):
 
         return JsonResponse({
             'success':      True,
-            'redirect_url': reverse('inventario:lista_productos')
-            #'redirect_url': reverse('inventario:lista_entradas')
+            'redirect_url': reverse('inventario:lista_entradas')
         })
 
     # Si hay errores, recarga sólo el fragmento

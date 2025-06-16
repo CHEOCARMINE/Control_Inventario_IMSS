@@ -9,12 +9,6 @@
     <!-- Encabezado + Botón Registrar Entrada -->
     <div class="d-flex align-items-center mb-3">
         <h2 class="mr-auto">Inventario</h2>
-        <button class="btn btn-success"
-                data-bs-toggle="modal"
-                data-bs-target="#modalRegistrarEntrada"
-                data-remote="{% url 'inventario:registrar_entrada' %}">
-        <i class="fas fa-plus"></i> Registrar Entrada
-        </button>
     </div>
 
     <!-- Mensajes de Sesión -->
@@ -200,21 +194,7 @@
 
     <!-- MODALES (contenedores vacíos; se cargan por AJAX) -->
 
-    <!-- Modal Registrar Entrada -->
-    <div class="modal fade" id="modalRegistrarEntrada" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content"><!-- AJAX carga aquí: modal_registrar_entrada.html --></div>
-    </div>
-    </div>
-
-    <!-- Modal Crear Producto -->
-    <div class="modal fade" id="modalCrearProducto" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-        <div class="modal-content"><!-- Aquí inyectamos modal_crear_producto.html vía AJAX --></div>
-    </div>
-    </div>
-
-    <!-- Modal Editar Producto al vuelo -->
+    <!-- Modal Editar Producto -->
     <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content"><!-- Aquí inyectamos modal_editar_producto.html vía AJAX --></div>

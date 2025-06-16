@@ -11,8 +11,11 @@ $(function() {
   $('#btn-agregar-fila').text('+ Agregar fila');
 
   // Capturar submit del formulario de Crear Producto
-  $(document).on('submit', '#modalCrearProducto form', function(e) {
+  $(document)
+  .off('submit', '#modalCrearProducto form')
+  .on('submit', '#modalCrearProducto form', function(e) {
     e.preventDefault();
+    console.log('submitProducto handler ejecutado');
     const $form = $(this);
     $.post($form.attr('action'), $form.serialize(), resp => {
       if (resp.success) {
