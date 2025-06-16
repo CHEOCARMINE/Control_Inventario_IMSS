@@ -58,6 +58,7 @@ AUTH_USER_MODEL = 'login_app.Usuario'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'Inventario_IMSS.session_timeout.SessionIdleTimeout',
     'django.middleware.common.CommonMiddleware',
