@@ -418,7 +418,7 @@ def registrar_entrada(request):
 
 # LISTA
 @login_required
-@almacen_required  
+@supervisor_required 
 def lista_entradas(request):
     folio       = request.GET.get('folio', '').strip()
     fecha_rec   = request.GET.get('fecha_rec', '').strip()
@@ -459,7 +459,7 @@ def lista_entradas(request):
 
 # EDITAR
 @login_required
-@almacen_required
+@supervisor_required
 def editar_entrada(request, pk):
     entrada = get_object_or_404(Entrada, pk=pk)
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
