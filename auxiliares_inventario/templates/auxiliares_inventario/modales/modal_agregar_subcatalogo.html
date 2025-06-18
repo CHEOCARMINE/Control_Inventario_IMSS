@@ -14,33 +14,3 @@
     </div>
   </form>
 </div>
-<script>
-function bindFormSubcatalogo() {
-  $('#form-subcatalogo')
-    .off('submit')
-    .on('submit', function(e) {
-      e.preventDefault();
-      const form = $(this);
-      $.ajax({
-        type: 'POST',
-        url: form.attr('action'),
-        data: form.serialize(),
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        success(res) {
-          if (res.success) {
-            $('#modal').modal('hide');
-            window.location = res.redirect_url;
-          } else {
-            // Reemplazo TOTAL del modal, no solo los campos
-            $('#modal .modal-content').html(res.html_form);
-          }
-        },
-        error() {
-          alert('Error de red. Intenta de nuevo.');
-        }
-      });
-    });
-}
-bindFormSubcatalogo();
-</script>
-
