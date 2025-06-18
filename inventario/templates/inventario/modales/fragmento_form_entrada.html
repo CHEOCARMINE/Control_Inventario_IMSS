@@ -50,10 +50,10 @@
         {# Botón al vuelo: oculto en la plantilla #}
         <button
           type="button"
-          class="btn btn-sm btn-outline-secondary btn-nuevo-producto"
+          class="btn btn-sm btn-outline-info btn-nuevo-producto btn-block"
           data-remote="{% url 'inventario:crear_producto' %}"
           style="display:none; margin-top: .25rem;">
-          + Nuevo Producto
+          + Crear Producto
         </button>
       </td>
       <td class="marca-cell"></td>
@@ -123,10 +123,10 @@
             </select>
             <button
               type="button"
-              class="btn btn-sm btn-outline-secondary btn-nuevo-producto"
+              class="btn btn-sm btn-outline-info btn-nuevo-producto btn-block"
               data-remote="{% url 'inventario:crear_producto' %}"
               style="margin-top: .25rem;">
-              + Nuevo Producto
+              + Crear Producto
             </button>
           </td>
           <!-- Columnas de datos -->
@@ -180,7 +180,7 @@
   <button
     type="button"
     id="btn-agregar-fila"
-    class="btn btn-sm btn-outline-primary">
+    class="btn btn-outline-primary">
     + Agregar fila
   </button>
 </div>
