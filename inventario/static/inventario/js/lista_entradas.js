@@ -42,3 +42,16 @@ $(function() {
         };
     }
 });
+
+$(function() {
+    // Cuando cambie la categoría, limpiamos subcategoria y tipo
+    $('#id_categoria').on('change', function() {
+        $('#id_subcategoria').val('');
+        $('#id_tipo').val('');
+    });
+
+    // Cuando cambie la subcategoría, limpiamos tipo
+    $('#id_subcategoria').on('change', function() {
+        $('#id_tipo').val('');
+    });
+});

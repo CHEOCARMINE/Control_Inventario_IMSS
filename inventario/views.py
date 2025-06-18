@@ -423,6 +423,9 @@ def lista_entradas(request):
     folio       = request.GET.get('folio', '').strip()
     fecha_rec   = request.GET.get('fecha_rec', '').strip()
     producto_id = request.GET.get('producto', '').strip()
+    categoria_id     = request.GET.get('categoria', '').strip()
+    subcategoria_id  = request.GET.get('subcategoria', '').strip()
+    tipo_id          = request.GET.get('tipo', '').strip()
 
     # Pre–cargamos las entradas con sus líneas y productos
     qs = Entrada.objects.prefetch_related('lineas__producto')
@@ -434,9 +437,37 @@ def lista_entradas(request):
         qs = qs.filter(fecha_recepcion=fecha_rec)
     if producto_id.isdigit():
         qs = qs.filter(lineas__producto_id=int(producto_id))
+    if categoria_id.isdigit():
+        qs = qs.filter(lineas__producto__tipo__Subcatalogo__catalogo_id=int(categoria_id))
+    if subcategoria_id.isdigit():
+        qs = qs.filter(lineas__producto__tipo__Subcatalogo_id=int(subcategoria_id))
+    if tipo_id.isdigit():
+        qs = qs.filter(lineas__producto__tipo_id=int(tipo_id))
 
     # Ordenar y quitar duplicados por join
     qs = qs.order_by('-fecha_recepcion').distinct()
+
+    # Para poblar los selects dependientes
+    catalogos = Catalogo.objects.filter(estado=True).order_by('nombre')
+    if categoria_id.isdigit():
+        subcatalogos = Subcatalogo.objects.filter(
+            catalogo_id=int(categoria_id), estado=True
+        ).order_by('nombre')
+    else:
+        subcatalogos = Subcatalogo.objects.filter(estado=True).order_by('nombre')
+
+    tipos_qs = Tipo.objects.filter(estado=True).select_related(
+        'Subcatalogo__catalogo'
+    )
+    if subcategoria_id.isdigit():
+        tipos_qs = tipos_qs.filter(Subcatalogo_id=int(subcategoria_id))
+    elif categoria_id.isdigit():
+        tipos_qs = tipos_qs.filter(Subcatalogo__catalogo_id=int(categoria_id))
+    tipos = tipos_qs.order_by(
+        'Subcatalogo__catalogo__nombre',
+        'Subcatalogo__nombre',
+        'nombre'
+    )
 
     page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
     productos = Producto.objects.filter(estado=True).order_by('nombre')
@@ -446,15 +477,21 @@ def lista_entradas(request):
     mensaje_error = request.session.pop('entrada_error', None)
 
     return render(request, 'inventario/entradas.html', {
-        'page_obj':      page_obj,
+        'page_obj':         page_obj,
         'filter': {
-            'folio':     folio,
-            'fecha_rec': fecha_rec,
-            'producto':  producto_id,
+            'folio':        folio,
+            'fecha_rec':    fecha_rec,
+            'producto':     producto_id,
+            'categoria':    categoria_id,
+            'subcategoria': subcategoria_id,
+            'tipo':         tipo_id,
         },
-        'productos':      productos,
-        'mensaje_exito':  mensaje_exito,
-        'mensaje_error':  mensaje_error,
+        'productos':     productos,
+        'catalogos':     catalogos,
+        'subcatalogos':  subcatalogos,
+        'tipos':         tipos,
+        'mensaje_exito': mensaje_exito,
+        'mensaje_error': mensaje_error,
     })
 
 # EDITAR

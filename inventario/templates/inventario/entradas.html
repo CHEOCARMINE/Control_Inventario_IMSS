@@ -59,6 +59,42 @@
                 {% endfor %}
                 </select>
             </div>
+            <div class="col-md-3 mb-2">
+                <select name="categoria" id="id_categoria"
+                        class="form-control auto-submit">
+                <option value="">-- Categoría --</option>
+                {% for c in catalogos %}
+                <option value="{{ c.id }}"
+                    {% if filter.categoria == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.nombre }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="subcategoria" id="id_subcategoria"
+                        class="form-control auto-submit">
+                <option value="">-- Subcategoría --</option>
+                {% for s in subcatalogos %}
+                <option value="{{ s.id }}"
+                    {% if filter.subcategoria == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.nombre }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="tipo" id="id_tipo"
+                        class="form-control auto-submit">
+                <option value="">-- Tipo --</option>
+                {% for t in tipos %}
+                <option value="{{ t.id }}"
+                    {% if filter.tipo == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t.nombre }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
             <div class="col-md-1 mb-2">
                 <button type="button"
                         class="btn btn-outline-secondary btn-block"
