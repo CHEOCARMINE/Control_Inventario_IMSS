@@ -28,35 +28,3 @@
         </div>
     </form>
 </div>
-
-<script>
-$(function() {
-    $('#form-producto').off('submit').on('submit', function(e) {
-        e.preventDefault();
-        const form = $(this);
-        $.ajax({
-            type: 'POST',
-            url: form.attr('action'),
-            data: form.serialize(),
-            success: function(response) {
-                if (response.success) {
-                    $('#modalCrearProducto').modal('hide');
-                    $(document).trigger('submitSuccess', {
-                        producto_id:     response.producto_id,
-                        producto_label:  response.producto_label,
-                        producto_marca:  response.producto_marca,
-                        producto_color:  response.producto_color,
-                        producto_modelo: response.producto_modelo,
-                        producto_serie:  response.producto_serie
-                    });
-                } else {
-                    $('#producto-form-fields').html(response.html_form);
-                }
-            },
-            error: function() {
-                alert('Error de red al crear producto. Intenta de nuevo.');
-            }
-        });
-    });
-});
-</script>

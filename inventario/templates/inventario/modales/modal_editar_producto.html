@@ -21,28 +21,3 @@
         </div>
     </form>
 </div>
-
-<script>
-$(function() {
-    $('#form-editar-producto').off('submit').on('submit', function(e) {
-        e.preventDefault();
-        const form = $(this);
-        $.ajax({
-            type: 'POST',
-            url: form.attr('action'),
-            data: form.serialize(),
-            success: function(response) {
-                if (response.success) {
-                    $('#modalEditarProducto').modal('hide');
-                    window.location = response.redirect_url;
-                } else {
-                    $('#producto-form-fields').html(response.html_form);
-                }
-            },
-            error: function() {
-                alert('Error de red al editar producto. Intenta de nuevo.');
-            }
-        });
-    });
-});
-</script>

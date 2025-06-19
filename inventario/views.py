@@ -261,11 +261,11 @@ def editar_producto(request, pk):
         if form.is_valid():
             form.save()
             _registrar_log(
-                request, 
-                tabla = "producto", 
-                id_registro = prod.id,
-                nombre_modulo = "Inventario", 
-                nombre_accion = "Editar"
+                request,
+                tabla="producto",
+                id_registro=prod.id,
+                nombre_modulo="Inventario",
+                nombre_accion="Editar"
             )
             request.session['producto_success'] = 'Producto actualizado correctamente.'
             return JsonResponse({
@@ -273,69 +273,76 @@ def editar_producto(request, pk):
                 'redirect_url': reverse('inventario:lista_productos')
             })
         else:
-            # reenviamos el fragmento con errores + la lista para el datalist
-            return JsonResponse({
-                'success': False,
-                'html_form': render_to_string(
-                    'inventario/modales/fragmento_form_producto.html',
-                    {'form': form, 'marcas_existentes': form.marcas_list},
-                    request=request
-                )
-            })
-
-    # GET: abrimos modal con formulario precargado + lista de marcas
-    form = ProductoForm(instance=prod)
-    return render(request,
-                    'inventario/modales/modal_editar_producto.html',
-                    {
+            # Renderizamos el modal completo con errores
+            html = render_to_string(
+                'inventario/modales/modal_editar_producto.html',
+                {
                     'form': form,
                     'producto': prod,
                     'marcas_existentes': form.marcas_list,
-                    })
+                },
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html})
+
+    # GET inicial: abrimos modal con formulario precargado
+    form = ProductoForm(instance=prod)
+    return render(
+        request,
+        'inventario/modales/modal_editar_producto.html',
+        {
+            'form': form,
+            'producto': prod,
+            'marcas_existentes': form.marcas_list,
+        }
+    )
 
 # CREAR
 def crear_producto(request):
     if request.method == "POST":
         form = ProductoForm(request.POST, crear=True)
-        marcas = form.marcas_list 
+        marcas = form.marcas_list
         if form.is_valid():
             producto = form.save(commit=False)
             producto.estado = True
-            producto.stock = 0
+            producto.stock  = 0
             producto.save()
             _registrar_log(
                 request,
-                tabla = "producto",
-                id_registro = producto.id,
-                nombre_modulo = "Inventario",
-                nombre_accion = "Crear"
+                tabla="producto",
+                id_registro=producto.id,
+                nombre_modulo="Inventario",
+                nombre_accion="Crear"
             )
             return JsonResponse({
-                "success":         True,
-                "producto_id":     producto.id,
-                "producto_label":  producto.nombre,
-                "producto_marca":  producto.marca.nombre,
-                "producto_color":  producto.color,
+                "success":        True,
+                "producto_id":    producto.id,
+                "producto_label": producto.nombre,
+                "producto_marca": producto.marca.nombre,
+                "producto_color": producto.color,
                 "producto_modelo": producto.modelo,
-                "producto_serie":  producto.numero_serie or ""
+                "producto_serie": producto.numero_serie or ""
             })
         else:
+            # Renderizamos el modal completo con errores
             html = render_to_string(
-                "inventario/modales/fragmento_form_producto.html",
+                'inventario/modales/modal_crear_producto.html',
                 {
-                    "form": form,
-                    "marcas_existentes": marcas,
+                    'form': form,
+                    'marcas_existentes': marcas,
                 },
                 request=request
             )
-            return JsonResponse({"success": False, "html_form": html})
+            return JsonResponse({'success': False, 'html_form': html})
+
+    # GET inicial: abrimos modal en blanco para crear
     form = ProductoForm(crear=True)
     return render(
         request,
-        "inventario/modales/modal_crear_producto.html",
+        'inventario/modales/modal_crear_producto.html',
         {
-            "form": form,
-            "marcas_existentes": form.marcas_list,
+            'form': form,
+            'marcas_existentes': form.marcas_list,
         }
     )
 # FINDE INVENTARIO

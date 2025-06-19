@@ -83,7 +83,7 @@ class ProductoForm(forms.ModelForm):
             'stock':          'Stock',
         }
         widgets = {
-            'tipo':           forms.Select(attrs={'class': 'form-control'}),
+            'tipo':           forms.Select(attrs={'class': 'form-control select2-tipo'}),
             'nombre':         forms.TextInput(attrs={'class': 'form-control'}),
             'modelo':         forms.TextInput(attrs={'class': 'form-control'}),
             'color':          forms.TextInput(attrs={'class': 'form-control'}),
@@ -147,7 +147,7 @@ class ProductoForm(forms.ModelForm):
         if not texto:
             raise forms.ValidationError("La marca es obligatoria.")
         # Validar solo letras y números
-        if not re.match(r'^[A-Za-z0-9]+$', texto):
+        if not re.match(r'^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s]+$', texto):
             raise forms.ValidationError("La marca solo puede contener letras y números.")
         # Buscamos case‐insensitive o creamos
         marca_obj, _ = Marca.objects.get_or_create(
@@ -161,7 +161,7 @@ class ProductoForm(forms.ModelForm):
         tipo   = self.cleaned_data.get('tipo')
         if not nombre:
             raise forms.ValidationError("El nombre es obligatorio.")
-        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ]+$', nombre):
+        if not re.match(r'^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s]+$', nombre):
             raise forms.ValidationError("Sólo letras, números y espacios.")
         qs = Producto.objects.filter(nombre__iexact=nombre, tipo=tipo)
         if self.instance.pk:
@@ -177,6 +177,14 @@ class ProductoForm(forms.ModelForm):
         if costo < 0:
             raise forms.ValidationError("El costo unitario no puede ser negativo.")
         return costo
+
+    def clean_color(self):
+        color = self.cleaned_data.get('color', '').strip()
+        if not color:
+            raise ValidationError("El color es obligatorio.")
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+", color):
+            raise ValidationError("El color solo debe contener letras y espacios.")
+        return color
 
 # FORMULARIO PARA LA CABECERA DE ENTRADA
 class EntradaForm(forms.ModelForm):

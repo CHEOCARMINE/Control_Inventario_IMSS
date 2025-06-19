@@ -1,31 +1,65 @@
 $(function() {
-  const $modal = $('#modalRegistrarEntrada');
+  // Función de inicialización de Select2 para Marca y Tipo
+  function initSelect2ProductoModal($modal) {
+    $modal.find('.select2-tags').select2({
+      theme: 'bootstrap4',
+      tags: true,
+      placeholder: $modal.find('.select2-tags').data('placeholder') || 'Escribe o selecciona una marca…',
+      width: '100%',
+      dropdownParent: $modal,
+      minimumResultsForSearch: 0
+    });
+    $modal.find('.select2-tipo').select2({
+      theme: 'bootstrap4',
+      placeholder: 'Selecciona un tipo…',
+      width: '100%',
+      dropdownParent: $modal,
+      minimumResultsForSearch: 0
+    });
+  }
 
-  // Al abrir el modal, asegurarnos de que la plantilla oculta NO muestre botones
-  $modal.on('show.bs.modal', () => {
-    const $tpl = $('#template-row');
-    $tpl.find('.btn-nuevo-producto, .btn-eliminar-fila').hide();
+  // Al mostrar el modal Crear/Editar Producto 
+  $('body').on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function(){
+    initSelect2ProductoModal($(this));
   });
 
-  // Renombrar texto del botón principal
-  $('#btn-agregar-fila').text('+ Agregar fila');
-
-  // Capturar submit del formulario de Crear Producto
+  // Capturar submit de Crear/Editar Producto y reinyectar con Select2 
   $(document)
-  .off('submit', '#modalCrearProducto form')
-  .on('submit', '#modalCrearProducto form', function(e) {
-    e.preventDefault();
-    console.log('submitProducto handler ejecutado');
-    const $form = $(this);
-    $.post($form.attr('action'), $form.serialize(), resp => {
-      if (resp.success) {
-        $('#modalCrearProducto').trigger('submitSuccess', resp);
-      } else {
-        // Sólo recargamos el cuerpo para no perder el footer
-        $('#modalCrearProducto #modal-body-content').html(resp.html_form);
-      }
-    }).fail(() => alert('Error al crear producto. Intenta de nuevo.'));
+    .off('submit', '#form-producto, #form-editar-producto')
+    .on('submit', '#form-producto, #form-editar-producto', function(e) {
+      e.preventDefault();
+      const $form  = $(this);
+      const $modal = $form.closest('.modal');
+
+      $.post($form.attr('action'), $form.serialize(), resp => {
+        if (resp.success) {
+          // Si es creación, disparar evento; si es edición, redirigir
+          if ($form.is('#form-producto')) {
+            $modal.trigger('submitSuccess', resp);
+          } else {
+            window.location = resp.redirect_url;
+          }
+        } else {
+          // Reemplaza TODO el modal-content
+          $modal.find('.modal-content').html(resp.html_form);
+          // Re-inicializa Select2
+          initSelect2ProductoModal($modal);
+        }
+      }).fail(() => {
+        alert('Error de red al crear/editar producto. Intenta de nuevo.');
+      });
+    });
+
+  // Lógica de Entradas 
+  const $modalEntrada = $('#modalRegistrarEntrada');
+
+  // Ocultar botones en plantilla oculta
+  $modalEntrada.on('show.bs.modal', () => {
+    $('#template-row').find('.btn-nuevo-producto, .btn-eliminar-fila').hide();
   });
+
+  // Cambia texto de "+ Agregar fila"
+  $('#btn-agregar-fila').text('+ Agregar fila');
 
   // AJAX submit de la Entrada
   function bindFormEntrada() {
@@ -34,7 +68,7 @@ $(function() {
       const $form = $(this);
       $.post($form.attr('action'), $form.serialize(), resp => {
         if (resp.success) {
-          $modal.modal('hide');
+          $modalEntrada.modal('hide');
           window.location = resp.redirect_url;
         } else {
           $('#entrada-form-fields').html(resp.html_form);
@@ -51,24 +85,16 @@ $(function() {
       e.preventDefault();
       const $total = $('#id_form-TOTAL_FORMS');
       const idx = parseInt($total.val(), 10);
-
-      // Clonar plantilla y preparar fila
-      let $row = $($('#template-row').prop('outerHTML')
-        .replace(/__INDEX__/g, idx));
-      $row
-        .removeAttr('id')
-        .addClass('linea-form')
-        .attr('data-index', idx)
-        .show()               // quitar display:none
-        .appendTo('#tabla-entradas tbody');
-
-      // Limpiar inputs y mostrar botones
+      let $row = $($('#template-row').prop('outerHTML').replace(/__INDEX__/g, idx));
+      $row.removeAttr('id')
+          .addClass('linea-form')
+          .attr('data-index', idx)
+          .show()
+          .appendTo('#tabla-entradas tbody');
       $row.find('select, input[type="number"]').val('');
       $row.find('input[type="checkbox"]').prop('checked', false).hide();
       $row.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
-      $row.find('.btn-nuevo-producto').show();    // botón al vuelo
-      $row.find('.btn-eliminar-fila').show();     // botón eliminar
-
+      $row.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
       $total.val(idx + 1);
     });
 
@@ -96,7 +122,7 @@ $(function() {
     });
   }
 
-  // Al cambiar de producto, rellenar celdas y ocultar botón “+ Nuevo Producto”
+  // Al cambiar de producto, rellenar celdas y ocultar "+ Nuevo Producto"
   function bindListenerCambioProducto() {
     $(document).on('change', '.select-producto-auto', function() {
       const $sel = $(this);
@@ -112,17 +138,13 @@ $(function() {
       $row.find('.color-cell').text(props.color);
       $row.find('.modelo-cell').text(props.modelo);
       $row.find('.serie-cell').text(props.serie);
-
-      // Ocultar el botón de creación de producto en esta fila
       $row.find('.btn-nuevo-producto').hide();
     });
   }
 
   // “+ Nuevo Producto” por fila
   function bindNuevoProductoFila() {
-    // Primero removemos cualquier binding anterior
     $(document).off('click', '.btn-nuevo-producto');
-    // Luego ligamos una sola vez
     $(document).on('click', '.btn-nuevo-producto', function(e) {
       e.preventDefault();
       const $row = $(this).closest('tr.linea-form');
@@ -146,9 +168,7 @@ $(function() {
 
   // “+ Nuevo Producto” global
   function bindNuevoProductoGeneral() {
-    // Desmontamos binding previo
     $(document).off('click', '#btn-nuevo-producto-general');
-    // Ligamos sólo una vez
     $(document).on('click', '#btn-nuevo-producto-general', function(e) {
       e.preventDefault();
       $.get($(this).data('remote'), html => {
@@ -171,7 +191,7 @@ $(function() {
     });
   }
 
-  // Inicializar todos los bindings
+  // Inicializar todos los bindings de Entradas
   function bindAll() {
     bindFormEntrada();
     bindBtnsLinea();
@@ -179,18 +199,6 @@ $(function() {
     bindNuevoProductoFila();
     bindNuevoProductoGeneral();
   }
-
   bindAll();
-});
 
-// Inicializar Select2 para el campo “Marca” al mostrar el modal Crear Producto
-$('body').on('shown.bs.modal', '#modalCrearProducto', function() {
-  $(this).find('.select2-tags').select2({
-    theme: 'bootstrap4',
-    tags: true,
-    placeholder: 'Escribe o selecciona una marca…',
-    width: '100%',
-    dropdownParent: $(this),
-    minimumResultsForSearch: 0
-  });
-});
+}); 
