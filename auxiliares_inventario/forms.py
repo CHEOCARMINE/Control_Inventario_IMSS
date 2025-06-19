@@ -57,7 +57,7 @@ class SubcatalogoForm(forms.ModelForm):
         model = Subcatalogo
         fields = ['catalogo', 'nombre', 'estado']
         widgets = {
-            'catalogo': forms.Select(attrs={'class': 'form-control'}),
+            'catalogo': forms.Select(attrs={'class': 'form-control select2-catalogo'}),
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nombre de la subcategoría'

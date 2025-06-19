@@ -34,8 +34,8 @@ class TipoForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Nombre de la tipo'
             }),
-            'Subcatalogo':   forms.Select(attrs={'class': 'form-control'}),
-            'unidad_medida': forms.Select(attrs={'class': 'form-control'}),
+            'Subcatalogo':   forms.Select(attrs={'class': 'form-control select2-subcategoria'}),
+            'unidad_medida': forms.Select(attrs={'class': 'form-control select2-unidad'}),
             'stock_minimo':  forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 0

@@ -12,33 +12,3 @@
         </div>
     </form>
 </div>
-
-<script>
-function bindFormTipo() {
-        $('#form-tipo')
-        .off('submit')
-        .on('submit', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            $.ajax({
-                type: 'POST',
-                url: form.attr('action'),
-                data: form.serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        $('#modal').modal('hide');
-                        window.location = response.redirect_url;
-                    } else {
-                        $('#tipo-form-fields').html(response.html_form);
-                        bindFormTipo();
-                    }
-                },
-                error: function() {
-                    alert('Error de red. Intenta de nuevo.');
-                }
-            });
-        });
-}
-// Inicializa el handler
-bindFormTipo();
-</script>
