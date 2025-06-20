@@ -117,7 +117,6 @@ $('#btn-agregar-fila').on('click', function() {
   initSelect2Productos($newRow);
 });
 
-
   // Al mostrar modal Registrar Entrada
   const $modalEntrada = $('#modalRegistrarEntrada');
   $modalEntrada
@@ -273,7 +272,6 @@ function bindNuevoProductoGeneral() {
     });
   });
 }
-
 
   // Bind all
   function bindAll() {
