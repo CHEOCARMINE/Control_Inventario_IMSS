@@ -34,20 +34,21 @@
       <!-- Celda de Producto con select -->
       <td>
         <select name="form-__INDEX__-producto"
-                class="form-control select-producto-auto">
-          <option value="">---------</option>
+                class="form-control select2-producto-auto"
+                data-placeholder="Selecciona producto…">
+          <option value=""></option>
           {% for prod in todos_productos %}
             <option
               value="{{ prod.id }}"
               data-marca="{{ prod.marca.nombre }}"
               data-color="{{ prod.color }}"
               data-modelo="{{ prod.modelo }}"
-              data-serie="{% if prod.numero_serie %}{{ prod.numero_serie }}{% endif %}">
+              data-serie="{{ prod.numero_serie|default_if_none:'' }}">
               {{ prod.nombre }}
             </option>
           {% endfor %}
         </select>
-        {# Botón al vuelo: oculto en la plantilla #}
+        <!-- Botón al vuelo: oculto en la plantilla -->
         <button
           type="button"
           class="btn btn-sm btn-outline-info btn-nuevo-producto btn-block"
@@ -69,7 +70,7 @@
           placeholder="Cantidad">
       </td>
       <td class="text-center align-middle">
-        {# Solo botón eliminar, oculto en la plantilla #}
+        <!-- Solo botón eliminar, oculto en la plantilla -->
         <button
           type="button"
           class="btn btn-sm btn-danger btn-eliminar-fila"
@@ -102,21 +103,19 @@
           <!-- Producto + Botón “Nuevo Producto” -->
           <td>
             <select name="{{ form_linea.prefix }}-producto"
-                    class="form-control select-producto-auto">
-              <option value="">---------</option>
+                    class="form-control select2-producto-auto"
+                    data-placeholder="Selecciona producto…">
+              <option value=""></option>
               {% for prod in todos_productos %}
-                {% 
-                  selected_attr = ""
-                  if form_linea.initial.producto and form_linea.initial.producto.id == prod.id:
-                    selected_attr = "selected"
-                %}
                 <option
                   value="{{ prod.id }}"
                   data-marca="{{ prod.marca.nombre }}"
                   data-color="{{ prod.color }}"
                   data-modelo="{{ prod.modelo }}"
-                  data-serie="{% if prod.numero_serie %}{{ prod.numero_serie }}{% endif %}"
-                  {{ selected_attr }}>
+                  data-serie="{{ prod.numero_serie|default_if_none:'' }}"
+                  {% if form_linea.initial.producto and form_linea.initial.producto.id == prod.id %}
+                    selected
+                  {% endif %}>
                   {{ prod.nombre }}
                 </option>
               {% endfor %}

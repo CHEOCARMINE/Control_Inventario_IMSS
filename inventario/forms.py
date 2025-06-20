@@ -244,7 +244,7 @@ class EntradaLineaForm(forms.ModelForm):
             'cantidad': 'Cantidad',
         }
         widgets = {
-            'producto': forms.Select(attrs={'class': 'form-control select-producto-auto'}),
+            'producto': forms.Select(attrs={'class': 'form-control select-producto-auto select2-tipo'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'Cantidad'}),
         }
 
