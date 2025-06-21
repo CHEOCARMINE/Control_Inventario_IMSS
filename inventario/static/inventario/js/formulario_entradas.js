@@ -144,41 +144,37 @@ $('#btn-agregar-fila').on('click', function() {
   // Agregar / eliminar filas
   function bindBtnsLinea() {
     // + Agregar fila
-    $(document).on('click', '#btn-agregar-fila', function(e) {
-      e.preventDefault();
-      const $total = $('#id_form-TOTAL_FORMS'),
-            idx    = parseInt($total.val(), 10);
-      const $row = $($('#template-row').prop('outerHTML').replace(/__INDEX__/g, idx))
-        .removeAttr('id').addClass('linea-form')
-        .attr('data-index', idx).show()
-        .appendTo('#tabla-entradas tbody');
-      // limpia
-      $row.find('select, input[type="number"]').val('');
-      $row.find('input[type="checkbox"]').prop('checked', false).hide();
-      $row.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
-      $row.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
-      $total.val(idx + 1);
-      initSelect2Productos($row);
-    });
+  $(document).on('click', '#btn-agregar-fila', function(e) {
+    e.preventDefault();
+    const $total = $('#id_form-TOTAL_FORMS'),
+          idx    = parseInt($total.val(), 10);
+    const $row = $($('#template-row').prop('outerHTML')
+                  .replace(/__INDEX__/g, idx))
+      .removeAttr('id')
+      .addClass('linea-form')
+      .attr('data-index', idx)
+      .show()
+      .appendTo('#tabla-entradas tbody');
+    // Limpia inputs / select
+    $row.find('select, input[type="number"]').val('');
+    // Elimina cualquier checkbox de DELETE heredado
+    $row.find('input[name$="-DELETE"]').remove();
+    $row.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
+    $row.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
+    // Actualiza contador
+    $total.val(idx + 1);
+    // Inicia Select2 en esta nueva fila
+    initSelect2Productos($row);
+  });
     // × Eliminar fila
-    $(document).on('click', '.btn-eliminar-fila', function(e) {
-      e.preventDefault();
-      const $row = $(this).closest('tr.linea-form'),
-            $del = $row.find('input[name$="-DELETE"]');
-      if ($del.length) { $del.prop('checked', true); $row.hide(); }
-      else { $row.remove(); }
-      // reindexa
-      $('#tabla-entradas tbody tr.linea-form:visible').each((i, tr) => {
-        const $tr = $(tr).attr('data-index', i);
-        $tr.find('select, input').each(function() {
-          const old = this.name||'', neu = old.replace(/-\d+-/, `-${i}-`);
-          $(this).attr({ name: neu, id: 'id_' + neu });
-        });
-      });
-      $('#id_form-TOTAL_FORMS').val($('#tabla-entradas tbody tr.linea-form:visible').length);
-      updateProductoOptions();
-    });
-  }
+  $(document).on('click', '.btn-eliminar-fila', function(e) {
+    e.preventDefault();
+    $(this).closest('tr.linea-form').remove();
+    // Reordena índices y TOTAL_FORMS
+    reorderRows();
+    updateProductoOptions();
+  });
+}
 
   // Rellenar celdas y filtrar duplicados al cambiar producto
   function bindListenerCambioProducto() {
@@ -208,31 +204,55 @@ $('#btn-agregar-fila').on('click', function() {
 
 // “+ Nuevo Producto” por fila
 function bindNuevoProductoFila() {
+  const $modal = $('#modalCrearProducto');
   $(document).off('click', '.btn-nuevo-producto');
   $(document).on('click', '.btn-nuevo-producto', function(e) {
     e.preventDefault();
-    const $row   = $(this).closest('tr.linea-form');
-    const $modal = $('#modalCrearProducto');
-
-    $.get($(this).data('remote'), html => {
-      // Inyecta el formulario completo
+    const $row = $(this).closest('tr.linea-form');
+    const url  = $(this).data('remote');
+    $.get(url, html => {
+      // Inyecta el form en el modal y prepara Select2
       $modal.find('.modal-content').html(html);
-      // Inicializa Select2 en marca y tipo **antes** de mostrar
       initSelect2ProductoModal($modal);
-      // Muestra el modal
       $modal.modal('show')
         .one('submitSuccess', (evt, data) => {
-          const opt = new Option(data.producto_label, data.producto_id, true, true);
-          $(opt).attr({
+          // atributos del producto
+          const val   = data.producto_id;
+          const txt   = data.producto_label;
+          const attrs = {
             'data-marca':  data.producto_marca,
             'data-color':  data.producto_color,
             'data-modelo': data.producto_modelo,
-            'data-serie':  data.producto_serie
+            'data-serie':  data.producto_serie || ''
+          };
+          // Creamos el <option> nuevo
+          const opt = new Option(txt, val, false, false);
+          Object.entries(attrs)
+            .forEach(([k, v]) => opt.setAttribute(k, v));
+          // Lo añadimos a todos los selects (incluida la plantilla oculta)
+          $('.select2-producto-auto').each(function() {
+            const $s = $(this);
+            $s.append(opt.cloneNode(true));
+            $s.trigger('change.select2');
           });
-          // Añade al select de la fila y dispara change para rellenar datos
-          $row.find('select[name$="-producto"]')
-              .append(opt)
-              .trigger('change');
+          // Ocultamos “+ Nuevo Producto” en esta fila
+          $row.find('.btn-nuevo-producto').hide();
+          // Desmarcamos cualquier DELETE heredado y lo ocultamos
+          const $del = $row.find('input[name$="-DELETE"]');
+          $del.prop('checked', false).hide();
+          // Seleccionamos la nueva opción en el <select> de la fila
+          const $sel = $row.find('select[name$="-producto"]');
+          $sel.val(val).trigger('change.select2');
+          // Rellenamos ya las celdas de marca/color/modelo/serie
+          $row.find('.marca-cell').text(attrs['data-marca']);
+          $row.find('.color-cell').text(attrs['data-color']);
+          $row.find('.modelo-cell').text(attrs['data-modelo']);
+          $row.find('.serie-cell').text(attrs['data-serie']);
+          // Refresca el bloqueo de duplicados
+          updateProductoOptions();
+          // Reindexa todas las filas y actualiza TOTAL_FORMS
+          reorderRows();
+          // Cierra el modal
           $modal.modal('hide');
         });
     });
@@ -241,36 +261,74 @@ function bindNuevoProductoFila() {
 
 // “+ Nuevo Producto” global
 function bindNuevoProductoGeneral() {
-  $(document).off('click', '#btn-nuevo-producto-general');
-  $(document).on('click', '#btn-nuevo-producto-general', function(e) {
-    e.preventDefault();
-    const $modal = $('#modalCrearProducto');
-
-    $.get($(this).data('remote'), html => {
-      // Inyecta formulario
-      $modal.find('.modal-content').html(html);
-      // Inicializa Select2
-      initSelect2ProductoModal($modal);
-      // Muestra modal
-      $modal.modal('show')
-        .one('submitSuccess', (evt, data) => {
-          // Al crear exitoso, añade nueva fila
-          $('#btn-agregar-fila').click();
-          const $last = $('#tabla-entradas tbody tr.linea-form:visible').last();
-          const opt = new Option(data.producto_label, data.producto_id, true, true);
-          $(opt).attr({
-            'data-marca':  data.producto_marca,
-            'data-color':  data.producto_color,
-            'data-modelo': data.producto_modelo,
-            'data-serie':  data.producto_serie
+  const $modal = $('#modalCrearProducto');
+  $(document).off('click', '#btn-nuevo-producto-general')
+    .on('click', '#btn-nuevo-producto-general', function(e) {
+      e.preventDefault();
+      const url = $(this).data('remote');
+      $.get(url, html => {
+        // Inyecta el formulario y muestra el modal
+        $modal.find('.modal-content').html(html);
+        initSelect2ProductoModal($modal);
+        $modal.modal('show')
+          .one('submitSuccess', (evt, data) => {
+            // Crea una nueva fila
+            $('#btn-agregar-fila').click();
+            const $row = $('#tabla-entradas tbody tr.linea-form:visible').last();
+            const val   = data.producto_id;
+            const txt   = data.producto_label;
+            const attrs = {
+              'data-marca':  data.producto_marca,
+              'data-color':  data.producto_color,
+              'data-modelo': data.producto_modelo,
+              'data-serie':  data.producto_serie || ''
+            };
+            // Construye el <option> nuevo
+            const opt = new Option(txt, val, false, false);
+            Object.entries(attrs).forEach(([k, v]) => opt.setAttribute(k, v));
+            // Añádelo a todos los selects y refresca Select2
+            $('.select2-producto-auto').each(function() {
+              const $s = $(this);
+              $s.append(opt.cloneNode(true));
+              $s.trigger('change.select2');
+            });
+            // Oculta el botón sólo en esta nueva fila
+            $row.find('.btn-nuevo-producto').hide();
+            // Limpia el checkbox DELETE heredado
+            $row.find('input[name$="-DELETE"]')
+                .prop('checked', false)
+                .hide();
+            // Selecciona y rellena la fila
+            const $sel = $row.find('select[name$="-producto"]');
+            $sel.val(val).trigger('change.select2');
+            $row.find('.marca-cell').text(attrs['data-marca']);
+            $row.find('.color-cell').text(attrs['data-color']);
+            $row.find('.modelo-cell').text(attrs['data-modelo']);
+            $row.find('.serie-cell').text(attrs['data-serie']);
+            // Actualiza bloqueo de duplicados
+            updateProductoOptions();
+            // Reindexa filas y TOTAL_FORMS
+            reorderRows();
+            // Cierra el modal
+            $modal.modal('hide');
           });
-          $last.find('select[name$="-producto"]')
-                .append(opt)
-                .trigger('change');
-          $modal.modal('hide');
-        });
+      });
+    });
+}
+
+// Reordena los índices de fila y actualiza TOTAL_FORMS
+function reorderRows() {
+  const $rows = $('#tabla-entradas tbody tr.linea-form:visible');
+  $rows.each((i, tr) => {
+    const $tr = $(tr).attr('data-index', i);
+    // Solo reindexa selects y cantidad
+    $tr.find('select, input[type="number"]').each(function() {
+      const old = this.name;
+      const neu = old.replace(/-\d+-/, `-${i}-`);
+      $(this).attr({ name: neu, id: 'id_' + neu });
     });
   });
+  $('#id_form-TOTAL_FORMS').val($rows.length);
 }
 
   // Bind all
