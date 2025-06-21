@@ -105,7 +105,7 @@ def agregar_tipo(request):
         else:
             html_form = render_to_string(
                 'inventario/modales/fragmento_form_tipo.html',
-                {'form': form},
+                {'form': form, 'crear': True},
                 request=request
             )
             return JsonResponse({'success': False, 'html_form': html_form})
