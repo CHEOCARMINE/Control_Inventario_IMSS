@@ -1,5 +1,11 @@
 {% csrf_token %}
 
+{% if form_entrada.non_field_errors %}
+    <div class="alert alert-danger">
+        {{ form_entrada.non_field_errors }}
+    </div>
+{% endif %}
+
 <!-- Cabecera editable -->
 <div class="form-row mb-3">
     <div class="col-md-6">

@@ -1,9 +1,9 @@
 from django.db.models import F
 from django.urls import reverse
-from django.db import transaction
 from django.http import JsonResponse
 from django.forms import formset_factory
 from django.core.paginator import Paginator
+from django.db import transaction, IntegrityError
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from .models import Tipo, Producto, Entrada, EntradaLinea
@@ -251,52 +251,6 @@ def lista_productos(request):
         'mensaje_error': mensaje_error,
     })
 
-# EDITAR
-@login_required
-@supervisor_required
-def editar_producto(request, pk):
-    prod = get_object_or_404(Producto, pk=pk)
-    if request.method == 'POST':
-        form = ProductoForm(request.POST, instance=prod)
-        if form.is_valid():
-            form.save()
-            _registrar_log(
-                request,
-                tabla="producto",
-                id_registro=prod.id,
-                nombre_modulo="Inventario",
-                nombre_accion="Editar"
-            )
-            request.session['producto_success'] = 'Producto actualizado correctamente.'
-            return JsonResponse({
-                'success': True,
-                'redirect_url': reverse('inventario:lista_productos')
-            })
-        else:
-            # Renderizamos el modal completo con errores
-            html = render_to_string(
-                'inventario/modales/modal_editar_producto.html',
-                {
-                    'form': form,
-                    'producto': prod,
-                    'marcas_existentes': form.marcas_list,
-                },
-                request=request
-            )
-            return JsonResponse({'success': False, 'html_form': html})
-
-    # GET inicial: abrimos modal con formulario precargado
-    form = ProductoForm(instance=prod)
-    return render(
-        request,
-        'inventario/modales/modal_editar_producto.html',
-        {
-            'form': form,
-            'producto': prod,
-            'marcas_existentes': form.marcas_list,
-        }
-    )
-
 # CREAR
 def crear_producto(request):
     if request.method == "POST":
@@ -345,83 +299,55 @@ def crear_producto(request):
             'marcas_existentes': form.marcas_list,
         }
     )
+
+# EDITAR
+@login_required
+@supervisor_required
+def editar_producto(request, pk):
+    prod = get_object_or_404(Producto, pk=pk)
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=prod)
+        if form.is_valid():
+            form.save()
+            _registrar_log(
+                request,
+                tabla="producto",
+                id_registro=prod.id,
+                nombre_modulo="Inventario",
+                nombre_accion="Editar"
+            )
+            request.session['producto_success'] = 'Producto actualizado correctamente.'
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('inventario:lista_productos')
+            })
+        else:
+            # Renderizamos el modal completo con errores
+            html = render_to_string(
+                'inventario/modales/modal_editar_producto.html',
+                {
+                    'form': form,
+                    'producto': prod,
+                    'marcas_existentes': form.marcas_list,
+                },
+                request=request
+            )
+            return JsonResponse({'success': False, 'html_form': html})
+
+    # GET inicial: abrimos modal con formulario precargado
+    form = ProductoForm(instance=prod)
+    return render(
+        request,
+        'inventario/modales/modal_editar_producto.html',
+        {
+            'form': form,
+            'producto': prod,
+            'marcas_existentes': form.marcas_list,
+        }
+    )
 # FINDE INVENTARIO
 
 # ENTRADAS
-
-# REGISTRAR
-@login_required
-@supervisor_required
-def registrar_entrada(request):
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    if request.method == 'GET':
-        if not is_ajax:
-            return redirect('inventario:lista_entradas')
-        form_entrada   = EntradaForm()
-        formset_lineas = EntradaLineaFormSet()
-        todos_productos = Producto.objects.filter(estado=True).order_by(
-            'tipo__Subcatalogo__catalogo__nombre',
-            'tipo__Subcatalogo__nombre',
-            'tipo__nombre',
-            'nombre'
-        )
-        return render(
-            request,
-            'inventario/modales/modal_registrar_entrada.html',
-            {
-                'form_entrada':   form_entrada,
-                'formset_lineas': formset_lineas,
-                'todos_productos': todos_productos
-            }
-        )
-
-    # POST
-    form_entrada   = EntradaForm(request.POST)
-    formset_lineas = EntradaLineaFormSet(request.POST)
-    if form_entrada.is_valid() and formset_lineas.is_valid():
-        # 1) Guardar la cabecera de la entrada
-        entrada = form_entrada.save()
-
-        # 2) Registrar log de creación
-        _registrar_log(
-            request,
-            tabla         = "entrada",
-            id_registro   = entrada.id,
-            nombre_modulo = "Inventario",
-            nombre_accion = "Crear"
-        )
-        request.session['entrada_success'] = 'Entrada registrada correctamente.'
-
-        # 3) Guardar cada línea
-        for form_linea in formset_lineas:
-            if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
-                EntradaLinea.objects.create(
-                    entrada=entrada,
-                    producto=form_linea.cleaned_data['producto'],
-                    cantidad=form_linea.cleaned_data['cantidad']
-                )
-
-        return JsonResponse({
-            'success':      True,
-            'redirect_url': reverse('inventario:lista_entradas')
-        })
-
-    # Si hay errores, recarga sólo el fragmento
-    html_form = render_to_string(
-        'inventario/modales/fragmento_form_entrada.html',
-        {
-            'form_entrada':   form_entrada,
-            'formset_lineas': formset_lineas,
-            'todos_productos': Producto.objects.filter(estado=True).order_by(
-                'tipo__Subcatalogo__catalogo__nombre',
-                'tipo__Subcatalogo__nombre',
-                'tipo__nombre',
-                'nombre'
-            )
-        },
-        request=request
-    )
-    return JsonResponse({'success': False, 'html_form': html_form})
 
 # LISTA
 @login_required
@@ -501,6 +427,82 @@ def lista_entradas(request):
         'mensaje_error': mensaje_error,
     })
 
+# REGISTRAR
+@login_required
+@supervisor_required
+def registrar_entrada(request):
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    if request.method == 'GET':
+        if not is_ajax:
+            return redirect('inventario:lista_entradas')
+        form_entrada   = EntradaForm()
+        formset_lineas = EntradaLineaFormSet()
+        todos_productos = Producto.objects.filter(estado=True).order_by(
+            'tipo__Subcatalogo__catalogo__nombre',
+            'tipo__Subcatalogo__nombre',
+            'tipo__nombre',
+            'nombre'
+        )
+        return render(
+            request,
+            'inventario/modales/modal_registrar_entrada.html',
+            {
+                'form_entrada':   form_entrada,
+                'formset_lineas': formset_lineas,
+                'todos_productos': todos_productos
+            }
+        )
+
+    # POST
+    form_entrada   = EntradaForm(request.POST)
+    formset_lineas = EntradaLineaFormSet(request.POST)
+    if form_entrada.is_valid() and formset_lineas.is_valid():
+        try:
+            entrada = form_entrada.save()
+        except IntegrityError:
+            form_entrada.add_error('folio', 'Ya existe una entrada con este folio.')
+        else:
+            # Registrar log de creación
+            _registrar_log(
+                request,
+                tabla         = "entrada",
+                id_registro   = entrada.id,
+                nombre_modulo = "Inventario",
+                nombre_accion = "Crear"
+            )
+            request.session['entrada_success'] = 'Entrada registrada correctamente.'
+
+            # Guardar cada línea
+            for form_linea in formset_lineas:
+                if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
+                    EntradaLinea.objects.create(
+                        entrada=entrada,
+                        producto=form_linea.cleaned_data['producto'],
+                        cantidad=form_linea.cleaned_data['cantidad']
+                    )
+
+            return JsonResponse({
+                'success':      True,
+                'redirect_url': reverse('inventario:lista_entradas')
+            })
+
+    # Si hay errores, recarga sólo el fragmento
+    html_form = render_to_string(
+        'inventario/modales/fragmento_form_entrada.html',
+        {
+            'form_entrada':   form_entrada,
+            'formset_lineas': formset_lineas,
+            'todos_productos': Producto.objects.filter(estado=True).order_by(
+                'tipo__Subcatalogo__catalogo__nombre',
+                'tipo__Subcatalogo__nombre',
+                'tipo__nombre',
+                'nombre'
+            )
+        },
+        request=request
+    )
+    return JsonResponse({'success': False, 'html_form': html_form})
+
 # EDITAR
 @login_required
 @supervisor_required
@@ -526,21 +528,25 @@ def editar_entrada(request, pk):
     # POST AJAX: actualizar sólo folio y fecha
     form_entrada = EntradaForm(request.POST, instance=entrada)
     if form_entrada.is_valid():
-        form_entrada.save()
-        _registrar_log(
-            request,
-            tabla         = "entrada",
-            id_registro   = entrada.id,
-            nombre_modulo = "Inventario",
-            nombre_accion = "Editar"
-        )
-        request.session['entrada_success'] = 'Entrada actualizada correctamente.'
-        return JsonResponse({
-            'success':      True,
-            'redirect_url': reverse('inventario:lista_entradas')
-        })
+        try:
+            form_entrada.save()
+        except IntegrityError:
+            form_entrada.add_error('folio', 'Ya existe otra entrada con este folio.')
+        else:
+            _registrar_log(
+                request,
+                tabla         = "entrada",
+                id_registro   = entrada.id,
+                nombre_modulo = "Inventario",
+                nombre_accion = "Editar"
+            )
+            request.session['entrada_success'] = 'Entrada actualizada correctamente.'
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('inventario:lista_entradas')
+            })
 
-    # Errores de validación: devolver fragmento con errores
+    # Si hay errores de validación o IntegrityError:
     html_form = render_to_string(
         'inventario/modales/fragmento_form_editar_entrada.html',
         {
@@ -551,3 +557,4 @@ def editar_entrada(request, pk):
         request=request
     )
     return JsonResponse({'success': False, 'html_form': html_form})
+# FIN DE ENTRADA

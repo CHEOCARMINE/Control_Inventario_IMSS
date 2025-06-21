@@ -125,21 +125,25 @@ $('#btn-agregar-fila').on('click', function() {
   $('#btn-agregar-fila').text('+ Agregar fila');
 
   // Submit AJAX de la Entrada
-  function bindFormEntrada() {
-    $(document).on('submit', '#form-entrada', function(e) {
-      e.preventDefault();
-      const $form = $(this);
-      $.post($form.attr('action'), $form.serialize(), resp => {
-        if (resp.success) {
-          $modalEntrada.modal('hide');
-          window.location = resp.redirect_url;
-        } else {
-          $('#entrada-form-fields').html(resp.html_form);
-          bindAll();
-        }
-      }).fail(() => alert('Error de red. Intenta de nuevo.'));
+function bindFormEntrada() {
+  $(document).off('submit', '#form-entrada, #form-editar-entrada');
+  $(document).on('submit', '#form-entrada, #form-editar-entrada', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    const $modal = $form.closest('.modal');
+    $.post($form.attr('action'), $form.serialize(), resp => {
+      if (resp.success) {
+        $modal.modal('hide');
+        window.location = resp.redirect_url;
+      } else {
+        $modal.find('#entrada-form-fields').html(resp.html_form);
+        bindAll(); 
+      }
+    }).fail(() => {
+      alert('Error de red. Intenta de nuevo.');
     });
-  }
+  });
+}
 
   // Agregar / eliminar filas
   function bindBtnsLinea() {
