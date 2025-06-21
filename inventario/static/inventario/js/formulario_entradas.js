@@ -83,6 +83,18 @@ function initSelect2Productos($scope) {
   });
   // Primera pasada de filtrado
   updateProductoOptions();
+
+  // Ocultar botón "Crear Producto" si ya hay algo seleccionado
+  $scope.find('.select2-producto-auto').each(function () {
+    const $sel = $(this);
+    const $row = $sel.closest('tr');
+    const $btn = $row.find('.btn-nuevo-producto');
+    if ($sel.val()) {
+      $btn.hide();
+    } else {
+      $btn.show();
+    }
+  });
 }
 
 // Filtrar duplicados deshabilitando opciones
@@ -137,6 +149,8 @@ function bindFormEntrada() {
         window.location = resp.redirect_url;
       } else {
         $modal.find('#entrada-form-fields').html(resp.html_form);
+        initSelect2Productos($('#tabla-entradas tbody'));
+        updateProductoOptions();
         bindAll(); 
       }
     }).fail(() => {
@@ -148,7 +162,7 @@ function bindFormEntrada() {
   // Agregar / eliminar filas
   function bindBtnsLinea() {
     // + Agregar fila
-  $(document).on('click', '#btn-agregar-fila', function(e) {
+  $(document).off("click", "#agregar-fila").on('click', '#btn-agregar-fila', function(e) {
     e.preventDefault();
     const $total = $('#id_form-TOTAL_FORMS'),
           idx    = parseInt($total.val(), 10);

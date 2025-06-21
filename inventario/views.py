@@ -486,6 +486,27 @@ def registrar_entrada(request):
                 'redirect_url': reverse('inventario:lista_entradas')
             })
 
+    for form_linea in formset_lineas:
+        # Intentar recuperar desde cleaned_data si está disponible
+        producto = form_linea.cleaned_data.get('producto') if hasattr(form_linea, 'cleaned_data') else None
+
+        # Si no está disponible (por errores), buscar el ID manualmente desde los datos enviados
+        if not producto:
+            producto_id = form_linea.data.get(f'{form_linea.prefix}-producto')
+            if producto_id:
+                try:
+                    producto = Producto.objects.get(id=producto_id)
+                except Producto.DoesNotExist:
+                    producto = None
+
+        # Si se recuperó un producto, inyectamos la info en los iniciales
+        if producto:
+            form_linea.initial['producto'] = producto
+            form_linea.initial['marca'] = producto.marca.nombre
+            form_linea.initial['color'] = producto.color
+            form_linea.initial['modelo'] = producto.modelo
+            form_linea.initial['numero_serie'] = producto.numero_serie
+
     # Si hay errores, recarga sólo el fragmento
     html_form = render_to_string(
         'inventario/modales/fragmento_form_entrada.html',
