@@ -51,7 +51,7 @@ $(function() {
           }
         } else {
           // sólo reemplazar el body para conservar header+footer
-          $modal.find('#modal-body-content').html(resp.html_form);
+          $modal.find('.modal-content').html(resp.html_form);
           initSelect2ProductoModal($modal);
         }
       }).fail(() => {
