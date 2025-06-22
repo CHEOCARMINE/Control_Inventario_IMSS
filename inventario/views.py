@@ -436,7 +436,7 @@ def registrar_entrada(request):
         if not is_ajax:
             return redirect('inventario:lista_entradas')
         form_entrada   = EntradaForm()
-        formset_lineas = EntradaLineaFormSetRegistro()
+        formset_lineas = EntradaLineaFormSetRegistro(queryset=EntradaLinea.objects.none())
         todos_productos = Producto.objects.filter(estado=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
@@ -511,43 +511,43 @@ def registrar_entrada(request):
                     'redirect_url': reverse('inventario:lista_entradas')
                 })
 
-        for form_linea in formset_lineas:
-            # Intentar recuperar desde cleaned_data si está disponible
-            producto = form_linea.cleaned_data.get('producto') if hasattr(form_linea, 'cleaned_data') else None
+            for form_linea in formset_lineas:
+                # Intentar recuperar desde cleaned_data si está disponible
+                producto = form_linea.cleaned_data.get('producto') if hasattr(form_linea, 'cleaned_data') else None
 
-            # Si no está disponible (por errores), buscar el ID manualmente desde los datos enviados
-            if not producto:
-                producto_id = form_linea.data.get(f'{form_linea.prefix}-producto')
-                if producto_id:
-                    try:
-                        producto = Producto.objects.get(id=producto_id)
-                    except Producto.DoesNotExist:
-                        producto = None
+                # Si no está disponible (por errores), buscar el ID manualmente desde los datos enviados
+                if not producto:
+                    producto_id = form_linea.data.get(f'{form_linea.prefix}-producto')
+                    if producto_id:
+                        try:
+                            producto = Producto.objects.get(id=producto_id)
+                        except Producto.DoesNotExist:
+                            producto = None
 
-            # Si se recuperó un producto, inyectamos la info en los iniciales
-            if producto:
-                form_linea.initial['producto'] = producto
-                form_linea.initial['marca'] = producto.marca.nombre
-                form_linea.initial['color'] = producto.color
-                form_linea.initial['modelo'] = producto.modelo
-                form_linea.initial['numero_serie'] = producto.numero_serie
+                # Si se recuperó un producto, inyectamos la info en los iniciales
+                if producto:
+                    form_linea.initial['producto'] = producto
+                    form_linea.initial['marca'] = producto.marca.nombre
+                    form_linea.initial['color'] = producto.color
+                    form_linea.initial['modelo'] = producto.modelo
+                    form_linea.initial['numero_serie'] = producto.numero_serie
 
-        # Si hay errores, recarga sólo el fragmento
-        html_form = render_to_string(
-            'inventario/modales/fragmento_form_entrada.html',
-            {
-                'form_entrada':   form_entrada,
-                'formset_lineas': formset_lineas,
-                'todos_productos': Producto.objects.filter(estado=True).order_by(
-                    'tipo__Subcatalogo__catalogo__nombre',
-                    'tipo__Subcatalogo__nombre',
-                    'tipo__nombre',
-                    'nombre'
-                )
-            },
-            request=request
-        )
-        return JsonResponse({'success': False, 'html_form': html_form})
+    # Si hay errores, recarga sólo el fragmento
+    html_form = render_to_string(
+        'inventario/modales/fragmento_form_entrada.html',
+        {
+            'form_entrada': form_entrada,
+            'formset_lineas': formset_lineas,
+            'todos_productos': Producto.objects.filter(estado=True).order_by(
+                'tipo__Subcatalogo__catalogo__nombre',
+                'tipo__Subcatalogo__nombre',
+                'tipo__nombre',
+                'nombre'
+            )
+        },
+        request=request
+    )
+    return JsonResponse({'success': False, 'html_form': html_form})
 
 # EDITAR
 @login_required
@@ -561,7 +561,7 @@ def editar_entrada(request, pk):
             return redirect('inventario:lista_entradas')
         form_entrada = EntradaForm(instance=entrada)
         lineas_qs = entrada.lineas.select_related('producto').all()
-        formset_lineas = EntradaLineaFormSetEdicion(queryset=entrada.lineas.all(), prefix='form')
+        formset_lineas = EntradaLineaFormSetEdicion(queryset=entrada.lineas.all())
 
         todos_productos = Producto.objects.filter(estado=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
@@ -673,21 +673,21 @@ def editar_entrada(request, pk):
             except IntegrityError:
                 form_entrada.add_error('folio', 'Ya existe una entrada con este folio.')
 
-        # Si hay errores, volver a cargar el fragmento con los forms
-        html_form = render_to_string(
-            'inventario/modales/fragmento_form_entrada.html',
-            {
-                'form_entrada': form_entrada,
-                'formset_lineas': formset_lineas,
-                'todos_productos': Producto.objects.filter(estado=True).order_by(
-                    'tipo__Subcatalogo__catalogo__nombre',
-                    'tipo__Subcatalogo__nombre',
-                    'tipo__nombre',
-                    'nombre'
-                ),
-                'entrada': entrada,
-            },
-            request=request
-        )
-        return JsonResponse({'success': False, 'html_form': html_form})
+    # Si hay errores, volver a cargar el fragmento con los forms
+    html_form = render_to_string(
+        'inventario/modales/fragmento_form_entrada.html',
+        {
+            'form_entrada': form_entrada,
+            'formset_lineas': formset_lineas,
+            'todos_productos': Producto.objects.filter(estado=True).order_by(
+                'tipo__Subcatalogo__catalogo__nombre',
+                'tipo__Subcatalogo__nombre',
+                'tipo__nombre',
+                'nombre'
+            ),
+            'entrada': entrada,
+        },
+        request=request
+    )
+    return JsonResponse({'success': False, 'html_form': html_form})
 # FIN DE ENTRADA

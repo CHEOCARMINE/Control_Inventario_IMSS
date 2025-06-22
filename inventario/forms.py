@@ -265,8 +265,9 @@ class EntradaLineaForm(forms.ModelForm):
             raise forms.ValidationError("La cantidad debe ser mayor que cero.")
         return cantidad
 
-EntradaLineaFormSetRegistro = formset_factory(
-    EntradaLineaForm,
+EntradaLineaFormSetRegistro = modelformset_factory(
+    EntradaLinea,
+    form=EntradaLineaForm,
     extra=1,
     can_delete=True
 )
