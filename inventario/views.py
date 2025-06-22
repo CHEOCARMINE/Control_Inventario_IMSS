@@ -475,10 +475,27 @@ def registrar_entrada(request):
             # Guardar cada línea
             for form_linea in formset_lineas:
                 if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
+                    producto = form_linea.cleaned_data['producto']
+                    cantidad = form_linea.cleaned_data['cantidad']
+
+                    # Crear la línea de entrada
                     EntradaLinea.objects.create(
                         entrada=entrada,
-                        producto=form_linea.cleaned_data['producto'],
-                        cantidad=form_linea.cleaned_data['cantidad']
+                        producto=producto,
+                        cantidad=cantidad
+                    )
+
+                    # Actualizar el stock
+                    producto.stock += cantidad
+                    producto.save()
+
+                    # Log de stock ajustado
+                    _registrar_log(
+                        request,
+                        tabla="producto",
+                        id_registro=producto.id,
+                        nombre_modulo="Inventario",
+                        nombre_accion="Ajuste stock"
                     )
 
             return JsonResponse({

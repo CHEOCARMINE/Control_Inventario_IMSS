@@ -55,13 +55,5 @@ class EntradaLinea(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.PositiveIntegerField()
 
-    def save(self, *args, **kwargs):
-        if self._state.adding:
-            # Sumar al stock del producto
-            self.producto.stock = F('stock') + self.cantidad
-            self.producto.save(update_fields=['stock'])
-            self.producto.refresh_from_db()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"{self.entrada.folio} – {self.producto.nombre} ({self.cantidad})"
