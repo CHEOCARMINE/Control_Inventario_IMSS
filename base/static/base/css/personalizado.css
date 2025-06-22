@@ -18,3 +18,11 @@
   color: #c0c0c0 !important;
   font-style: italic;
 }
+
+/* Asegura que el modal de crear producto se superponga al de editar entrada */
+#modalCrearProducto {
+  z-index: 1065 !important;
+}
+#modalCrearProducto .modal-backdrop {
+  z-index: 1060 !important;
+}
