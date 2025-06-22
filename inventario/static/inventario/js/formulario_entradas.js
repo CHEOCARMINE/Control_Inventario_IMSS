@@ -173,7 +173,7 @@ function bindFormEntrada() {
         $modal.modal('hide');
         window.location = resp.redirect_url;
       } else {
-        $modal.find('#entrada-form-fields').html(resp.html_form);
+        $modal.find('#entrada-form-fields, #editar-form-fields').html(resp.html_form);
         initSelect2Productos($('#tabla-entradas tbody'));
         updateProductoOptions();
         bindAll(); 
