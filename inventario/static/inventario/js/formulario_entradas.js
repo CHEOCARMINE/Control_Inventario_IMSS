@@ -146,11 +146,19 @@ $('#btn-agregar-fila').on('click', function () {
   initSelect2Productos($newRow);
 });
 
-  // Al mostrar modal Registrar Entrada
+  // Al mostrar modal Registrar/Editar Entrada
   const $modalEntrada = $('#modalRegistrarEntrada, #modalEditarEntrada');
   $modalEntrada
-    .on('shown.bs.modal', () => initSelect2Productos($('#tabla-entradas tbody')))
-    .on('show.bs.modal', () => $('#template-row').find('.btn-nuevo-producto, .btn-eliminar-fila').hide());
+    .on('shown.bs.modal', () => {
+      initSelect2Productos($('#tabla-entradas tbody'));
+      actualizarColumnasProductosExistentes(); // <- Actualiza columnas al abrir
+      $('#tabla-entradas tbody .select2-producto-auto').each(function () {
+        $(this).trigger('change'); // <- Fuerza eventos de Select2
+      });
+    })
+    .on('show.bs.modal', () => {
+      $('#template-row').find('.btn-nuevo-producto, .btn-eliminar-fila').hide();
+    });
   $('#btn-agregar-fila').text('+ Agregar fila');
 
   // Submit AJAX de la Entrada
@@ -235,6 +243,21 @@ function bindFormEntrada() {
       .on('select2:clear', '.select2-producto-auto', function() {
         updateProductoOptions();
       });
+  }
+
+  // Forzar actualización de columnas al abrir el modal
+  function actualizarColumnasProductosExistentes() {
+    $('#tabla-entradas tbody tr.linea-form:visible').each(function () {
+      const $row = $(this);
+      const $sel = $row.find('.select2-producto-auto');
+      const selected = $sel.find(':selected');
+      const data = selected.data();
+
+      $row.find('.marca-cell').text(data.marca || '');
+      $row.find('.color-cell').text(data.color || '');
+      $row.find('.modelo-cell').text(data.modelo || '');
+      $row.find('.serie-cell').text(data.serie || '');
+    });
   }
 
 // “+ Nuevo Producto” por fila
