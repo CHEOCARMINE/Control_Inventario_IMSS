@@ -121,16 +121,33 @@ function updateProductoOptions() {
 }
 
 // Tras abrir el modal
-$('#modalRegistrarEntrada').on('shown.bs.modal', () => {
+$('#modalRegistrarEntrada, #modalEditarEntrada').on('shown.bs.modal', () => {
   initSelect2Productos($('#tabla-entradas tbody'));
 });
 // Tras añadir cada fila
-$('#btn-agregar-fila').on('click', function() {
+$('#btn-agregar-fila').on('click', function () {
+  const $total = $('#id_form-TOTAL_FORMS');
+  const idx = parseInt($total.val(), 10);
+
+  const $newRow = $($('#template-row').prop('outerHTML')
+    .replace(/__INDEX__/g, idx))
+    .removeAttr('id')
+    .addClass('linea-form')
+    .attr('data-index', idx)
+    .show()
+    .appendTo('#tabla-entradas tbody');
+
+  $newRow.find('select, input[type="number"]').val('');
+  $newRow.find('input[name$="-DELETE"]').remove();
+  $newRow.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
+  $newRow.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
+  $total.val(idx + 1);
+
   initSelect2Productos($newRow);
 });
 
   // Al mostrar modal Registrar Entrada
-  const $modalEntrada = $('#modalRegistrarEntrada');
+  const $modalEntrada = $('#modalRegistrarEntrada, #modalEditarEntrada');
   $modalEntrada
     .on('shown.bs.modal', () => initSelect2Productos($('#tabla-entradas tbody')))
     .on('show.bs.modal', () => $('#template-row').find('.btn-nuevo-producto, .btn-eliminar-fila').hide());

@@ -1,10 +1,10 @@
 import re
 from django import forms
 from datetime import date
-from django.forms import formset_factory
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from .models import Tipo, Producto, Entrada, EntradaLinea
+from django.forms import formset_factory, modelformset_factory
 from auxiliares_inventario.models import Subcatalogo, UnidadDeMedida, Marca
 
 # Tipo FORM
@@ -265,8 +265,15 @@ class EntradaLineaForm(forms.ModelForm):
             raise forms.ValidationError("La cantidad debe ser mayor que cero.")
         return cantidad
 
-EntradaLineaFormSet = formset_factory(
+EntradaLineaFormSetRegistro = formset_factory(
     EntradaLineaForm,
     extra=1,
+    can_delete=True
+)
+
+EntradaLineaFormSetEdicion = modelformset_factory(
+    EntradaLinea,
+    form=EntradaLineaForm,
+    extra=0,          
     can_delete=True
 )

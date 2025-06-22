@@ -9,9 +9,9 @@ from django.views.decorators.http import require_POST
 from .models import Tipo, Producto, Entrada, EntradaLinea
 from django.shortcuts import render, get_object_or_404, redirect
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
-from login_app.decorators import login_required, supervisor_required, almacen_required
 from auxiliares_inventario.models import Catalogo, Subcatalogo, Marca
-from .forms import (TipoForm, ProductoForm, EntradaForm, EntradaLineaFormSet)
+from login_app.decorators import login_required, supervisor_required, almacen_required
+from .forms import (TipoForm, ProductoForm, EntradaForm, EntradaLineaFormSetRegistro, EntradaLineaFormSetEdicion)
 
 # Helper para registrar logs 
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
@@ -436,7 +436,7 @@ def registrar_entrada(request):
         if not is_ajax:
             return redirect('inventario:lista_entradas')
         form_entrada   = EntradaForm()
-        formset_lineas = EntradaLineaFormSet()
+        formset_lineas = EntradaLineaFormSetRegistro()
         todos_productos = Producto.objects.filter(estado=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
@@ -455,7 +455,7 @@ def registrar_entrada(request):
 
     # POST
     form_entrada   = EntradaForm(request.POST)
-    formset_lineas = EntradaLineaFormSet(request.POST)
+    formset_lineas = EntradaLineaFormSetRegistro(request.POST)
     if form_entrada.is_valid() and formset_lineas.is_valid():
         try:
             entrada = form_entrada.save()
@@ -535,45 +535,120 @@ def editar_entrada(request, pk):
         if not is_ajax:
             return redirect('inventario:lista_entradas')
         form_entrada = EntradaForm(instance=entrada)
-        lineas = entrada.lineas.select_related('producto').all()
+        lineas_qs = entrada.lineas.select_related('producto').all()
+        formset_lineas = EntradaLineaFormSetEdicion(queryset=entrada.lineas.all(), prefix='form')
+
+        todos_productos = Producto.objects.filter(estado=True).order_by(
+            'tipo__Subcatalogo__catalogo__nombre',
+            'tipo__Subcatalogo__nombre',
+            'tipo__nombre',
+            'nombre'
+        )
         return render(
             request,
             'inventario/modales/modal_editar_entrada.html',
             {
-                'form_entrada': form_entrada,
-                'entrada':      entrada,
-                'lineas':       lineas,
+                'form_entrada':   form_entrada,
+                'formset_lineas': formset_lineas,
+                'todos_productos': todos_productos,
+                'entrada':        entrada,
             }
         )
 
-    # POST AJAX: actualizar sólo folio y fecha
+    # POST AJAX: edición completa
     form_entrada = EntradaForm(request.POST, instance=entrada)
-    if form_entrada.is_valid():
-        try:
+    formset_lineas = EntradaLineaFormSetEdicion(request.POST)
+
+    if form_entrada.is_valid() and formset_lineas.is_valid():
+        with transaction.atomic():
             form_entrada.save()
-        except IntegrityError:
-            form_entrada.add_error('folio', 'Ya existe otra entrada con este folio.')
-        else:
+
+            cambios_stock = []
+            originales = {
+                linea.id: linea
+                for linea in entrada.lineas.select_related('producto').all()
+            }
+
+            nuevas_lineas = formset_lineas.save(commit=False)
+
+            for form_linea in formset_lineas:
+                if form_linea.cleaned_data.get('DELETE'):
+                    continue
+
+                linea = form_linea.save(commit=False)
+                linea.entrada = entrada
+
+                cantidad_nueva = linea.cantidad
+                producto = linea.producto
+                linea_id = form_linea.instance.id
+
+                if linea_id in originales:
+                    cantidad_original = originales[linea_id].cantidad
+                    diferencia = cantidad_nueva - cantidad_original
+                    if diferencia != 0:
+                        producto.stock += diferencia
+                        cambios_stock.append((producto, cantidad_original, cantidad_nueva))
+                    del originales[linea_id]
+                else:
+                    producto.stock += cantidad_nueva
+                    cambios_stock.append((producto, 0, cantidad_nueva))
+
+                producto.save()
+                linea.save()
+
+            for linea_restante in originales.values():
+                producto = linea_restante.producto
+                producto.stock -= linea_restante.cantidad
+                producto.save()
+                cambios_stock.append((producto, linea_restante.cantidad, 0))
+                linea_restante.delete()
+
+            for form_linea in formset_lineas.deleted_forms:
+                if form_linea.instance and form_linea.instance.id:
+                    linea = form_linea.instance
+                    producto = linea.producto
+                    producto.stock -= linea.cantidad
+                    producto.save()
+                    cambios_stock.append((producto, linea.cantidad, 0))
+                    linea.delete()
+
             _registrar_log(
                 request,
-                tabla         = "entrada",
-                id_registro   = entrada.id,
-                nombre_modulo = "Inventario",
-                nombre_accion = "Editar"
+                tabla="entrada",
+                id_registro=entrada.id,
+                nombre_modulo="Inventario",
+                nombre_accion="Editar"
             )
+
+            for producto, antes, despues in cambios_stock:
+                if antes != despues:
+                    _registrar_log(
+                        request,
+                        tabla="producto",
+                        id_registro=producto.id,
+                        nombre_modulo="Inventario",
+                        nombre_accion="Ajuste stock",
+                    )
+
             request.session['entrada_success'] = 'Entrada actualizada correctamente.'
             return JsonResponse({
                 'success': True,
                 'redirect_url': reverse('inventario:lista_entradas')
             })
 
-    # Si hay errores de validación o IntegrityError:
+    # Si hay errores, volver a cargar el fragmento con los forms
     html_form = render_to_string(
-        'inventario/modales/fragmento_form_editar_entrada.html',
+        'inventario/modales/fragmento_form_entrada.html',
         {
-            'form_entrada': form_entrada,
-            'entrada':      entrada,
-            'lineas':       entrada.lineas.select_related('producto').all(),
+            'form_entrada':   form_entrada,
+            'formset_lineas': formset_lineas,
+            'todos_productos': Producto.objects.filter(estado=True).order_by(
+                'tipo__Subcatalogo__catalogo__nombre',
+                'tipo__Subcatalogo__nombre',
+                'tipo__nombre',
+                'nombre'
+            ),
+            'entrada': entrada,
         },
         request=request
     )

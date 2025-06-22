@@ -100,6 +100,7 @@
     <tbody>
       {% for form_linea in formset_lineas %}
         <tr class="linea-form" data-index="{{ forloop.counter0 }}">
+        <div style="display: none;"> {{ form_linea.id }} </div>
           <!-- Producto + Botón “Nuevo Producto” -->
           <td>
             <select name="{{ form_linea.prefix }}-producto"

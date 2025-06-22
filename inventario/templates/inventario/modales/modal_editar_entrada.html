@@ -3,13 +3,19 @@
   <button type="button" class="close" data-dismiss="modal">&times;</button>
 </div>
 <div class="modal-body">
-  <form id="form-editar-entrada" method="post"
-        action="{% url 'inventario:editar_entrada' entrada.pk %}">
+  <form id="form-editar-entrada" method="post" action="{% url 'inventario:editar_entrada' entrada.id %}">
     <div id="editar-form-fields">
-      {% include 'inventario/modales/fragmento_form_editar_entrada.html' %}
+    {% include 'inventario/modales/fragmento_form_entrada.html' %}
     </div>
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <div class="text-right mt-3">
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
     </div>
   </form>
+</div>
+
+<!-- Modal para “Crear Producto al vuelo” -->
+<div class="modal fade" id="modalCrearProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content"><!-- Carga modal_crear_producto.html vía AJAX --></div>
+    </div>
 </div>
