@@ -84,6 +84,17 @@
 </table>
 
 <!-- Tabla principal donde se muestran (o agregarán) las filas -->
+{% if formset_lineas.non_form_errors %}
+  <div class="alert alert-danger alert-dismissible fade show small mb-3" role="alert">
+    {% for error in formset_lineas.non_form_errors %}
+      <div>{{ error }}</div>
+    {% endfor %}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
+
 <div class="table-responsive">
   <table class="table table-bordered" id="tabla-entradas">
     <thead class="thead-light">
