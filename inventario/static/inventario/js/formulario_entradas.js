@@ -59,92 +59,92 @@ $(function() {
       });
     });
 
- // Init Select2 para Productos en el formset
-function initSelect2Productos($scope) {
-  $scope.find('.select2-producto-auto').each(function() {
-    const $sel = $(this);
-    if ($sel.hasClass('select2-hidden-accessible')) return;
+  // Init Select2 para Productos en el formset
+  function initSelect2Productos($scope) {
+    $scope.find('.select2-producto-auto').each(function() {
+      const $sel = $(this);
+      if ($sel.hasClass('select2-hidden-accessible')) return;
 
-    $sel.select2({
-      theme: 'bootstrap4',
-      placeholder: $sel.data('placeholder') || 'Selecciona producto…',
-      allowClear: true,
-      closeOnSelect: true,
-      width: '100%',
-      dropdownParent: $scope.closest('.modal'),
-      minimumResultsForSearch: 0
+      $sel.select2({
+        theme: 'bootstrap4',
+        placeholder: $sel.data('placeholder') || 'Selecciona producto…',
+        allowClear: true,
+        closeOnSelect: true,
+        width: '100%',
+        dropdownParent: $scope.closest('.modal'),
+        minimumResultsForSearch: 0
+      });
+
+      // Al seleccionar o deseleccionar, re-filtra duplicados y cierra
+      $sel.on('select2:select select2:unselect', () => {
+        updateProductoOptions();
+        $sel.select2('close');
+      });
     });
+    // Primera pasada de filtrado
+    updateProductoOptions();
 
-    // Al seleccionar o deseleccionar, re-filtra duplicados y cierra
-    $sel.on('select2:select select2:unselect', () => {
-      updateProductoOptions();
-      $sel.select2('close');
-    });
-  });
-  // Primera pasada de filtrado
-  updateProductoOptions();
-
-  // Ocultar botón "Crear Producto" si ya hay algo seleccionado
-  $scope.find('.select2-producto-auto').each(function () {
-    const $sel = $(this);
-    const $row = $sel.closest('tr');
-    const $btn = $row.find('.btn-nuevo-producto');
-    if ($sel.val()) {
-      $btn.hide();
-    } else {
-      $btn.show();
-    }
-  });
-}
-
-// Filtrar duplicados deshabilitando opciones
-function updateProductoOptions() {
-  // lista de ids seleccionados
-  const selected = $('.linea-form:visible .select2-producto-auto')
-    .map((_, el) => $(el).val())
-    .get()
-    .filter(v => v);
-  $('.select2-producto-auto').each(function() {
-    const $sel = $(this),
-          me  = $sel.val();
-    // reactiva todas primero
-    $sel.find('option').prop('disabled', false);
-    // deshabilita las que otro select ya eligió
-    selected.forEach(val => {
-      if (val && val !== me) {
-        $sel.find(`option[value="${val}"]`).prop('disabled', true);
+    // Ocultar botón "Crear Producto" si ya hay algo seleccionado
+    $scope.find('.select2-producto-auto').each(function () {
+      const $sel = $(this);
+      const $row = $sel.closest('tr');
+      const $btn = $row.find('.btn-nuevo-producto');
+      if ($sel.val()) {
+        $btn.hide();
+      } else {
+        $btn.show();
       }
     });
-    // refresca la UI de Select2
-    $sel.trigger('change.select2');
+  }
+
+  // Filtrar duplicados deshabilitando opciones
+  function updateProductoOptions() {
+    // lista de ids seleccionados
+    const selected = $('.linea-form:visible .select2-producto-auto')
+      .map((_, el) => $(el).val())
+      .get()
+      .filter(v => v);
+    $('.select2-producto-auto').each(function() {
+      const $sel = $(this),
+            me  = $sel.val();
+      // reactiva todas primero
+      $sel.find('option').prop('disabled', false);
+      // deshabilita las que otro select ya eligió
+      selected.forEach(val => {
+        if (val && val !== me) {
+          $sel.find(`option[value="${val}"]`).prop('disabled', true);
+        }
+      });
+      // refresca la UI de Select2
+      $sel.trigger('change.select2');
+    });
+  }
+
+  // Tras abrir el modal
+  $('#modalRegistrarEntrada, #modalEditarEntrada').on('shown.bs.modal', () => {
+    initSelect2Productos($('#tabla-entradas tbody'));
   });
-}
+  // Tras añadir cada fila
+  $('#btn-agregar-fila').on('click', function () {
+    const $total = $('#id_form-TOTAL_FORMS');
+    const idx = parseInt($total.val(), 10);
 
-// Tras abrir el modal
-$('#modalRegistrarEntrada, #modalEditarEntrada').on('shown.bs.modal', () => {
-  initSelect2Productos($('#tabla-entradas tbody'));
-});
-// Tras añadir cada fila
-$('#btn-agregar-fila').on('click', function () {
-  const $total = $('#id_form-TOTAL_FORMS');
-  const idx = parseInt($total.val(), 10);
+    const $newRow = $($('#template-row').prop('outerHTML')
+      .replace(/__INDEX__/g, idx))
+      .removeAttr('id')
+      .addClass('linea-form')
+      .attr('data-index', idx)
+      .show()
+      .appendTo('#tabla-entradas tbody');
 
-  const $newRow = $($('#template-row').prop('outerHTML')
-    .replace(/__INDEX__/g, idx))
-    .removeAttr('id')
-    .addClass('linea-form')
-    .attr('data-index', idx)
-    .show()
-    .appendTo('#tabla-entradas tbody');
+    $newRow.find('select, input[type="number"]').val('');
+    $newRow.find('input[name$="-DELETE"]').remove();
+    $newRow.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
+    $newRow.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
+    $total.val(idx + 1);
 
-  $newRow.find('select, input[type="number"]').val('');
-  $newRow.find('input[name$="-DELETE"]').remove();
-  $newRow.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
-  $newRow.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
-  $total.val(idx + 1);
-
-  initSelect2Productos($newRow);
-});
+    initSelect2Productos($newRow);
+  });
 
   // Al mostrar modal Registrar/Editar Entrada
   const $modalEntrada = $('#modalRegistrarEntrada, #modalEditarEntrada');
@@ -162,27 +162,27 @@ $('#btn-agregar-fila').on('click', function () {
   $('#btn-agregar-fila').text('+ Agregar fila');
 
   // Submit AJAX de la Entrada
-function bindFormEntrada() {
-  $(document).off('submit', '#form-entrada, #form-editar-entrada');
-  $(document).on('submit', '#form-entrada, #form-editar-entrada', function(e) {
-    e.preventDefault();
-    const $form = $(this);
-    const $modal = $form.closest('.modal');
-    $.post($form.attr('action'), $form.serialize(), resp => {
-      if (resp.success) {
-        $modal.modal('hide');
-        window.location = resp.redirect_url;
-      } else {
-        $modal.find('#entrada-form-fields, #editar-form-fields').html(resp.html_form);
-        initSelect2Productos($('#tabla-entradas tbody'));
-        updateProductoOptions();
-        bindAll(); 
-      }
-    }).fail(() => {
-      alert('Error de red. Intenta de nuevo.');
+  function bindFormEntrada() {
+    $(document).off('submit', '#form-entrada, #form-editar-entrada');
+    $(document).on('submit', '#form-entrada, #form-editar-entrada', function(e) {
+      e.preventDefault();
+      const $form = $(this);
+      const $modal = $form.closest('.modal');
+      $.post($form.attr('action'), $form.serialize(), resp => {
+        if (resp.success) {
+          $modal.modal('hide');
+          window.location = resp.redirect_url;
+        } else {
+          $modal.find('#entrada-form-fields, #editar-form-fields').html(resp.html_form);
+          initSelect2Productos($('#tabla-entradas tbody'));
+          updateProductoOptions($formFields);
+          bindAll(); 
+        }
+      }).fail(() => {
+        alert('Error de red. Intenta de nuevo.');
+      });
     });
-  });
-}
+  }
 
   // Agregar / eliminar filas
   function bindBtnsLinea() {
@@ -260,79 +260,21 @@ function bindFormEntrada() {
     });
   }
 
-// “+ Nuevo Producto” por fila
-function bindNuevoProductoFila() {
-  const $modal = $('#modalCrearProducto');
-  $(document).off('click', '.btn-nuevo-producto');
-  $(document).on('click', '.btn-nuevo-producto', function(e) {
-    e.preventDefault();
-    const $row = $(this).closest('tr.linea-form');
-    const url  = $(this).data('remote');
-    $.get(url, html => {
-      // Inyecta el form en el modal y prepara Select2
-      $modal.find('.modal-content').html(html);
-      initSelect2ProductoModal($modal);
-      $modal.modal('show')
-        .one('submitSuccess', (evt, data) => {
-          // atributos del producto
-          const val   = data.producto_id;
-          const txt   = data.producto_label;
-          const attrs = {
-            'data-marca':  data.producto_marca,
-            'data-color':  data.producto_color,
-            'data-modelo': data.producto_modelo,
-            'data-serie':  data.producto_serie || ''
-          };
-          // Creamos el <option> nuevo
-          const opt = new Option(txt, val, false, false);
-          Object.entries(attrs)
-            .forEach(([k, v]) => opt.setAttribute(k, v));
-          // Lo añadimos a todos los selects (incluida la plantilla oculta)
-          $('.select2-producto-auto').each(function() {
-            const $s = $(this);
-            $s.append(opt.cloneNode(true));
-            $s.trigger('change.select2');
-          });
-          // Ocultamos “+ Nuevo Producto” en esta fila
-          $row.find('.btn-nuevo-producto').hide();
-          // Desmarcamos cualquier DELETE heredado y lo ocultamos
-          const $del = $row.find('input[name$="-DELETE"]');
-          $del.prop('checked', false).hide();
-          // Seleccionamos la nueva opción en el <select> de la fila
-          const $sel = $row.find('select[name$="-producto"]');
-          $sel.val(val).trigger('change.select2');
-          // Rellenamos ya las celdas de marca/color/modelo/serie
-          $row.find('.marca-cell').text(attrs['data-marca']);
-          $row.find('.color-cell').text(attrs['data-color']);
-          $row.find('.modelo-cell').text(attrs['data-modelo']);
-          $row.find('.serie-cell').text(attrs['data-serie']);
-          // Refresca el bloqueo de duplicados
-          updateProductoOptions();
-          // Reindexa todas las filas y actualiza TOTAL_FORMS
-          reorderRows();
-          // Cierra el modal
-          $modal.modal('hide');
-        });
-    });
-  });
-}
-
-// “+ Nuevo Producto” global
-function bindNuevoProductoGeneral() {
-  const $modal = $('#modalCrearProducto');
-  $(document).off('click', '#btn-nuevo-producto-general')
-    .on('click', '#btn-nuevo-producto-general', function(e) {
+  // “+ Nuevo Producto” por fila
+  function bindNuevoProductoFila() {
+    const $modal = $('#modalCrearProducto');
+    $(document).off('click', '.btn-nuevo-producto');
+    $(document).on('click', '.btn-nuevo-producto', function(e) {
       e.preventDefault();
-      const url = $(this).data('remote');
+      const $row = $(this).closest('tr.linea-form');
+      const url  = $(this).data('remote');
       $.get(url, html => {
-        // Inyecta el formulario y muestra el modal
+        // Inyecta el form en el modal y prepara Select2
         $modal.find('.modal-content').html(html);
         initSelect2ProductoModal($modal);
         $modal.modal('show')
           .one('submitSuccess', (evt, data) => {
-            // Crea una nueva fila
-            $('#btn-agregar-fila').click();
-            const $row = $('#tabla-entradas tbody tr.linea-form:visible').last();
+            // atributos del producto
             const val   = data.producto_id;
             const txt   = data.producto_label;
             const attrs = {
@@ -341,53 +283,111 @@ function bindNuevoProductoGeneral() {
               'data-modelo': data.producto_modelo,
               'data-serie':  data.producto_serie || ''
             };
-            // Construye el <option> nuevo
+            // Creamos el <option> nuevo
             const opt = new Option(txt, val, false, false);
-            Object.entries(attrs).forEach(([k, v]) => opt.setAttribute(k, v));
-            // Añádelo a todos los selects y refresca Select2
+            Object.entries(attrs)
+              .forEach(([k, v]) => opt.setAttribute(k, v));
+            // Lo añadimos a todos los selects (incluida la plantilla oculta)
             $('.select2-producto-auto').each(function() {
               const $s = $(this);
               $s.append(opt.cloneNode(true));
               $s.trigger('change.select2');
             });
-            // Oculta el botón sólo en esta nueva fila
+            // Ocultamos “+ Nuevo Producto” en esta fila
             $row.find('.btn-nuevo-producto').hide();
-            // Limpia el checkbox DELETE heredado
-            $row.find('input[name$="-DELETE"]')
-                .prop('checked', false)
-                .hide();
-            // Selecciona y rellena la fila
+            // Desmarcamos cualquier DELETE heredado y lo ocultamos
+            const $del = $row.find('input[name$="-DELETE"]');
+            $del.prop('checked', false).hide();
+            // Seleccionamos la nueva opción en el <select> de la fila
             const $sel = $row.find('select[name$="-producto"]');
             $sel.val(val).trigger('change.select2');
+            // Rellenamos ya las celdas de marca/color/modelo/serie
             $row.find('.marca-cell').text(attrs['data-marca']);
             $row.find('.color-cell').text(attrs['data-color']);
             $row.find('.modelo-cell').text(attrs['data-modelo']);
             $row.find('.serie-cell').text(attrs['data-serie']);
-            // Actualiza bloqueo de duplicados
+            // Refresca el bloqueo de duplicados
             updateProductoOptions();
-            // Reindexa filas y TOTAL_FORMS
+            // Reindexa todas las filas y actualiza TOTAL_FORMS
             reorderRows();
             // Cierra el modal
             $modal.modal('hide');
           });
       });
     });
-}
+  }
 
-// Reordena los índices de fila y actualiza TOTAL_FORMS
-function reorderRows() {
-  const $rows = $('#tabla-entradas tbody tr.linea-form:visible');
-  $rows.each((i, tr) => {
-    const $tr = $(tr).attr('data-index', i);
-    // Solo reindexa selects y cantidad
-    $tr.find('select, input[type="number"]').each(function() {
-      const old = this.name;
-      const neu = old.replace(/-\d+-/, `-${i}-`);
-      $(this).attr({ name: neu, id: 'id_' + neu });
+  // “+ Nuevo Producto” global
+  function bindNuevoProductoGeneral() {
+    const $modal = $('#modalCrearProducto');
+    $(document).off('click', '#btn-nuevo-producto-general')
+      .on('click', '#btn-nuevo-producto-general', function(e) {
+        e.preventDefault();
+        const url = $(this).data('remote');
+        $.get(url, html => {
+          // Inyecta el formulario y muestra el modal
+          $modal.find('.modal-content').html(html);
+          initSelect2ProductoModal($modal);
+          $modal.modal('show')
+            .one('submitSuccess', (evt, data) => {
+              // Crea una nueva fila
+              $('#btn-agregar-fila').click();
+              const $row = $('#tabla-entradas tbody tr.linea-form:visible').last();
+              const val   = data.producto_id;
+              const txt   = data.producto_label;
+              const attrs = {
+                'data-marca':  data.producto_marca,
+                'data-color':  data.producto_color,
+                'data-modelo': data.producto_modelo,
+                'data-serie':  data.producto_serie || ''
+              };
+              // Construye el <option> nuevo
+              const opt = new Option(txt, val, false, false);
+              Object.entries(attrs).forEach(([k, v]) => opt.setAttribute(k, v));
+              // Añádelo a todos los selects y refresca Select2
+              $('.select2-producto-auto').each(function() {
+                const $s = $(this);
+                $s.append(opt.cloneNode(true));
+                $s.trigger('change.select2');
+              });
+              // Oculta el botón sólo en esta nueva fila
+              $row.find('.btn-nuevo-producto').hide();
+              // Limpia el checkbox DELETE heredado
+              $row.find('input[name$="-DELETE"]')
+                  .prop('checked', false)
+                  .hide();
+              // Selecciona y rellena la fila
+              const $sel = $row.find('select[name$="-producto"]');
+              $sel.val(val).trigger('change.select2');
+              $row.find('.marca-cell').text(attrs['data-marca']);
+              $row.find('.color-cell').text(attrs['data-color']);
+              $row.find('.modelo-cell').text(attrs['data-modelo']);
+              $row.find('.serie-cell').text(attrs['data-serie']);
+              // Actualiza bloqueo de duplicados
+              updateProductoOptions();
+              // Reindexa filas y TOTAL_FORMS
+              reorderRows();
+              // Cierra el modal
+              $modal.modal('hide');
+            });
+        });
+      });
+  }
+
+  // Reordena los índices de fila y actualiza TOTAL_FORMS
+  function reorderRows() {
+    const $rows = $('#tabla-entradas tbody tr.linea-form:visible');
+    $rows.each((i, tr) => {
+      const $tr = $(tr).attr('data-index', i);
+      // Solo reindexa selects y cantidad
+      $tr.find('select, input[type="number"]').each(function() {
+        const old = this.name;
+        const neu = old.replace(/-\d+-/, `-${i}-`);
+        $(this).attr({ name: neu, id: 'id_' + neu });
+      });
     });
-  });
-  $('#id_form-TOTAL_FORMS').val($rows.length);
-}
+    $('#id_form-TOTAL_FORMS').val($rows.length);
+  }
 
   // Bind all
   function bindAll() {
