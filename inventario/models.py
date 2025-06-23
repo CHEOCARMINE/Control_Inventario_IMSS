@@ -22,7 +22,7 @@ class Producto(models.Model):
     modelo          = models.CharField(max_length=50)
     marca           = models.ForeignKey(Marca, on_delete=models.PROTECT)
     color           = models.CharField(max_length=30)
-    numero_serie    = models.CharField(max_length=50, blank=True, null=True)
+    numero_serie    = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name="Número de serie")
     descripcion     = models.TextField(blank=True)
     nota            = models.TextField(blank=True)
     costo_unitario  = models.DecimalField(max_digits=10, decimal_places=2)
