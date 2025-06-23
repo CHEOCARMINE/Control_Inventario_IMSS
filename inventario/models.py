@@ -28,8 +28,11 @@ class Producto(models.Model):
     costo_unitario  = models.DecimalField(max_digits=10, decimal_places=2)
     estado          = models.BooleanField(default=True)
     stock           = models.PositiveIntegerField(default=0)
+    producto_padre  = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='productos_hijos')
 
     def __str__(self):
+        if self.numero_serie:
+            return f"{self.tipo.nombre} – {self.nombre} (Serie: {self.numero_serie})"
         return f"{self.tipo.nombre} – {self.nombre}"
 
 class Entrada(models.Model):

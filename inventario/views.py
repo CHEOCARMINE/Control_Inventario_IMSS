@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.forms import formset_factory
 from django.core.paginator import Paginator
 from django.db import transaction, IntegrityError
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from .models import Tipo, Producto, Entrada, EntradaLinea
@@ -481,21 +482,60 @@ def registrar_entrada(request):
                 request.session['entrada_success'] = 'Entrada registrada correctamente.'
 
                 # Guardar cada línea
+                productos_afectados = set()
+
                 for form_linea in formset_lineas:
                     if form_linea.cleaned_data and not form_linea.cleaned_data.get('DELETE', False):
                         producto = form_linea.cleaned_data['producto']
                         cantidad = form_linea.cleaned_data['cantidad']
+                        numero_serie = form_linea.cleaned_data.get('numero_serie')
 
-                        # Crear la línea de entrada
-                        EntradaLinea.objects.create(
-                            entrada=entrada,
-                            producto=producto,
-                            cantidad=cantidad
-                        )
+                        if numero_serie:
+                            # Validación redundante por seguridad
+                            if Producto.objects.filter(numero_serie=numero_serie).exists():
+                                form_linea.add_error('numero_serie', 'Ya existe un producto con ese número de serie.')
+                                raise ValidationError("Número de serie duplicado.")
 
-                        # Actualizar el stock
-                        producto.stock += cantidad
-                        producto.save()
+                            # Crear producto hijo
+                            producto_hijo = Producto.objects.create(
+                                tipo=producto.tipo,
+                                nombre=producto.nombre,
+                                modelo=producto.modelo,
+                                marca=producto.marca,
+                                color=producto.color,
+                                descripcion=producto.descripcion,
+                                nota=producto.nota,
+                                costo_unitario=producto.costo_unitario,
+                                numero_serie=numero_serie,
+                                producto_padre=producto,
+                                stock=1
+                            )
+
+                            EntradaLinea.objects.create(
+                                entrada=entrada,
+                                producto=producto_hijo,
+                                cantidad=1
+                            )
+
+                            productos_afectados.add(producto.id)
+
+                            _registrar_log(
+                                request,
+                                tabla="producto",
+                                id_registro=producto_hijo.id,
+                                nombre_modulo="Inventario",
+                                nombre_accion="Crear hijo"
+                            )
+
+                        else:
+                            EntradaLinea.objects.create(
+                                entrada=entrada,
+                                producto=producto,
+                                cantidad=cantidad
+                            )
+
+                            producto.stock += cantidad
+                            producto.save()
 
                         # Log de stock ajustado
                         _registrar_log(
@@ -505,6 +545,21 @@ def registrar_entrada(request):
                             nombre_modulo="Inventario",
                             nombre_accion="Ajuste stock"
                         )
+
+                # Actualizar stock de productos padres si se crearon hijos
+                productos_padres_actualizados = Producto.objects.filter(id__in=productos_afectados)
+                for padre in productos_padres_actualizados:
+                    total_hijos = Producto.objects.filter(producto_padre=padre).count()
+                    padre.stock = total_hijos
+                    padre.save()
+
+                    _registrar_log(
+                        request,
+                        tabla="producto",
+                        id_registro=padre.id,
+                        nombre_modulo="Inventario",
+                        nombre_accion="Ajuste stock (por hijos)"
+                    )
 
                 return JsonResponse({
                     'success':      True,

@@ -273,6 +273,14 @@ class EntradaLineaForm(forms.ModelForm):
             raise forms.ValidationError("La cantidad debe ser mayor que cero.")
         return cantidad
 
+    def clean_numero_serie(self):
+        numero_serie = self.cleaned_data.get('numero_serie', '').strip()
+        # Si viene número de serie, validamos que no exista ya en Productos
+        if numero_serie:
+            if Producto.objects.filter(numero_serie=numero_serie).exists():
+                raise ValidationError("Ya existe un producto con este número de serie.")
+        return numero_serie
+
 EntradaLineaFormSetRegistro = modelformset_factory(
     EntradaLinea,
     form=EntradaLineaForm,
