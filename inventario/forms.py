@@ -234,15 +234,25 @@ class EntradaForm(forms.ModelForm):
 
 # FORMULARIO PARA CADA LÍNEA DE ENTRADA
 class EntradaLineaForm(forms.ModelForm):
+    numero_serie = forms.CharField(
+        required=False,
+        label='N.º Serie',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control numero-serie-input',
+            'placeholder': 'N.º Serie'
+        })
+    )
     class Meta:
         model = EntradaLinea
-        fields = ['producto', 'cantidad']
+        fields = ['producto','numero_serie', 'cantidad']
         labels = {
             'producto': 'Producto',
+            'numero_serie': 'N.º Serie',
             'cantidad': 'Cantidad',
         }
         widgets = {
             'producto': forms.Select(attrs={'class': 'form-control select-producto-auto select2-tipo'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control numero-serie-input', 'placeholder': 'N.º Serie'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'Cantidad'}),
         }
 

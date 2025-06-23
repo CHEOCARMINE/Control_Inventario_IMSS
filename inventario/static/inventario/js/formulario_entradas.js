@@ -231,7 +231,9 @@ $(function() {
         $row.find('.marca-cell').text(data.marca  || '');
         $row.find('.color-cell').text(data.color  || '');
         $row.find('.modelo-cell').text(data.modelo || '');
-        $row.find('.serie-cell').text(data.serie || '');
+        if ($('#tabla-entradas').hasClass('modo-edicion')) {
+          $row.find('.serie-cell').text(data.serie || '');
+        }
         $row.find('.btn-nuevo-producto').hide();
         // cierra el dropdown
         $sel.select2('close');
@@ -256,7 +258,9 @@ $(function() {
       $row.find('.marca-cell').text(data.marca || '');
       $row.find('.color-cell').text(data.color || '');
       $row.find('.modelo-cell').text(data.modelo || '');
-      $row.find('.serie-cell').text(data.serie || '');
+      if ($('#tabla-entradas').hasClass('modo-edicion')) {
+        $row.find('.serie-cell').text(data.serie || '');
+      }
     });
   }
 
@@ -388,6 +392,40 @@ $(function() {
     });
     $('#id_form-TOTAL_FORMS').val($rows.length);
   }
+
+  function controlarCantidadPorSerie($fila) {
+  const $inputSerie = $fila.find('.numero-serie-input');
+  const $inputCantidad = $fila.find('input[name$="-cantidad"]');
+
+  $inputSerie.on('input', function () {
+    const tieneSerie = $inputSerie.val().trim() !== '';
+    if (tieneSerie) {
+      $inputCantidad.val(1);
+      $inputCantidad.prop('readonly', true);
+    } else {
+      $inputCantidad.prop('readonly', false);
+    }
+  });
+
+    // Al cargar la fila (edición), verificar si ya viene con serie
+    if ($inputSerie.val().trim() !== '') {
+      $inputCantidad.val(1);
+      $inputCantidad.prop('readonly', true);
+    }
+  }
+
+  // Aplica la lógica a todas las filas ya existentes
+  $('.linea-form').each(function () {
+    controlarCantidadPorSerie($(this));
+  });
+
+  // Aplica a filas nuevas (al clonar el template)
+  $('#tabla-entradas').on('click', '#btn-agregar-fila', function () {
+    setTimeout(() => {
+      const $nuevaFila = $('#tabla-entradas .linea-form').last();
+      controlarCantidadPorSerie($nuevaFila);
+    }, 100); // pequeño delay para que la fila exista en el DOM
+  });
 
   // Bind all
   function bindAll() {

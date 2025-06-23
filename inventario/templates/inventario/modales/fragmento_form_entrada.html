@@ -60,7 +60,13 @@
       <td class="marca-cell"></td>
       <td class="color-cell"></td>
       <td class="modelo-cell"></td>
-      <td class="serie-cell"></td>
+      <td class="serie-cell">
+        <input
+          type="text"
+          name="form-__INDEX__-numero_serie"
+          class="form-control numero-serie-input"
+          placeholder="Número de serie">
+      </td>
       <td>
         <input
           type="number"
@@ -103,8 +109,8 @@
         <th>Marca</th>
         <th>Color</th>
         <th>Modelo</th>
-        <th>N.º Serie</th>
-        <th style="width:120px;">Cantidad</th>
+        <th style="width:150px;">N.º Serie</th>
+        <th style="width:130px;">Cantidad</th>
         <th style="width:160px;">Acción</th>
       </tr>
     </thead>
@@ -159,8 +165,9 @@
             {% endif %}
           </td>
           <td class="serie-cell">
-            {% if form_linea.initial.producto and form_linea.initial.producto.numero_serie %}
-              {{ form_linea.initial.producto.numero_serie }}
+            {{ form_linea.numero_serie }}
+            {% if form_linea.numero_serie.errors %}
+              <div class="text-danger small">{{ form_linea.numero_serie.errors.0 }}</div>
             {% endif %}
           </td>
           <!-- Cantidad -->
