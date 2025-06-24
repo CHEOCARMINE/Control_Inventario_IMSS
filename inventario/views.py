@@ -438,7 +438,7 @@ def registrar_entrada(request):
             return redirect('inventario:lista_entradas')
         form_entrada   = EntradaForm()
         formset_lineas = EntradaLineaFormSetRegistro(queryset=EntradaLinea.objects.none())
-        todos_productos = Producto.objects.filter(estado=True).order_by(
+        todos_productos = Producto.objects.filter(estado=True, numero_serie__isnull=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
             'tipo__nombre',
@@ -618,7 +618,7 @@ def editar_entrada(request, pk):
         lineas_qs = entrada.lineas.select_related('producto').all()
         formset_lineas = EntradaLineaFormSetEdicion(queryset=entrada.lineas.all())
 
-        todos_productos = Producto.objects.filter(estado=True).order_by(
+        todos_productos = Producto.objects.filter(estado=True, numero_serie__isnull=True).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
             'tipo__nombre',

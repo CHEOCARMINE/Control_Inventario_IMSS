@@ -99,23 +99,32 @@ $(function() {
 
   // Filtrar duplicados deshabilitando opciones
   function updateProductoOptions() {
-    // lista de ids seleccionados
-    const selected = $('.linea-form:visible .select2-producto-auto')
-      .map((_, el) => $(el).val())
-      .get()
-      .filter(v => v);
+    // Contar cuántas veces está seleccionado cada producto
+    const counts = {};
+    $('.linea-form:visible .select2-producto-auto').each(function() {
+      const v = $(this).val();
+      if (v) counts[v] = (counts[v] || 0) + 1;
+    });
+
+    // Recorrer todos los selects para ajustar sus <option>
     $('.select2-producto-auto').each(function() {
-      const $sel = $(this),
-            me  = $sel.val();
-      // reactiva todas primero
-      $sel.find('option').prop('disabled', false);
-      // deshabilita las que otro select ya eligió
-      selected.forEach(val => {
-        if (val && val !== me) {
-          $sel.find(`option[value="${val}"]`).prop('disabled', true);
+      const $sel = $(this), me  = $sel.val(); 
+      $sel.find('option').each(function() {
+        const $opt = $(this), val  = $opt.val();
+        if (!val) return;
+
+        // Leer si este producto padre ya tiene hijos
+        const tieneHijos = String($opt.data('tiene-hijos')) === 'true';
+        let disable = false;
+
+        // Si NO tiene hijos, y ya está seleccionado en otra fila, lo deshabilitamos
+        if (!tieneHijos && counts[val] >= 1 && me !== val) {
+          disable = true;
         }
+
+        $opt.prop('disabled', disable);
       });
-      // refresca la UI de Select2
+      // Refrescar la UI de Select2
       $sel.trigger('change.select2');
     });
   }
@@ -139,11 +148,15 @@ $(function() {
 
     $newRow.find('select, input[type="number"]').val('');
     $newRow.find('input[name$="-DELETE"]').remove();
-    $newRow.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
+    $newRow.find('.marca-cell, .color-cell, .modelo-cell').text('');
+    $newRow.find('.serie-cell input.numero-serie-input').val('').show();
     $newRow.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
     $total.val(idx + 1);
 
     initSelect2Productos($newRow);
+    bindListenerCambioProducto();
+    controlarCantidadPorSerie($newRow);
+    controlarSerieYCantidad($newRow);
   });
 
   // Al mostrar modal Registrar/Editar Entrada
@@ -202,7 +215,8 @@ $(function() {
     $row.find('select, input[type="number"]').val('');
     // Elimina cualquier checkbox de DELETE heredado
     $row.find('input[name$="-DELETE"]').remove();
-    $row.find('.marca-cell, .color-cell, .modelo-cell, .serie-cell').text('');
+    $row.find('.marca-cell, .color-cell, .modelo-cell').text('');
+    $row.find('.serie-cell input.numero-serie-input').val('').show();
     $row.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
     // Actualiza contador
     $total.val(idx + 1);
@@ -231,14 +245,17 @@ $(function() {
         $row.find('.marca-cell').text(data.marca  || '');
         $row.find('.color-cell').text(data.color  || '');
         $row.find('.modelo-cell').text(data.modelo || '');
-        if ($('#tabla-entradas').hasClass('modo-edicion')) {
-          $row.find('.serie-cell').text(data.serie || '');
-        }
+        $row.find('.serie-cell').show();
+
+        // Lógica cantidad/serie
+        onProductoChange($sel);
+        controlarSerieYCantidad($row);
+        // Oculta “+ Nuevo Producto” en esta fila
         $row.find('.btn-nuevo-producto').hide();
-        // cierra el dropdown
-        $sel.select2('close');
         // vuelve a filtrar duplicados
         updateProductoOptions();
+        // cierra el dropdown
+        $sel.select2('close');
       });
     // Si usas allowClear tú también debes escuchar el evento clear
     $(document).off('select2:clear', '.select2-producto-auto')
@@ -426,6 +443,64 @@ $(function() {
       controlarCantidadPorSerie($nuevaFila);
     }, 100); // pequeño delay para que la fila exista en el DOM
   });
+
+  //  Controla cantidad al cambiar producto
+  function onProductoChange($sel) {
+    const tieneHijos  = $sel.find(':selected').data('tiene-hijos') === true;
+    const $row        = $sel.closest('tr.linea-form');
+    const $serieInput = $row.find('.numero-serie-input');
+    const $qtyInput   = $row.find('input[name$="-cantidad"]');
+
+    // siempre mostramos el campo Serie
+    $serieInput.closest('td').show();
+
+    if (tieneHijos) {
+      $qtyInput.val(1).prop('readonly', true);
+    } else {
+      $qtyInput.prop('readonly', false);
+    }
+  }
+
+  function controlarSerieYCantidad($row) {
+    const $serie    = $row.find('.numero-serie-input');
+    const $cantidad = $row.find('input[name$="-cantidad"]');
+
+    function prodId() {
+      return $row.find('select[name$="-producto"]').val();
+    }
+
+    // desconecta eventos anteriores y engancha el nuevo
+    $serie.off('input').on('input', function() {
+      const tiene = $serie.val().trim() !== '';
+
+      if (tiene) {
+        // bloqueo + forzar 1
+        $cantidad.val(1).prop('readonly', true);
+        // permito volver a elegir ese padre
+        updateProductoOptions();
+      } else {
+        // desbloqueo
+        $cantidad.prop('readonly', false);
+
+        // elimino **todas** las filas de este producto
+        $('#tabla-entradas tbody tr.linea-form').each(function() {
+          const $f = $(this);
+          if ($f.find('select[name$="-producto"]').val() === prodId()) {
+            $f.remove();
+          }
+        });
+
+        // reindexar y refrescar duplicados
+        reorderRows();
+        updateProductoOptions();
+      }
+    });
+
+    // si venimos con serie (edición), aplicarlo ya
+    if ($serie.val().trim()) {
+      $cantidad.val(1).prop('readonly', true);
+    }
+  }
 
   // Bind all
   function bindAll() {

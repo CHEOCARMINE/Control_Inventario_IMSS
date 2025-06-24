@@ -267,6 +267,24 @@ class EntradaLineaForm(forms.ModelForm):
             (f' / {obj.numero_serie}' if obj.numero_serie else '')
         )
 
+    def clean(self):
+        cd = super().clean()
+        prod = cd.get('producto')
+        serie = cd.get('numero_serie')
+        qty   = cd.get('cantidad')
+
+        # Si el padre ya tiene hijos, exigir serie
+        if prod and prod.productos_hijos.exists() and not serie:
+            raise forms.ValidationError(
+                "Este producto ya tiene unidades con serie; ingresa un número de serie."
+            )
+
+        # Si hay serie → qty = 1
+        if serie:
+            cd['cantidad'] = 1
+
+        return cd
+
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
         if cantidad is None or cantidad <= 0:

@@ -95,7 +95,7 @@
 
     <!-- TABLA DE PRODUCTOS -->
     <div class="table-responsive">
-        <table class="table table-bordered table-hover">
+        <table id="tabla-productos" class="table table-bordered table-hover">
         <thead class="thead-light">
             <tr>
             <th>Tipo</th>
@@ -111,10 +111,7 @@
         </thead>
         <tbody>
             {% for p in page_obj.object_list %}
-            <tr class="
-                {% if p.stock == 0 %}table-danger
-                {% elif p.stock < p.tipo.stock_minimo %}table-warning
-                {% endif %}">
+            <tr data-producto-padre="{{ p.producto_padre_id|default:'' }}" class="">
             <td>
                 {{ p.tipo.Subcatalogo.catalogo.nombre }} /
                 {{ p.tipo.Subcatalogo.nombre }} /
@@ -133,6 +130,7 @@
                 {% endif %}
             </td>
             <td>{{ p.stock }}</td>
+            <td style="display:none" data-minimo="{{ p.tipo.stock_minimo }}"></td>
             <td>
                 <button class="btn btn-sm btn-primary"
                         data-bs-toggle="modal"

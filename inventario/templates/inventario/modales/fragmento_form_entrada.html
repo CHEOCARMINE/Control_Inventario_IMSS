@@ -43,7 +43,8 @@
               data-marca="{{ prod.marca.nombre }}"
               data-color="{{ prod.color }}"
               data-modelo="{{ prod.modelo }}"
-              data-serie="{{ prod.numero_serie|default_if_none:'' }}">
+              data-serie="{{ prod.numero_serie|default_if_none:'' }}"
+              data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}">
               {{ prod.nombre }}
             </option>
           {% endfor %}
@@ -65,7 +66,7 @@
           type="text"
           name="form-__INDEX__-numero_serie"
           class="form-control numero-serie-input"
-          placeholder="Número de serie">
+          placeholder="N.º Serie">
       </td>
       <td>
         <input
@@ -131,6 +132,7 @@
                   data-color="{{ prod.color }}"
                   data-modelo="{{ prod.modelo }}"
                   data-serie="{{ prod.numero_serie|default_if_none:'' }}"
+                  data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}"
                   {% with selected_value=form_linea.producto.value|stringformat:"s" current_id=prod.id|stringformat:"s" %}
                     {% if selected_value == current_id %}
                       selected

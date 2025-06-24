@@ -53,3 +53,29 @@ $('body').on('shown.bs.modal', '#modalEditarProducto', function() {
     minimumResultsForSearch: 0
   });
 });
+
+// Recolorea cada fila según si es padre o hijo
+function colorearFilasInventario() {
+  $('#tabla-productos tbody tr').each(function() {
+    const $row   = $(this);
+    const stock  = Number($row.find('td').eq(7).text());                // Columna 8 (índice 7)
+    const minimo = Number($row.find('td[data-minimo]').data('minimo')); // Del atributo data-minimo
+    const esHijo = !!$row.data('producto-padre');                       // truthy si tiene padre
+
+    $row.removeClass('table-warning table-danger');
+
+    if (esHijo) {
+      if (stock <= 0) {
+        $row.addClass('table-danger');
+      }
+    } else {
+      if (stock <= 0) {
+        $row.addClass('table-danger');
+      } else if (stock < minimo) {
+        $row.addClass('table-warning');
+      }
+    }
+  });
+}
+
+$(document).ready(colorearFilasInventario);
