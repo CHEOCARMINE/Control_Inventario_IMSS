@@ -448,14 +448,28 @@ $(function() {
     }, 100); // pequeño delay para que la fila exista en el DOM
   });
 
-  //  Controla cantidad al cambiar producto
+  // Detecta si ya hemos escrito un número de serie para este padre en cualquier fila
+  function tieneSerieEnForm(prodId) {
+    return $('#tabla-entradas tbody tr.linea-form').filter(function() {
+      const $r     = $(this);
+      const id     = $r.find('.select2-producto-auto').val();
+      const serie  = $r.find('.numero-serie-input').val().trim();
+      return id === prodId && serie !== '';
+    }).length > 0;
+  }
+
+  // Al cambiar de producto (select2:select), mostramos siempre el input de serie y bloqueamos/corregimos la cantidad si el padre ya tiene hijos (BD) o si tiene serie en el form
   function onProductoChange($sel) {
-    const tieneHijos  = $sel.find(':selected').data('tiene-hijos') === true;
+    const prodId      = $sel.val();
+    const bdTieneHijos = $sel.find(':selected').data('tiene-hijos') === true;
+    const formTieneHijos = tieneSerieEnForm(prodId);
+    const tieneHijos  = bdTieneHijos || formTieneHijos;
+
     const $row        = $sel.closest('tr.linea-form');
     const $serieInput = $row.find('.numero-serie-input');
     const $qtyInput   = $row.find('input[name$="-cantidad"]');
 
-    // siempre mostramos el campo Serie
+    // siempre mostramos la celda de serie
     $serieInput.closest('td').show();
 
     if (tieneHijos) {
@@ -465,42 +479,42 @@ $(function() {
     }
   }
 
+  // Control visual serie ↔ cantidad y limpieza de filas huérfanas
   function controlarSerieYCantidad($row) {
     const $serie    = $row.find('.numero-serie-input');
     const $cantidad = $row.find('input[name$="-cantidad"]');
 
     function prodId() {
-      return $row.find('select[name$="-producto"]').val();
+      return $row.find('.select2-producto-auto').val();
     }
 
-    // desconecta eventos anteriores y engancha el nuevo
+    // cada vez que cambie el input de serie
     $serie.off('input').on('input', function() {
       const tiene = $serie.val().trim() !== '';
 
       if (tiene) {
-        // bloqueo + forzar 1
+        // bloqueo y forzamos 1
         $cantidad.val(1).prop('readonly', true);
-        // permito volver a elegir ese padre
-        updateProductoOptions();
       } else {
-        // desbloqueo
+        // desbloqueamos cantidad
         $cantidad.prop('readonly', false);
 
-        // elimino **todas** las filas de este producto
-        $('#tabla-entradas tbody tr.linea-form').each(function() {
-          const $f = $(this);
-          if ($f.find('select[name$="-producto"]').val() === prodId()) {
-            $f.remove();
-          }
+        // eliminamos filas huérfanas: mismas padre y sin serie, dejando siempre la primera
+        const $sinSerie = $('#tabla-entradas tbody tr.linea-form').filter(function() {
+          return $(this).find('select[name$="-producto"]').val() === prodId()
+              && $(this).find('.numero-serie-input').val().trim() === '';
         });
-
-        // reindexar y refrescar duplicados
-        reorderRows();
-        updateProductoOptions();
+        if ($sinSerie.length > 1) {
+          $sinSerie.slice(1).remove();
+        }
       }
+
+      // cada vez que cambie serie, reindexamos y refrescamos duplicados
+      reorderRows();
+      updateProductoOptions();
     });
 
-    // si venimos con serie (edición), aplicarlo ya
+    // inicialización en edición
     if ($serie.val().trim()) {
       $cantidad.val(1).prop('readonly', true);
     }
