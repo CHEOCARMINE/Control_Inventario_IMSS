@@ -19,24 +19,6 @@
   font-style: italic;
 }
 
-.select2-container--bootstrap4 .select2-selection {
-  max-width: 250px !important; 
-}
-
-.select2-container--bootstrap4 .select2-selection__rendered {
-  display: inline-block;     
-  max-width: 100%;             
-  white-space: nowrap;         
-  overflow: hidden !important; 
-  text-overflow: ellipsis;     
-}
-
-.select2-container--bootstrap4 .select2-results__option {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* Asegura que el modal de crear producto se superponga al de editar entrada */
 #modalCrearProducto {
   z-index: 1065 !important;

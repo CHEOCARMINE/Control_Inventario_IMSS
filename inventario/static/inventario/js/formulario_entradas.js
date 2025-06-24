@@ -72,8 +72,25 @@ $(function() {
         closeOnSelect: true,
         width: '100%',
         dropdownParent: $scope.closest('.modal'),
-        minimumResultsForSearch: 0
-      });
+        minimumResultsForSearch: 0,
+
+        // función que formatea cada opción del dropdown
+        templateResult: function(item) {
+          if (!item.id) return item.text;    
+          const txt = item.text;
+          return txt.length > 60
+            ? txt.substr(0, 60) + '…'
+            : txt;
+        },
+        // función que formatea el texto que se muestra una vez seleccionado
+        templateSelection: function(item) {
+          if (!item.id) return item.text;
+          const txt = item.text;
+          return txt.length > 60
+            ? txt.substr(0, 60) + '…'
+            : txt;
+        }
+        });
 
       // Al seleccionar o deseleccionar, re-filtra duplicados y cierra
       $sel.on('select2:select select2:unselect', () => {
