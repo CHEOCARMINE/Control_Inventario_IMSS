@@ -192,8 +192,12 @@ $(function() {
         } else {
           $modal.find('#entrada-form-fields, #editar-form-fields').html(resp.html_form);
           initSelect2Productos($('#tabla-entradas tbody'));
-          updateProductoOptions($formFields);
           bindAll(); 
+          actualizarColumnasProductosExistentes();
+          $('#tabla-entradas tbody .select2-producto-auto')
+          .each(function(){
+            $(this).trigger('change.select2');
+          });
         }
       }).fail(() => {
         alert('Error de red. Intenta de nuevo.');
