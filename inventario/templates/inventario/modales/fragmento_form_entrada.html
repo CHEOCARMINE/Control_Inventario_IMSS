@@ -45,7 +45,7 @@
               data-modelo="{{ prod.modelo }}"
               data-serie="{{ prod.numero_serie|default_if_none:'' }}"
               data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}">
-              {{ prod.nombre }}
+              {{ prod.tipo.nombre }} – {{ prod.nombre }}
             </option>
           {% endfor %}
         </select>
@@ -106,7 +106,7 @@
   <table class="table table-bordered" id="tabla-entradas">
     <thead class="thead-light">
       <tr>
-        <th>Producto</th>
+        <th style="width:250px;">Producto</th>
         <th>Marca</th>
         <th>Color</th>
         <th>Modelo</th>

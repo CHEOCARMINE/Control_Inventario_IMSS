@@ -101,9 +101,13 @@ $(function() {
   function updateProductoOptions() {
     // Contar cuántas veces está seleccionado cada producto
     const counts = {};
-    $('.linea-form:visible .select2-producto-auto').each(function() {
-      const v = $(this).val();
-      if (v) counts[v] = (counts[v] || 0) + 1;
+    $('.linea-form:visible').each(function() {
+      const $f = $(this);
+      const id = $f.find('.select2-producto-auto').val();
+      const serie = $f.find('.numero-serie-input').val().trim();
+      if (id && !serie) {
+        counts[id] = (counts[id] || 0) + 1;
+      }
     });
 
     // Recorrer todos los selects para ajustar sus <option>
