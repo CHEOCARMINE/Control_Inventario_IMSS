@@ -121,7 +121,8 @@ $(function() {
     $('.linea-form:visible').each(function() {
       const $f = $(this);
       const id = $f.find('.select2-producto-auto').val();
-      const serie = $f.find('.numero-serie-input').val().trim();
+      const rawSerie = $f.find('.numero-serie-input').val();
+      const serie   = rawSerie ? rawSerie.trim() : '';
       if (id && !serie) {
         counts[id] = (counts[id] || 0) + 1;
       }
