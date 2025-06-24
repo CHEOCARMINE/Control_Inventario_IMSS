@@ -251,7 +251,7 @@ class EntradaLineaForm(forms.ModelForm):
             'cantidad': 'Cantidad',
         }
         widgets = {
-            'producto': forms.Select(attrs={'class': 'form-control select-producto-auto select2-tipo'}),
+            'producto': forms.Select(attrs={'class': 'form-control select-producto-auto select2-tipo', 'data-placeholder': 'Selecciona producto…'}),
             'numero_serie': forms.TextInput(attrs={'class': 'form-control numero-serie-input', 'placeholder': 'N.º Serie'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'Cantidad'}),
         }
@@ -292,10 +292,13 @@ class EntradaLineaForm(forms.ModelForm):
         return cantidad
 
     def clean_numero_serie(self):
-        numero_serie = self.cleaned_data.get('numero_serie', '').strip()
-        # Si viene número de serie, validamos que no exista ya en Productos
+        numero_serie = self.cleaned_data.get('numero_serie','').strip()
         if numero_serie:
-            if Producto.objects.filter(numero_serie=numero_serie).exists():
+            qs = Producto.objects.filter(numero_serie=numero_serie)
+            # Si estamos editando una línea que ya apuntaba a ese hijo, lo permitimos:
+            if self.instance.pk and self.instance.producto.numero_serie == numero_serie:
+                return numero_serie
+            if qs.exists():
                 raise ValidationError("Ya existe un producto con este número de serie.")
         return numero_serie
 

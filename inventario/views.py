@@ -1,5 +1,5 @@
-from django.db.models import F
 from django.urls import reverse
+from django.db.models import F, Q
 from django.http import JsonResponse
 from django.forms import formset_factory
 from django.core.paginator import Paginator
@@ -617,8 +617,9 @@ def editar_entrada(request, pk):
         form_entrada = EntradaForm(instance=entrada)
         lineas_qs = entrada.lineas.select_related('producto').all()
         formset_lineas = EntradaLineaFormSetEdicion(queryset=entrada.lineas.all())
+        entrada_prod_ids = list(entrada.lineas.values_list('producto_id', flat=True))
 
-        todos_productos = Producto.objects.filter(estado=True, numero_serie__isnull=True).order_by(
+        todos_productos = Producto.objects.filter(estado=True).filter( Q(numero_serie__isnull=True) | Q(id__in=entrada_prod_ids)).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
             'tipo__nombre',
@@ -637,7 +638,7 @@ def editar_entrada(request, pk):
 
     # POST AJAX
     form_entrada = EntradaForm(request.POST, instance=entrada)
-    formset_lineas = EntradaLineaFormSetEdicion(request.POST)
+    formset_lineas = EntradaLineaFormSetEdicion(request.POST, queryset=entrada.lineas.all())
 
     if form_entrada.is_valid() and formset_lineas.is_valid():
         # Validar que al menos una línea no esté marcada para eliminar
@@ -696,6 +697,8 @@ def editar_entrada(request, pk):
                         if form_linea.instance and form_linea.instance.id:
                             linea = form_linea.instance
                             producto = linea.producto
+                            if producto.numero_serie:
+                                producto.delete()
                             producto.stock -= linea.cantidad
                             producto.save()
                             cambios_stock.append((producto, linea.cantidad, 0))

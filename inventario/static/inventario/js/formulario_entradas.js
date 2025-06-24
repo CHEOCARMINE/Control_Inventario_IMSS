@@ -187,6 +187,7 @@ $(function() {
     .on('shown.bs.modal', () => {
       initSelect2Productos($('#tabla-entradas tbody'));
       actualizarColumnasProductosExistentes(); // <- Actualiza columnas al abrir
+      bloquearFilasConSerie();
       $('#tabla-entradas tbody .select2-producto-auto').each(function () {
         $(this).trigger('change'); // <- Fuerza eventos de Select2
       });
@@ -290,19 +291,31 @@ $(function() {
       });
   }
 
-  // Forzar actualización de columnas al abrir el modal
-  function actualizarColumnasProductosExistentes() {
-    $('#tabla-entradas tbody tr.linea-form:visible').each(function () {
-      const $row = $(this);
-      const $sel = $row.find('.select2-producto-auto');
-      const selected = $sel.find(':selected');
-      const data = selected.data();
+  // Cuando se muestra el modal de edición, actualiza todas las columnas
+  $('#modalEditarEntrada').on('shown.bs.modal', function() {
+    actualizarColumnasProductosExistentes();
+  });
 
-      $row.find('.marca-cell').text(data.marca || '');
-      $row.find('.color-cell').text(data.color || '');
+  function actualizarColumnasProductosExistentes() {
+    $('#tabla-entradas tbody tr.linea-form').each(function () {
+      const $row  = $(this);
+      const data  = $row
+        .find('.select2-producto-auto option:selected')
+        .data() || {};
+
+      // Rellenar siempre las columnas
+      $row.find('.marca-cell').text(data.marca   || '');
+      $row.find('.color-cell').text(data.color   || '');
       $row.find('.modelo-cell').text(data.modelo || '');
-      if ($('#tabla-entradas').hasClass('modo-edicion')) {
-        $row.find('.serie-cell').text(data.serie || '');
+
+      // Volcar la serie en el input, si existe
+      const $serieInput = $row.find('input.numero-serie-input');
+      $serieInput.val(data.serie || '');
+
+      // Si es un hijo (ya trae serie), bloqueamos serie y cantidad
+      if (data.serie) {
+        $serieInput.prop('readonly', true);
+        $row.find('input[name$="-cantidad"]').prop('readonly', true);
       }
     });
   }
@@ -541,6 +554,26 @@ $(function() {
       $cantidad.val(1).prop('readonly', true);
     }
   }
+
+  function bloquearFilasConSerie() {
+  $('#tabla-entradas tbody tr.linea-form').each(function() {
+    const $row   = $(this);
+    const serie  = $row.find('.numero-serie-input').val().trim();
+    if (serie) {
+      // Deshabilitar el select2 de producto
+      const $sel = $row.find('.select2-producto-auto');
+      $sel.prop('disabled', true)
+          .trigger('change.select2'); 
+
+      // Poner readonly en serie y cantidad
+      $row.find('.numero-serie-input, input[name$="-cantidad"]')
+          .prop('readonly', true);
+
+      // Ocultar el botón “+ Nuevo Producto” en esa fila
+      $row.find('.btn-nuevo-producto').hide();
+    }
+  });
+}
 
   // Bind all
   function bindAll() {
