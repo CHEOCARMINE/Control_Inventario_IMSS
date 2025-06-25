@@ -556,24 +556,27 @@ $(function() {
   }
 
   function bloquearFilasConSerie() {
-  $('#tabla-entradas tbody tr.linea-form').each(function() {
-    const $row   = $(this);
-    const serie  = $row.find('.numero-serie-input').val().trim();
-    if (serie) {
-      // Deshabilitar el select2 de producto
-      const $sel = $row.find('.select2-producto-auto');
-      $sel.prop('disabled', true)
-          .trigger('change.select2'); 
-
-      // Poner readonly en serie y cantidad
-      $row.find('.numero-serie-input, input[name$="-cantidad"]')
-          .prop('readonly', true);
-
-      // Ocultar el botón “+ Nuevo Producto” en esa fila
+    $('#tabla-entradas tbody tr.linea-form').each(function() {
+      const $row   = $(this);
+      const serie  = $row.find('.numero-serie-input').val().trim();
+      if (!serie) return;
+      const $sel   = $row.find('.select2-producto-auto');
+      const name   = $sel.attr('name');
+      const value  = $sel.val();
+      $row
+        .find('input.hidden-producto')
+        .remove(); 
+      $row.prepend(
+        $('<input type="hidden" class="hidden-producto">')
+          .attr({ name: name, value: value })
+      );
+      $sel.prop('disabled', true).trigger('change.select2');
+      $row
+        .find('.numero-serie-input, input[name$="-cantidad"]')
+        .prop('readonly', true);
       $row.find('.btn-nuevo-producto').hide();
-    }
-  });
-}
+    });
+  }
 
   // Bind all
   function bindAll() {
