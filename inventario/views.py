@@ -640,10 +640,12 @@ def editar_entrada(request, pk):
     form_entrada   = EntradaForm(request.POST, instance=entrada)
     formset_lineas = EntradaLineaFormSetEdicion(request.POST, queryset=entrada.lineas.all())
 
-    # Guardar primero la cabecera (folio) y controlar duplicados
+    # Guardar primero la cabecera y controlar duplicados (folio)
     if form_entrada.is_valid():
         try:
-            entrada = form_entrada.save()
+            entrada.folio             = form_entrada.cleaned_data['folio']
+            entrada.fecha_recepcion   = form_entrada.cleaned_data['fecha_recepcion']
+            entrada.save(update_fields=['folio', 'fecha_recepcion'])
         except IntegrityError as e:
             if 'folio' in str(e).lower():
                 form_entrada.add_error(
