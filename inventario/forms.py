@@ -66,8 +66,9 @@ class ProductoForm(forms.ModelForm):
         model = Producto
         fields = [
             'tipo', 'nombre', 'modelo', 'marca',
-            'color', 'numero_serie', 'descripcion',
-            'nota', 'costo_unitario', 'estado', 'stock',
+            'color', 'tiene_serie', 'numero_serie',
+            'descripcion', 'nota', 'costo_unitario',
+            'estado', 'stock',
         ]
         labels = {
             'tipo':           'Tipo',
@@ -75,6 +76,8 @@ class ProductoForm(forms.ModelForm):
             'modelo':         'Modelo',
             'marca':          'Marca',
             'color':          'Color',
+            'tiene_serie':    '¿Este producto tendrá unidades con serie (hijos)?',
+            'numero_serie':   'Número de serie',
             'descripcion':    'Descripción',
             'nota':           'Nota',
             'costo_unitario': 'Costo unitario',
@@ -87,52 +90,50 @@ class ProductoForm(forms.ModelForm):
             'modelo':         forms.TextInput(attrs={'class': 'form-control'}),
             'color':          forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion':    forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'nota':           forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'nota':           forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'costo_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'estado':         forms.HiddenInput(),
             'stock':          forms.HiddenInput(),
         }
 
-    def __init__(self, *args, **kwargs):
-        # Extraemos el flag 'crear'
-        crear = kwargs.pop('crear', False)
-
-        # Ajustamos initial para precargar marca al editar
+    def __init__(self, *args, crear=False, **kwargs):
         initial = kwargs.pop('initial', {}) or {}
         instance = kwargs.get('instance')
         if instance and instance.pk and instance.marca:
             initial['marca'] = instance.marca.nombre
         kwargs['initial'] = initial
-
         super().__init__(*args, **kwargs)
 
-        # Construimos la lista de nombres de Marca
-        marcas = Marca.objects.order_by('nombre')\
-            .values_list('nombre', flat=True)
+        marcas = Marca.objects.order_by('nombre').values_list('nombre', flat=True)
         self.marcas_list = list(marcas)
-
-        # Reemplazamos el widget de 'marca' por un <select>
-        choices = [('', '---------')] + [(m, m) for m in self.marcas_list]
         self.fields['marca'].widget = forms.Select(
-            choices=choices,
+            choices=[('', '---------')] + [(m, m) for m in self.marcas_list],
             attrs={'class': 'form-control select2-tags'}
         )
 
-        # Ajustes de campos restantes
-        self.fields['tipo'].queryset = Tipo.objects.filter(estado=True)\
-            .order_by('nombre')
-        for fname, fld in self.fields.items():
-            if fname not in ('tipo', 'marca'):
-                fld.widget.attrs.update({'class': 'form-control'})
+        self.fields['tipo'].queryset = Tipo.objects.filter(estado=True).order_by('nombre')
 
-        # Control de ocultar/mostrar stock y estado
+        self.fields['tiene_serie'] = forms.TypedChoiceField(
+            choices=[('False', 'No'), ('True', 'Sí')],
+            coerce=lambda v: v == 'True',
+            empty_value=False,
+            required=False,
+            widget=forms.Select(attrs={'class': 'form-control'})
+        )
+
+        inst = getattr(self, 'instance', None)
+        if crear:
+            self.fields['tiene_serie'].initial = 'False'
+        elif inst and inst.pk:
+            self.fields['tiene_serie'].initial = 'True' if inst.tiene_serie else 'False'
+            if inst.productos_hijos.exists():
+                self.fields['tiene_serie'].disabled = True
+
         if crear:
             self.fields['estado'].initial = True
             self.fields['estado'].widget = forms.HiddenInput()
-            self.fields['stock'].widget  = forms.HiddenInput()
         else:
-            self.fields['stock'].widget = forms.HiddenInput()
-            if instance and instance.pk and instance.stock == 0:
+            if inst and inst.pk and inst.stock == 0:
                 self.fields['estado'].widget = forms.Select(
                     choices=[(True, 'Activo'), (False, 'Inactivo')],
                     attrs={'class': 'form-control'}
@@ -140,14 +141,27 @@ class ProductoForm(forms.ModelForm):
             else:
                 self.fields['estado'].widget = forms.HiddenInput()
 
+        if crear:
+            self.fields['numero_serie'].widget = forms.HiddenInput()
+            self.fields['numero_serie'].required = False
+        elif inst and inst.pk:
+            if inst.numero_serie:
+                self.fields['numero_serie'].widget = forms.TextInput(attrs={'class': 'form-control'})
+                self.fields['numero_serie'].required = True
+            else:
+                self.fields['numero_serie'].widget = forms.HiddenInput()
+                self.fields['numero_serie'].required = False
+
+        for fname, fld in self.fields.items():
+            if fname not in ('tipo', 'marca', 'tiene_serie', 'numero_serie', 'estado', 'stock'):
+                fld.widget.attrs.update({'class': 'form-control'})
+
     def clean_marca(self):
         texto = self.cleaned_data['marca'].strip()
         if not texto:
             raise forms.ValidationError("La marca es obligatoria.")
-        # Validar solo letras y números
         if not re.match(r'^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s]+$', texto):
             raise forms.ValidationError("La marca solo puede contener letras y números.")
-        # Buscamos case‐insensitive o creamos
         marca_obj, _ = Marca.objects.get_or_create(
             nombre__iexact=texto,
             defaults={'nombre': texto}
@@ -170,18 +184,16 @@ class ProductoForm(forms.ModelForm):
 
     def clean_costo_unitario(self):
         costo = self.cleaned_data.get('costo_unitario')
-        if costo is None:
-            return costo
-        if costo < 0:
+        if costo is None or costo < 0:
             raise forms.ValidationError("El costo unitario no puede ser negativo.")
         return costo
 
     def clean_color(self):
         color = self.cleaned_data.get('color', '').strip()
         if not color:
-            raise ValidationError("El color es obligatorio.")
+            raise forms.ValidationError("El color es obligatorio.")
         if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+", color):
-            raise ValidationError("El color solo debe contener letras y espacios.")
+            raise forms.ValidationError("El color solo debe contener letras y espacios.")
         return color
 
 # FORMULARIO PARA LA CABECERA DE ENTRADA

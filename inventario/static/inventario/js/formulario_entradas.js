@@ -31,8 +31,20 @@ $(function() {
   }
 
   // Al mostrar modal Crear/Editar Producto
-  $('body').on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
-    initSelect2ProductoModal($(this));
+  $(document).on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
+    const $m = $(this);
+    initSelect2ProductoModal($m);
+    const $chk   = $m.find('#id_tiene_serie');
+    const $serie = $m.find('#div_numero_serie');
+    function toggleSerie() {
+      if ($chk.is(':checked')) {
+        $serie.show();
+      } else {
+        $serie.hide().find('input').val('');
+      }
+    }
+    toggleSerie();
+    $chk.off('change.selectorSerie').on('change.selectorSerie', toggleSerie);
   });
 
   // Capturar submit Crear/Editar Producto y reinit Select2

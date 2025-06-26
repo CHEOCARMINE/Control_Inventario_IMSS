@@ -253,6 +253,8 @@ def lista_productos(request):
     })
 
 # CREAR
+@login_required
+@supervisor_required
 def crear_producto(request):
     if request.method == "POST":
         form = ProductoForm(request.POST, crear=True)
@@ -270,16 +272,16 @@ def crear_producto(request):
                 nombre_accion="Crear"
             )
             return JsonResponse({
-                "success":        True,
-                "producto_id":    producto.id,
-                "producto_label": producto.nombre,
-                "producto_marca": producto.marca.nombre,
-                "producto_color": producto.color,
+                "success":         True,
+                "producto_id":     producto.id,
+                "producto_label":  producto.nombre,
+                "producto_marca":  producto.marca.nombre,
+                "producto_color":  producto.color,
                 "producto_modelo": producto.modelo,
-                "producto_serie": producto.numero_serie or ""
+                "producto_serie":  producto.numero_serie or "",
+                "tiene_serie":     producto.tiene_serie,
             })
         else:
-            # Renderizamos el modal completo con errores
             html = render_to_string(
                 'inventario/modales/modal_crear_producto.html',
                 {
@@ -290,7 +292,7 @@ def crear_producto(request):
             )
             return JsonResponse({'success': False, 'html_form': html})
 
-    # GET inicial: abrimos modal en blanco para crear
+    # GET inicial: creamos el form en 'crear' mode
     form = ProductoForm(crear=True)
     return render(
         request,
@@ -307,13 +309,14 @@ def crear_producto(request):
 def editar_producto(request, pk):
     prod = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
-        form = ProductoForm(request.POST, instance=prod)
+        form = ProductoForm(request.POST, crear=False, instance=prod)
+        marcas = form.marcas_list
         if form.is_valid():
-            form.save()
+            producto = form.save()
             _registrar_log(
                 request,
                 tabla="producto",
-                id_registro=prod.id,
+                id_registro=producto.id,
                 nombre_modulo="Inventario",
                 nombre_accion="Editar"
             )
@@ -323,7 +326,6 @@ def editar_producto(request, pk):
                 'redirect_url': reverse('inventario:lista_productos')
             })
         else:
-            # Renderizamos el modal completo con errores
             html = render_to_string(
                 'inventario/modales/modal_editar_producto.html',
                 {
@@ -335,8 +337,8 @@ def editar_producto(request, pk):
             )
             return JsonResponse({'success': False, 'html_form': html})
 
-    # GET inicial: abrimos modal con formulario precargado
-    form = ProductoForm(instance=prod)
+    # GET inicial: form con instancia
+    form = ProductoForm(crear=False, instance=prod)
     return render(
         request,
         'inventario/modales/modal_editar_producto.html',
