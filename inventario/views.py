@@ -279,7 +279,7 @@ def crear_producto(request):
                 "producto_color":  producto.color,
                 "producto_modelo": producto.modelo,
                 "producto_serie":  producto.numero_serie or "",
-                "tiene_serie":     producto.tiene_serie,
+                "producto_tiene_serie":     producto.tiene_serie,
             })
         else:
             html = render_to_string(
@@ -303,6 +303,7 @@ def crear_producto(request):
         }
     )
 
+# EDITAR
 @login_required
 @supervisor_required
 def editar_producto(request, pk):
@@ -362,7 +363,6 @@ def editar_producto(request, pk):
             'marcas_existentes': form.marcas_list,
         }
     )
-
 # FINDE INVENTARIO
 
 # ENTRADAS

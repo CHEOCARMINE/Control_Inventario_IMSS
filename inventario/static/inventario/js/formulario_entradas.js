@@ -144,9 +144,11 @@ $(function() {
     // Contar cuántas veces está seleccionado cada producto (sin serie)
     const counts = {};
     $('.linea-form:visible').each(function() {
-      const $f     = $(this);
-      const id     = $f.find('.select2-producto-auto').val();
-      const serie  = $f.find('.numero-serie-input').val().trim();
+      const $f      = $(this);
+      const id      = $f.find('.select2-producto-auto').val();
+      // Asegurarnos de que rawSerie sea siempre string
+      const rawSerie = $f.find('.numero-serie-input').val() || '';
+      const serie   = rawSerie.trim();
       if (id && !serie) {
         counts[id] = (counts[id] || 0) + 1;
       }
@@ -156,13 +158,12 @@ $(function() {
     $('.select2-producto-auto').each(function() {
       const $sel = $(this), me = $sel.val();
       $sel.find('option').each(function() {
-        const $opt = $(this), val = $opt.val();
+        const $opt      = $(this),
+              val       = $opt.val(),
+              tieneSerie = String($opt.data('tiene-serie')) === 'true';
         if (!val) return;
 
-        // Miramos si el producto tiene serie
-        const tieneSerie = String($opt.data('tiene-serie')) === 'true';
         let disable = false;
-
         // Si NO tiene serie y ya está en counts, lo deshabilitamos (si no es este select)
         if (!tieneSerie && counts[val] >= 1 && me !== val) {
           disable = true;
@@ -387,13 +388,21 @@ $(function() {
             // Seleccionamos la nueva opción en el <select> de la fila
             const $sel = $row.find('select[name$="-producto"]');
             $sel.val(val).trigger('change.select2');
-            // Rellenamos ya las celdas de marca/color/modelo/serie
+            // Hacemos visible la celda y el input de serie
+            const $serieCelda  = $row.find('.serie-cell').show();
+            const $serieInput  = $serieCelda
+              .find('input.numero-serie-input')
+              .show()
+              .prop('required', true);
+            // Asignamos el valor de serie **al input**, no al contenedor
+            $serieInput.val(attrs['data-serie']);
+            // Rellenamos las celdas de marca/color/modelo
             $row.find('.marca-cell').text(attrs['data-marca']);
             $row.find('.color-cell').text(attrs['data-color']);
             $row.find('.modelo-cell').text(attrs['data-modelo']);
-            $row.find('.serie-cell').text(attrs['data-serie']);
             // Refresca el bloqueo de duplicados
             updateProductoOptions();
+            updateRowSerieQty($row);
             // Reindexa todas las filas y actualiza TOTAL_FORMS
             reorderRows();
             // Cierra el modal
@@ -443,17 +452,26 @@ $(function() {
               $row.find('input[name$="-DELETE"]')
                   .prop('checked', false)
                   .hide();
-              // Selecciona y rellena la fila
+              // Seleccionamos la nueva opción en el <select> de la fila
               const $sel = $row.find('select[name$="-producto"]');
               $sel.val(val).trigger('change.select2');
+              // Hacemos visible la celda y el input de serie
+              const $serieCelda  = $row.find('.serie-cell').show();
+              const $serieInput  = $serieCelda
+                .find('input.numero-serie-input')
+                .show()
+                .prop('required', true);
+              // Asignamos el valor de serie **al input**, no al contenedor
+              $serieInput.val(attrs['data-serie']);
+              // Rellenamos las celdas de marca/color/modelo
               $row.find('.marca-cell').text(attrs['data-marca']);
               $row.find('.color-cell').text(attrs['data-color']);
               $row.find('.modelo-cell').text(attrs['data-modelo']);
-              $row.find('.serie-cell').text(attrs['data-serie']);
               // Actualiza bloqueo de duplicados
               updateProductoOptions();
               // Reindexa filas y TOTAL_FORMS
               reorderRows();
+              updateRowSerieQty($row);
               // Cierra el modal
               $modal.modal('hide');
             });
