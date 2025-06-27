@@ -80,42 +80,44 @@
         </div>
     </div>
 
-    <!-- 4) Estado (si aplica) + Tiene Serie -->
+    <!-- 4) Estado (si aplica) + ¿Tiene Serie? -->
     <div class="row">
         {% if not form.estado.is_hidden %}
         <div class="col-md-6 mb-3">
+            <div class="form-group">
             {{ form.estado.label_tag }}
             {{ form.estado }}
-            {% for err in form.estado.errors %}
-            <div class="text-danger small">{{ err }}</div>
-            {% endfor %}
+            {% if form.estado.errors %}
+                <div class="text-danger small">{{ form.estado.errors.0 }}</div>
+            {% endif %}
+            </div>
         </div>
         {% endif %}
 
         {% if not form.tiene_serie.is_hidden %}
         <div class="col-md-6 mb-3">
-            <label for="{{ form.tiene_serie.id_for_label }}" class="form-label">
-            {{ form.tiene_serie.label }}
-            </label>
+            <div class="form-group">
+            <label for="{{ form.tiene_serie.id_for_label }}">{{ form.tiene_serie.label }}</label>
             {{ form.tiene_serie }}
             {% if form.tiene_serie.errors %}
-            <div class="text-danger small">{{ form.tiene_serie.errors.0 }}</div>
+                <div class="text-danger small">{{ form.tiene_serie.errors.0 }}</div>
             {% endif %}
+            </div>
         </div>
         {% endif %}
     </div>
 
-    <!-- 5) Número de Serie (si aplica) -->
     {% if not form.numero_serie.is_hidden %}
-        <div class="row">
+    <!-- 5) Número de Serie (si aplica) -->
+    <div class="row">
         <div id="div_numero_serie" class="col-md-6 mb-3">
-            {{ form.numero_serie.label_tag }}
-            {{ form.numero_serie }}
-            {% for err in form.numero_serie.errors %}
+        {{ form.numero_serie.label_tag }}
+        {{ form.numero_serie }}
+        {% for err in form.numero_serie.errors %}
             <div class="text-danger small">{{ err }}</div>
-            {% endfor %}
+        {% endfor %}
         </div>
-        </div>
+    </div>
     {% endif %}
 
     <!-- 6) Descripción / Nota -->

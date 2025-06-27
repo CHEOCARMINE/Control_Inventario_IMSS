@@ -97,64 +97,75 @@ class ProductoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, crear=False, **kwargs):
-        initial = kwargs.pop('initial', {}) or {}
-        instance = kwargs.get('instance')
+        initial  = kwargs.pop('initial', {}) or {}
+        instance = kwargs.get('instance', None)
         if instance and instance.pk and instance.marca:
             initial['marca'] = instance.marca.nombre
         kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
 
+        # Widgets comunes
         marcas = Marca.objects.order_by('nombre').values_list('nombre', flat=True)
         self.marcas_list = list(marcas)
         self.fields['marca'].widget = forms.Select(
             choices=[('', '---------')] + [(m, m) for m in self.marcas_list],
             attrs={'class': 'form-control select2-tags'}
         )
-
         self.fields['tipo'].queryset = Tipo.objects.filter(estado=True).order_by('nombre')
-
         self.fields['tiene_serie'] = forms.TypedChoiceField(
             choices=[('False', 'No'), ('True', 'Sí')],
             coerce=lambda v: v == 'True',
             empty_value=False,
             required=False,
-            widget=forms.Select(attrs={'class': 'form-control'})
+            widget=forms.Select(attrs={'class':'form-control'})
         )
 
-        inst = getattr(self, 'instance', None)
-        if crear:
-            self.fields['tiene_serie'].initial = 'False'
-        elif inst and inst.pk:
-            self.fields['tiene_serie'].initial = 'True' if inst.tiene_serie else 'False'
-            if inst.productos_hijos.exists():
-                self.fields['tiene_serie'].disabled = True
+        # CASO HIJO: sólo nota y número de serie editables
+        if instance and instance.pk and instance.producto_padre:
+            # ocultar “¿Tiene Serie?”
+            self.fields['tiene_serie'].widget = forms.HiddenInput()
+            # deshabilitar todo excepto ‘numero_serie’ y ‘nota’
+            for fname, field in self.fields.items():
+                if fname not in ('numero_serie', 'nota'):
+                    field.disabled = True
+            # mostrar siempre el campo de número de serie
+            self.fields['numero_serie'].widget   = forms.TextInput(attrs={'class':'form-control'})
+            self.fields['numero_serie'].required = True
+            return
 
+        # CASO CREACIÓN o EDICIÓN DE PADRE
+
+        # “tiene_serie” inicial y visibilidad
+        if crear:
+            self.fields['tiene_serie'].initial = False
+        elif instance and instance.pk:
+            self.fields['tiene_serie'].initial = instance.tiene_serie
+            if instance.stock > 0 or instance.productos_hijos.exists():
+                self.fields['tiene_serie'].widget = forms.HiddenInput()
+                if instance.productos_hijos.exists():
+                    self.fields['tiene_serie'].disabled = True
+
+        # “estado”
         if crear:
             self.fields['estado'].initial = True
-            self.fields['estado'].widget = forms.HiddenInput()
+            self.fields['estado'].widget  = forms.HiddenInput()
         else:
-            if inst and inst.pk and inst.stock == 0:
+            if instance and instance.pk and instance.stock == 0:
                 self.fields['estado'].widget = forms.Select(
                     choices=[(True, 'Activo'), (False, 'Inactivo')],
-                    attrs={'class': 'form-control'}
+                    attrs={'class':'form-control'}
                 )
             else:
                 self.fields['estado'].widget = forms.HiddenInput()
 
-        if crear:
-            self.fields['numero_serie'].widget = forms.HiddenInput()
-            self.fields['numero_serie'].required = False
-        elif inst and inst.pk:
-            if inst.numero_serie:
-                self.fields['numero_serie'].widget = forms.TextInput(attrs={'class': 'form-control'})
-                self.fields['numero_serie'].required = True
-            else:
-                self.fields['numero_serie'].widget = forms.HiddenInput()
-                self.fields['numero_serie'].required = False
+        # “numero_serie” siempre oculto para padres/creación
+        self.fields['numero_serie'].widget   = forms.HiddenInput()
+        self.fields['numero_serie'].required = False
 
+        # Aplicar form-control al resto de campos
         for fname, fld in self.fields.items():
-            if fname not in ('tipo', 'marca', 'tiene_serie', 'numero_serie', 'estado', 'stock'):
-                fld.widget.attrs.update({'class': 'form-control'})
+            if fname not in ('tipo','marca','tiene_serie','numero_serie','estado','stock'):
+                fld.widget.attrs.update({'class':'form-control'})
 
     def clean_marca(self):
         texto = self.cleaned_data['marca'].strip()
@@ -169,13 +180,21 @@ class ProductoForm(forms.ModelForm):
         return marca_obj
 
     def clean_nombre(self):
-        nombre = self.cleaned_data.get('nombre', '').strip()
+        if self.instance.pk and self.instance.producto_padre:
+            return self.instance.nombre
+
+        nombre = self.cleaned_data.get('nombre','').strip()
         tipo   = self.cleaned_data.get('tipo')
         if not nombre:
             raise forms.ValidationError("El nombre es obligatorio.")
         if not re.match(r'^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s]+$', nombre):
             raise forms.ValidationError("Sólo letras, números y espacios.")
-        qs = Producto.objects.filter(nombre__iexact=nombre, tipo=tipo)
+
+        qs = Producto.objects.filter(
+            nombre__iexact=nombre,
+            tipo=tipo,
+            producto_padre__isnull=True
+        )
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():

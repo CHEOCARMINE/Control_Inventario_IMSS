@@ -303,16 +303,29 @@ def crear_producto(request):
         }
     )
 
-# EDITAR
 @login_required
 @supervisor_required
 def editar_producto(request, pk):
     prod = get_object_or_404(Producto, pk=pk)
+
     if request.method == 'POST':
         form = ProductoForm(request.POST, crear=False, instance=prod)
         marcas = form.marcas_list
+
         if form.is_valid():
             producto = form.save()
+
+            if producto.producto_padre is None:
+                producto.productos_hijos.update(
+                    tipo=producto.tipo,
+                    nombre=producto.nombre,
+                    modelo=producto.modelo,
+                    marca=producto.marca,
+                    color=producto.color,
+                    descripcion=producto.descripcion,
+                    costo_unitario=producto.costo_unitario
+                )
+
             _registrar_log(
                 request,
                 tabla="producto",
@@ -325,19 +338,20 @@ def editar_producto(request, pk):
                 'success': True,
                 'redirect_url': reverse('inventario:lista_productos')
             })
+
         else:
             html = render_to_string(
                 'inventario/modales/modal_editar_producto.html',
                 {
                     'form': form,
                     'producto': prod,
-                    'marcas_existentes': form.marcas_list,
+                    'marcas_existentes': marcas,
                 },
                 request=request
             )
             return JsonResponse({'success': False, 'html_form': html})
 
-    # GET inicial: form con instancia
+    # GET inicial: instanciar form con los datos actuales
     form = ProductoForm(crear=False, instance=prod)
     return render(
         request,
@@ -348,6 +362,7 @@ def editar_producto(request, pk):
             'marcas_existentes': form.marcas_list,
         }
     )
+
 # FINDE INVENTARIO
 
 # ENTRADAS

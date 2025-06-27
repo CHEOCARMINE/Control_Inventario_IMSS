@@ -8,7 +8,8 @@
 <div class="modal-body" id="modal-body-content">
     <form id="form-editar-producto"
             method="post"
-            action="{% url 'inventario:editar_producto' producto.id %}">
+            action="{% url 'inventario:editar_producto' producto.id %}"
+            novalidate>
         {% csrf_token %}
         <div id="producto-form-fields">
         {% include 'inventario/modales/fragmento_form_producto.html' %}

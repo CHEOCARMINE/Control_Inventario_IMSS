@@ -52,11 +52,26 @@ class Producto(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        # Si se crea un hijo, marcar siempre al padre con tiene_serie=True
-        if self.producto_padre:
-            self.producto_padre.tiene_serie = True
-            self.producto_padre.save(update_fields=['tiene_serie'])
+        is_child = self.producto_padre_id is not None
         super().save(*args, **kwargs)
+
+        if is_child:
+            # Aseguramos que el padre pase a ser 'tiene_serie'
+            Producto.objects.filter(pk=self.producto_padre_id).update(
+                tiene_serie=True
+            )
+        else:
+            fields = [
+                'tipo', 'nombre', 'modelo',
+                'marca', 'color', 'descripcion',
+                'costo_unitario'
+            ]
+            hijos = list(self.productos_hijos.all())
+            if hijos:
+                for hijo in hijos:
+                    for f in fields:
+                        setattr(hijo, f, getattr(self, f))
+                    hijo.save(update_fields=fields)
 
     def __str__(self):
         if self.numero_serie:

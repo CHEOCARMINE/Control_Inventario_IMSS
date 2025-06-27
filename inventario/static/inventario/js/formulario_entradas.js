@@ -30,22 +30,35 @@ $(function() {
     });
   }
 
-  // Al mostrar modal Crear/Editar Producto
-  $(document).on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
-    const $m = $(this);
-    initSelect2ProductoModal($m);
-    const $chk   = $m.find('#id_tiene_serie');
-    const $serie = $m.find('#div_numero_serie');
-    function toggleSerie() {
-      if ($chk.is(':checked')) {
-        $serie.show();
-      } else {
-        $serie.hide().find('input').val('');
-      }
+// Al mostrar modal Crear/Editar Producto
+$(document).on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
+  const $m      = $(this);
+  const $field  = $m.find('[name="tiene_serie"]');      
+  const $rowTS  = $field.closest('.col-md-6.mb-3');     
+  const $rowNum = $m.find('#div_numero_serie').closest('.row'); 
+
+  // función que decide qué mostrar
+  function actualizarVista() {
+    const esSelect = $field.is('select');
+    const esHijo   = !esSelect; 
+    if (esHijo) {
+      // caso hijo: ocultar “¿Tiene Serie?” y mostrar siempre Nº Serie
+      $rowTS.hide();
+      $rowNum.show().find('input').prop('required', true);
+      return;
     }
-    toggleSerie();
-    $chk.off('change.selectorSerie').on('change.selectorSerie', toggleSerie);
-  });
+    // caso padre: mostramos el select y alternamos Number row
+    $rowTS.show();
+    if ($field.val() === 'True') {
+      $rowNum.show().find('input').prop('required', true);
+    } else {
+      $rowNum.hide().find('input').val('').prop('required', false);
+    }
+  }
+  // bind y trigger inicial
+  $field.off('change.toggleSerie').on('change.toggleSerie', actualizarVista);
+  actualizarVista();
+});
 
   // Capturar submit Crear/Editar Producto y reinit Select2
   $(document)
