@@ -30,35 +30,35 @@ $(function() {
     });
   }
 
-// Al mostrar modal Crear/Editar Producto
-$(document).on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
-  const $m      = $(this);
-  const $field  = $m.find('[name="tiene_serie"]');      
-  const $rowTS  = $field.closest('.col-md-6.mb-3');     
-  const $rowNum = $m.find('#div_numero_serie').closest('.row'); 
+  // Al mostrar modal Crear/Editar Producto
+  $(document).on('shown.bs.modal', '#modalCrearProducto, #modalEditarProducto', function() {
+    const $m      = $(this);
+    const $field  = $m.find('[name="tiene_serie"]');      
+    const $rowTS  = $field.closest('.col-md-6.mb-3');     
+    const $rowNum = $m.find('#div_numero_serie').closest('.row'); 
 
-  // función que decide qué mostrar
-  function actualizarVista() {
-    const esSelect = $field.is('select');
-    const esHijo   = !esSelect; 
-    if (esHijo) {
-      // caso hijo: ocultar “¿Tiene Serie?” y mostrar siempre Nº Serie
-      $rowTS.hide();
-      $rowNum.show().find('input').prop('required', true);
-      return;
+    // función que decide qué mostrar
+    function actualizarVista() {
+      const esSelect = $field.is('select');
+      const esHijo   = !esSelect; 
+      if (esHijo) {
+        // caso hijo: ocultar “¿Tiene Serie?” y mostrar siempre Nº Serie
+        $rowTS.hide();
+        $rowNum.show().find('input').prop('required', true);
+        return;
+      }
+      // caso padre: mostramos el select y alternamos Number row
+      $rowTS.show();
+      if ($field.val() === 'True') {
+        $rowNum.show().find('input').prop('required', true);
+      } else {
+        $rowNum.hide().find('input').val('').prop('required', false);
+      }
     }
-    // caso padre: mostramos el select y alternamos Number row
-    $rowTS.show();
-    if ($field.val() === 'True') {
-      $rowNum.show().find('input').prop('required', true);
-    } else {
-      $rowNum.hide().find('input').val('').prop('required', false);
-    }
-  }
-  // bind y trigger inicial
-  $field.off('change.toggleSerie').on('change.toggleSerie', actualizarVista);
-  actualizarVista();
-});
+    // bind y trigger inicial
+    $field.off('change.toggleSerie').on('change.toggleSerie', actualizarVista);
+    actualizarVista();
+  });
 
   // Capturar submit Crear/Editar Producto y reinit Select2
   $(document)
