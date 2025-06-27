@@ -211,19 +211,47 @@ $(function() {
     .on('shown.bs.modal', () => {
       initSelect2Productos($('#tabla-entradas tbody'));
       actualizarColumnasProductosExistentes(); // <- Actualiza columnas al abrir
-      // Inserción: ajustar serie/cantidad en todas las filas
+      // Ajustar serie/cantidad en todas las filas
       $('#tabla-entradas tbody tr.linea-form').each(function() {
-      updateRowSerieQty($(this));
+        updateRowSerieQty($(this));
       });
       // Fuerza eventos de Select2
       $('#tabla-entradas tbody .select2-producto-auto').each(function () {
-        $(this).trigger('change'); 
+        $(this).trigger('change');
       });
     })
     .on('show.bs.modal', () => {
       $('#template-row').find('.btn-nuevo-producto, .btn-eliminar-fila').hide();
     });
   $('#btn-agregar-fila').text('+ Agregar fila');
+
+  $('#modalEditarEntrada').on('shown.bs.modal', function() {
+    // Bloquear el select de producto en cada fila
+    $('#tabla-entradas tbody tr.linea-form').each(function() {
+      const $row = $(this);
+      // deshabilita el <select> nativo
+      $row.find('select[name$="-producto"]').prop('disabled', true);
+      // y deshabilita el widget Select2
+      const $sel2 = $row.find('.select2-producto-auto');
+      $sel2.prop('disabled', true).trigger('change.select2');
+
+      // Para los hijos (tienen serie), bloquear también serie y cantidad;
+      //    para los normales, ocultar número de serie y dejar cantidad editable.
+      const data = $row.find('select[name$="-producto"] option:selected').data() || {};
+      const $inpSerie = $row.find('input.numero-serie-input');
+      const $inpQty   = $row.find('input[name$="-cantidad"]');
+
+      if (data.serie) {
+        // hijo: bloquea todo
+        $inpSerie.show().prop({ readonly: true, disabled: true });
+        $inpQty  .prop({ readonly: true, disabled: true });
+      } else {
+        // normal: oculta serie, mantiene cantidad editable
+        $inpSerie.hide();
+        $inpQty.prop({ readonly: false, disabled: false });
+      }
+    });
+  });
 
   // Submit AJAX de la Entrada
   function bindFormEntrada() {
