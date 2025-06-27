@@ -202,8 +202,7 @@ $(function() {
 
     initSelect2Productos($newRow);
     bindListenerCambioProducto();
-    controlarCantidadPorSerie($newRow);
-    controlarSerieYCantidad($newRow);
+    updateRowSerieQty($newRow);
   });
 
   // Al mostrar modal Registrar/Editar Entrada
@@ -212,9 +211,13 @@ $(function() {
     .on('shown.bs.modal', () => {
       initSelect2Productos($('#tabla-entradas tbody'));
       actualizarColumnasProductosExistentes(); // <- Actualiza columnas al abrir
-      bloquearFilasConSerie();
+      // Inserción: ajustar serie/cantidad en todas las filas
+      $('#tabla-entradas tbody tr.linea-form').each(function() {
+      updateRowSerieQty($(this));
+      });
+      // Fuerza eventos de Select2
       $('#tabla-entradas tbody .select2-producto-auto').each(function () {
-        $(this).trigger('change'); // <- Fuerza eventos de Select2
+        $(this).trigger('change'); 
       });
     })
     .on('show.bs.modal', () => {
@@ -299,9 +302,7 @@ $(function() {
         $row.find('.modelo-cell').text(data.modelo || '');
         $row.find('.serie-cell').show();
 
-        // Lógica cantidad/serie
-        onProductoChange($sel);
-        controlarSerieYCantidad($row);
+        updateRowSerieQty($row);
         // Oculta “+ Nuevo Producto” en esta fila
         $row.find('.btn-nuevo-producto').hide();
         // vuelve a filtrar duplicados
@@ -368,6 +369,7 @@ $(function() {
               'data-modelo': data.producto_modelo,
               'data-serie':  data.producto_serie || ''
             };
+            attrs['data-tiene-serie'] = data.producto_tiene_serie ? 'true' : 'false';
             // Creamos el <option> nuevo
             const opt = new Option(txt, val, false, false);
             Object.entries(attrs)
@@ -426,6 +428,7 @@ $(function() {
                 'data-modelo': data.producto_modelo,
                 'data-serie':  data.producto_serie || ''
               };
+              attrs['data-tiene-serie'] = data.producto_tiene_serie ? 'true' : 'false';
               // Construye el <option> nuevo
               const opt = new Option(txt, val, false, false);
               Object.entries(attrs).forEach(([k, v]) => opt.setAttribute(k, v));
@@ -474,133 +477,24 @@ $(function() {
     $('#id_form-TOTAL_FORMS').val($rows.length);
   }
 
-  function controlarCantidadPorSerie($fila) {
-  const $inputSerie = $fila.find('.numero-serie-input');
-  const $inputCantidad = $fila.find('input[name$="-cantidad"]');
+  //  Función que decide visibilidad de Serie / bloqueo de Cantidad
+  function updateRowSerieQty($row) {
+    const tieneSerie = String(
+      $row.find('.select2-producto-auto option:selected')
+        .data('tiene-serie')
+    ) === 'true';
+    const $inputSerie = $row.find('.serie-cell input.numero-serie-input');
+    const $inputQty   = $row.find('input[name$="-cantidad"]');
 
-  $inputSerie.on('input', function () {
-    const tieneSerie = $inputSerie.val().trim() !== '';
     if (tieneSerie) {
-      $inputCantidad.val(1);
-      $inputCantidad.prop('readonly', true);
+      // mostrar input de serie y forzar qty=1 readonly
+      $inputSerie.show().prop('required', true);
+      $inputQty.val(1).prop('readonly', true);
     } else {
-      $inputCantidad.prop('readonly', false);
+      // ocultar serie y desbloquear qty
+      $inputSerie.hide().val('').prop('required', false);
+      $inputQty.prop('readonly', false);
     }
-  });
-
-    // Al cargar la fila (edición), verificar si ya viene con serie
-    if ($inputSerie.val().trim() !== '') {
-      $inputCantidad.val(1);
-      $inputCantidad.prop('readonly', true);
-    }
-  }
-
-  // Aplica la lógica a todas las filas ya existentes
-  $('.linea-form').each(function () {
-    controlarCantidadPorSerie($(this));
-  });
-
-  // Aplica a filas nuevas (al clonar el template)
-  $('#tabla-entradas').on('click', '#btn-agregar-fila', function () {
-    setTimeout(() => {
-      const $nuevaFila = $('#tabla-entradas .linea-form').last();
-      controlarCantidadPorSerie($nuevaFila);
-    }, 100); // pequeño delay para que la fila exista en el DOM
-  });
-
-  // Detecta si ya hemos escrito un número de serie para este padre en cualquier fila
-  function tieneSerieEnForm(prodId) {
-    return $('#tabla-entradas tbody tr.linea-form').filter(function() {
-      const $r     = $(this);
-      const id     = $r.find('.select2-producto-auto').val();
-      const serie  = $r.find('.numero-serie-input').val().trim();
-      return id === prodId && serie !== '';
-    }).length > 0;
-  }
-
-  // Al cambiar de producto (select2:select), mostramos siempre el input de serie y bloqueamos/corregimos la cantidad si el padre ya tiene hijos (BD) o si tiene serie en el form
-  function onProductoChange($sel) {
-    const prodId      = $sel.val();
-    const bdTieneHijos = $sel.find(':selected').data('tiene-hijos') === true;
-    const formTieneHijos = tieneSerieEnForm(prodId);
-    const tieneHijos  = bdTieneHijos || formTieneHijos;
-
-    const $row        = $sel.closest('tr.linea-form');
-    const $serieInput = $row.find('.numero-serie-input');
-    const $qtyInput   = $row.find('input[name$="-cantidad"]');
-
-    // siempre mostramos la celda de serie
-    $serieInput.closest('td').show();
-
-    if (tieneHijos) {
-      $qtyInput.val(1).prop('readonly', true);
-    } else {
-      $qtyInput.prop('readonly', false);
-    }
-  }
-
-  // Control visual serie ↔ cantidad y limpieza de filas huérfanas
-  function controlarSerieYCantidad($row) {
-    const $serie    = $row.find('.numero-serie-input');
-    const $cantidad = $row.find('input[name$="-cantidad"]');
-
-    function prodId() {
-      return $row.find('.select2-producto-auto').val();
-    }
-
-    // cada vez que cambie el input de serie
-    $serie.off('input').on('input', function() {
-      const tiene = $serie.val().trim() !== '';
-
-      if (tiene) {
-        // bloqueo y forzamos 1
-        $cantidad.val(1).prop('readonly', true);
-      } else {
-        // desbloqueamos cantidad
-        $cantidad.prop('readonly', false);
-
-        // eliminamos filas huérfanas: mismas padre y sin serie, dejando siempre la primera
-        const $sinSerie = $('#tabla-entradas tbody tr.linea-form').filter(function() {
-          return $(this).find('select[name$="-producto"]').val() === prodId()
-              && $(this).find('.numero-serie-input').val().trim() === '';
-        });
-        if ($sinSerie.length > 1) {
-          $sinSerie.slice(1).remove();
-        }
-      }
-
-      // cada vez que cambie serie, reindexamos y refrescamos duplicados
-      reorderRows();
-      updateProductoOptions();
-    });
-
-    // inicialización en edición
-    if ($serie.val().trim()) {
-      $cantidad.val(1).prop('readonly', true);
-    }
-  }
-
-  function bloquearFilasConSerie() {
-    $('#tabla-entradas tbody tr.linea-form').each(function() {
-      const $row   = $(this);
-      const serie  = $row.find('.numero-serie-input').val().trim();
-      if (!serie) return;
-      const $sel   = $row.find('.select2-producto-auto');
-      const name   = $sel.attr('name');
-      const value  = $sel.val();
-      $row
-        .find('input.hidden-producto')
-        .remove(); 
-      $row.prepend(
-        $('<input type="hidden" class="hidden-producto">')
-          .attr({ name: name, value: value })
-      );
-      $sel.prop('disabled', true).trigger('change.select2');
-      $row
-        .find('.numero-serie-input, input[name$="-cantidad"]')
-        .prop('readonly', true);
-      $row.find('.btn-nuevo-producto').hide();
-    });
   }
 
   // Bind all

@@ -44,6 +44,7 @@
               data-color="{{ prod.color }}"
               data-modelo="{{ prod.modelo }}"
               data-serie="{{ prod.numero_serie|default_if_none:'' }}"
+              data-tiene-serie="{{ prod.tiene_serie|yesno:'true,false' }}"
               data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}">
               {{ prod.tipo.nombre }} – {{ prod.nombre }}
             </option>
@@ -133,6 +134,7 @@
                   data-modelo="{{ prod.modelo }}"
                   data-serie="{{ prod.numero_serie|default_if_none:'' }}"
                   data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}"
+                  data-tiene-serie="{{ prod.tiene_serie|yesno:'true,false' }}"
                   {% with selected_value=form_linea.producto.value|stringformat:"s" current_id=prod.id|stringformat:"s" %}
                     {% if selected_value == current_id %}
                       selected
