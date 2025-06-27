@@ -270,7 +270,7 @@ $(function() {
     // Elimina cualquier checkbox de DELETE heredado
     $row.find('input[name$="-DELETE"]').remove();
     $row.find('.marca-cell, .color-cell, .modelo-cell').text('');
-    $row.find('.serie-cell input.numero-serie-input').val('').show();
+    $row.find('.serie-cell input.numero-serie-input').val('').hide();
     $row.find('.btn-nuevo-producto, .btn-eliminar-fila').show();
     // Actualiza contador
     $total.val(idx + 1);
