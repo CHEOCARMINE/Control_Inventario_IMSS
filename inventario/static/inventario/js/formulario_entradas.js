@@ -230,20 +230,50 @@ $(function() {
     $(document).off('submit', '#form-entrada, #form-editar-entrada');
     $(document).on('submit', '#form-entrada, #form-editar-entrada', function(e) {
       e.preventDefault();
-      const $form = $(this);
-      const $modal = $form.closest('.modal');
+      const $form   = $(this);
+      const $modal  = $form.closest('.modal');
+
+      // Backup de folio, series y cantidades
+      const backupFolio      = $form.find('[name="folio"]').val() || '';
+      const backupSeries     = {};
+      const backupCantidades = {};
+      $('#tabla-entradas tbody tr.linea-form').each(function(i) {
+        backupSeries[i]     = $(this).find('input.numero-serie-input').val() || '';
+        backupCantidades[i] = $(this).find('input[name$="-cantidad"]').val()    || '';
+      });
+
+      // Envío AJAX
       $.post($form.attr('action'), $form.serialize(), resp => {
         if (resp.success) {
           $modal.modal('hide');
           window.location = resp.redirect_url;
         } else {
+          // Reemplazo del fragmento con errores
           $modal.find('#entrada-form-fields, #editar-form-fields').html(resp.html_form);
+
+          // Restaurar folio
+          $modal.find('[name="folio"]').val(backupFolio);
+
+          // Reinicializar UI de filas y selects
           initSelect2Productos($('#tabla-entradas tbody'));
-          bindAll(); 
+          bindAll();
           actualizarColumnasProductosExistentes();
-          $('#tabla-entradas tbody .select2-producto-auto')
-          .each(function(){
+          $('#tabla-entradas tbody .select2-producto-auto').each(function(){
             $(this).trigger('change.select2');
+          });
+
+          // Restaurar series y cantidades
+          $('#tabla-entradas tbody tr.linea-form').each(function(i) {
+            const $row = $(this);
+            $row.find('input.numero-serie-input')
+                .val( backupSeries[i] );
+            $row.find('input[name$="-cantidad"]')
+                .val( backupCantidades[i] );
+          });
+
+          // Reaplicar visibilidad de serie/cantidad
+          $('#tabla-entradas tbody tr.linea-form').each(function() {
+            updateRowSerieQty($(this));
           });
         }
       }).fail(() => {
