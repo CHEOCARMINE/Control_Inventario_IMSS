@@ -141,37 +141,36 @@ $(function() {
 
   // Filtrar duplicados deshabilitando opciones
   function updateProductoOptions() {
-    // Contar cuántas veces está seleccionado cada producto
+    // Contar cuántas veces está seleccionado cada producto (sin serie)
     const counts = {};
     $('.linea-form:visible').each(function() {
-      const $f = $(this);
-      const id = $f.find('.select2-producto-auto').val();
-      const rawSerie = $f.find('.numero-serie-input').val();
-      const serie   = rawSerie ? rawSerie.trim() : '';
+      const $f     = $(this);
+      const id     = $f.find('.select2-producto-auto').val();
+      const serie  = $f.find('.numero-serie-input').val().trim();
       if (id && !serie) {
         counts[id] = (counts[id] || 0) + 1;
       }
     });
 
-    // Recorrer todos los selects para ajustar sus <option>
+    // Para cada select, activamos o desactivamos sus opciones
     $('.select2-producto-auto').each(function() {
-      const $sel = $(this), me  = $sel.val(); 
+      const $sel = $(this), me = $sel.val();
       $sel.find('option').each(function() {
-        const $opt = $(this), val  = $opt.val();
+        const $opt = $(this), val = $opt.val();
         if (!val) return;
 
-        // Leer si este producto padre ya tiene hijos
-        const tieneHijos = String($opt.data('tiene-hijos')) === 'true';
+        // Miramos si el producto tiene serie
+        const tieneSerie = String($opt.data('tiene-serie')) === 'true';
         let disable = false;
 
-        // Si NO tiene hijos, y ya está seleccionado en otra fila, lo deshabilitamos
-        if (!tieneHijos && counts[val] >= 1 && me !== val) {
+        // Si NO tiene serie y ya está en counts, lo deshabilitamos (si no es este select)
+        if (!tieneSerie && counts[val] >= 1 && me !== val) {
           disable = true;
         }
 
         $opt.prop('disabled', disable);
       });
-      // Refrescar la UI de Select2
+      // Refrescar Select2
       $sel.trigger('change.select2');
     });
   }
