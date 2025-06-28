@@ -229,11 +229,15 @@ $(function() {
     // Bloquear el select de producto en cada fila
     $('#tabla-entradas tbody tr.linea-form').each(function() {
       const $row = $(this);
-      // deshabilita el <select> nativo
-      $row.find('select[name$="-producto"]').prop('disabled', true);
-      // y deshabilita el widget Select2
+
+      // No deshabilites el <select> real, solo el Select2 visual
       const $sel2 = $row.find('.select2-producto-auto');
-      $sel2.prop('disabled', true).trigger('change.select2');
+      const $s2container = $sel2.next('.select2-container');
+      $s2container.find('.select2-selection')
+        .css('pointer-events', 'none')        // evita clics
+        .css('background-color', '#e9ecef')   // gris tipo desactivado
+        .css('opacity', 0.7)                  // se ve más apagado
+        .css('cursor', 'not-allowed');        // cursor de no permitido
 
       // Para los hijos (tienen serie), bloquear también serie y cantidad;
       //    para los normales, ocultar número de serie y dejar cantidad editable.
