@@ -632,11 +632,12 @@ def editar_entrada(request, pk):
         if not is_ajax:
             return redirect('inventario:lista_entradas')
         form_entrada = EntradaForm(instance=entrada)
-        lineas_qs = entrada.lineas.select_related('producto').all()
         formset_lineas = EntradaLineaFormSetEdicion(queryset=entrada.lineas.all())
         entrada_prod_ids = list(entrada.lineas.values_list('producto_id', flat=True))
 
-        todos_productos = Producto.objects.filter(estado=True).filter( Q(numero_serie__isnull=True) | Q(id__in=entrada_prod_ids)).order_by(
+        todos_productos = Producto.objects.filter(estado=True).filter(
+            Q(numero_serie__isnull=True) | Q(id__in=entrada_prod_ids)
+        ).order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',
             'tipo__nombre',
@@ -660,15 +661,12 @@ def editar_entrada(request, pk):
     # Guardar primero la cabecera y controlar duplicados (folio)
     if form_entrada.is_valid():
         try:
-            entrada.folio             = form_entrada.cleaned_data['folio']
-            entrada.fecha_recepcion   = form_entrada.cleaned_data['fecha_recepcion']
+            entrada.folio = form_entrada.cleaned_data['folio']
+            entrada.fecha_recepcion = form_entrada.cleaned_data['fecha_recepcion']
             entrada.save(update_fields=['folio', 'fecha_recepcion'])
         except IntegrityError as e:
             if 'folio' in str(e).lower():
-                form_entrada.add_error(
-                    'folio',
-                    'Ya existe una entrada con este folio.'
-                )
+                form_entrada.add_error('folio', 'Ya existe una entrada con este folio.')
             else:
                 raise
             html_form = render_to_string(
@@ -697,9 +695,7 @@ def editar_entrada(request, pk):
             if f.cleaned_data and not f.cleaned_data.get('DELETE', False)
         ]
         if not lineas_validas:
-            formset_lineas.non_form_errors = lambda: [
-                'Debe conservar al menos un producto en la entrada.'
-            ]
+            formset_lineas.non_form_errors = lambda: ['Debe conservar al menos un producto en la entrada.']
         else:
             with transaction.atomic():
                 cambios_stock = []
@@ -715,12 +711,42 @@ def editar_entrada(request, pk):
                     if form_linea.cleaned_data.get('DELETE'):
                         continue
 
+                    producto = form_linea.cleaned_data['producto']
+                    cantidad = form_linea.cleaned_data['cantidad']
+                    numero_serie = form_linea.cleaned_data.get('numero_serie')
+
+                    if producto and not producto.numero_serie and numero_serie:
+                        hijo_existente = Producto.objects.filter(numero_serie=numero_serie).first()
+                        if hijo_existente:
+                            producto = hijo_existente
+                        else:
+                            producto = Producto.objects.create(
+                                tipo=producto.tipo,
+                                nombre=producto.nombre,
+                                modelo=producto.modelo,
+                                marca=producto.marca,
+                                color=producto.color,
+                                descripcion=producto.descripcion,
+                                nota=producto.nota,
+                                costo_unitario=producto.costo_unitario,
+                                numero_serie=numero_serie,
+                                producto_padre=producto,
+                                stock=1
+                            )
+                            _registrar_log(
+                                request,
+                                tabla="producto",
+                                id_registro=producto.id,
+                                nombre_modulo="Inventario",
+                                nombre_accion="Crear hijo"
+                            )
+
                     linea = form_linea.save(commit=False)
+                    linea.producto = producto
                     linea.entrada = entrada
 
                     cantidad_nueva = linea.cantidad
-                    producto       = linea.producto
-                    linea_id       = form_linea.instance.id
+                    linea_id = form_linea.instance.id
 
                     if linea_id in originales:
                         # Cambio de cantidad en línea existente
@@ -728,9 +754,7 @@ def editar_entrada(request, pk):
                         diff = cantidad_nueva - cantidad_original
                         if diff:
                             producto.stock += diff
-                            cambios_stock.append(
-                                (producto, cantidad_original, cantidad_nueva)
-                            )
+                            cambios_stock.append((producto, cantidad_original, cantidad_nueva))
                         del originales[linea_id]
                     else:
                         # Línea nueva
@@ -743,12 +767,10 @@ def editar_entrada(request, pk):
                 # Eliminación de las originales faltantes
                 for linea_rest in originales.values():
                     prod = linea_rest.producto
-
                     if prod.numero_serie:
                         # Producto hijo: primero borramos la línea...
                         padre = prod.producto_padre
                         stock_antes = padre.stock
-
                         linea_rest.delete()
                         # ...luego borramos el hijo
                         prod.delete()
@@ -756,45 +778,35 @@ def editar_entrada(request, pk):
                         padre.stock = F('stock') - 1
                         padre.save()
                         padre.refresh_from_db(fields=['stock'])
-                        cambios_stock.append(
-                            (padre, stock_antes, padre.stock)
-                        )
+                        cambios_stock.append((padre, stock_antes, padre.stock))
                     else:
                         # Producto normal
                         antes = prod.stock
                         prod.stock = F('stock') - linea_rest.cantidad
                         prod.save()
                         prod.refresh_from_db(fields=['stock'])
-                        cambios_stock.append(
-                            (prod, antes, prod.stock)
-                        )
+                        cambios_stock.append((prod, antes, prod.stock))
                         linea_rest.delete()
 
                 # Eliminación de las líneas marcadas DELETE
                 for form_linea in formset_lineas.deleted_forms:
                     linea = form_linea.instance
-                    prod  = linea.producto
-
+                    prod = linea.producto
                     if prod.numero_serie:
                         padre = prod.producto_padre
                         stock_antes = padre.stock
-
                         linea.delete()
                         prod.delete()
                         padre.stock = F('stock') - 1
                         padre.save()
                         padre.refresh_from_db(fields=['stock'])
-                        cambios_stock.append(
-                            (padre, stock_antes, padre.stock)
-                        )
+                        cambios_stock.append((padre, stock_antes, padre.stock))
                     else:
                         antes = prod.stock
                         prod.stock = F('stock') - linea.cantidad
                         prod.save()
                         prod.refresh_from_db(fields=['stock'])
-                        cambios_stock.append(
-                            (prod, antes, prod.stock)
-                        )
+                        cambios_stock.append((prod, antes, prod.stock))
                         linea.delete()
 
                 # Logs
@@ -815,9 +827,7 @@ def editar_entrada(request, pk):
                             nombre_accion="Ajuste stock"
                         )
 
-                request.session['entrada_success'] = (
-                    'Entrada actualizada correctamente.'
-                )
+                request.session['entrada_success'] = 'Entrada actualizada correctamente.'
                 return JsonResponse({
                     'success': True,
                     'redirect_url': reverse('inventario:lista_entradas')

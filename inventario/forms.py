@@ -297,6 +297,7 @@ class EntradaLineaForm(forms.ModelForm):
             obj.color,
             (f' / {obj.numero_serie}' if obj.numero_serie else '')
         )
+        self.fields['cantidad'].required = False
 
     def clean(self):
         cd = super().clean()
@@ -311,14 +312,16 @@ class EntradaLineaForm(forms.ModelForm):
             )
 
         # Si hay serie → qty = 1
-        if serie:
+        if prod and prod.numero_serie:
             cd['cantidad'] = 1
 
         return cd
 
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
-        if cantidad is None or cantidad <= 0:
+        if cantidad in (None, ''):
+            return 1  # Asume 1 si viene vacío (como en productos hijos)
+        if cantidad <= 0:
             raise forms.ValidationError("La cantidad debe ser mayor que cero.")
         return cantidad
 

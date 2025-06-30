@@ -546,33 +546,53 @@ $(function() {
     const $rows = $('#tabla-entradas tbody tr.linea-form:visible');
     $rows.each((i, tr) => {
       const $tr = $(tr).attr('data-index', i);
-      // Solo reindexa selects y cantidad
-      $tr.find('select, input[type="number"]').each(function() {
-        const old = this.name;
-        const neu = old.replace(/-\d+-/, `-${i}-`);
-        $(this).attr({ name: neu, id: 'id_' + neu });
+      // Reindexa todo: selects, inputs y textareas
+      $tr.find('select, input, textarea').each(function() {
+        const old = this.name || '';
+        const newName = old.replace(/-\d+-/, `-${i}-`);
+        $(this).attr({ name: newName, id: 'id_' + newName });
       });
     });
     $('#id_form-TOTAL_FORMS').val($rows.length);
   }
 
-  //  Función que decide visibilidad de Serie / bloqueo de Cantidad
+  // Función que decide visibilidad de Serie / bloqueo de Cantidad
   function updateRowSerieQty($row) {
-    const tieneSerie = String(
-      $row.find('.select2-producto-auto option:selected')
-        .data('tiene-serie')
-    ) === 'true';
+    const $select     = $row.find('.select2-producto-auto');
+    const $selected   = $select.find('option:selected');
+    const tieneSerie  = String($selected.data('tiene-serie')) === 'true';
+    const serieFija   = $selected.data('serie') || '';  // hijos siempre traen una serie
+
     const $inputSerie = $row.find('.serie-cell input.numero-serie-input');
     const $inputQty   = $row.find('input[name$="-cantidad"]');
 
-    if (tieneSerie) {
-      // mostrar input de serie y forzar qty=1 readonly
-      $inputSerie.show().prop('required', true);
-      $inputQty.val(1).prop('readonly', true);
+    if (serieFija) {
+      // Producto hijo: ya tiene una serie asignada → readonly total
+      $inputSerie
+        .val(serieFija)
+        .show()
+        .prop({ readonly: true, disabled: true, required: true });
+      $inputQty
+        .val(1)
+        .prop({ readonly: true, disabled: true });
+
+    } else if (tieneSerie) {
+      // Producto padre con serie activada → permitir escribir la serie (requerido), qty = 1
+      $inputSerie
+        .show()
+        .prop({ required: true, readonly: false, disabled: false });
+      $inputQty
+        .val(1)
+        .prop({ readonly: true, disabled: false });
+
     } else {
-      // ocultar serie y desbloquear qty
-      $inputSerie.hide().val('').prop('required', false);
-      $inputQty.prop('readonly', false);
+      // Producto normal (sin serie) → serie oculta, qty editable
+      $inputSerie
+        .val('')
+        .hide()
+        .prop({ required: false, readonly: false, disabled: false });
+      $inputQty
+        .prop({ readonly: false, disabled: false });
     }
   }
 
