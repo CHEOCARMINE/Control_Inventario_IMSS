@@ -118,7 +118,7 @@ function initSelect2Productos($scope) {
       }
     });
 
-    // 🔒 Ocultar productos hijos si no hay nada seleccionado todavía
+    // Ocultar productos hijos si no hay nada seleccionado todavía
     if (!$sel.val()) {
       $sel.find('option').each(function () {
         const $opt = $(this);
