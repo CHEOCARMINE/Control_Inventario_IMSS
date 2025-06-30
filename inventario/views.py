@@ -421,7 +421,16 @@ def lista_entradas(request):
     )
 
     page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
-    productos = Producto.objects.filter(estado=True).order_by('nombre')
+    productos_qs = Producto.objects.filter(
+        estado=True,
+        producto_padre__isnull=True  # ← solo productos que no son hijos
+    )
+
+    if tipo_id.isdigit():
+        productos_qs = productos_qs.filter(tipo_id=int(tipo_id))
+
+    productos = productos_qs.order_by('nombre')
+
 
     # Sacar mensajes de sesión
     mensaje_exito = request.session.pop('entrada_success', None)

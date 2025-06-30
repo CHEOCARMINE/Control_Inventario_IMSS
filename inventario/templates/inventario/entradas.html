@@ -49,17 +49,6 @@
                     value="{{ filter.fecha_rec }}">
             </div>
             <div class="col-md-3 mb-2">
-                <select name="producto" class="form-control auto-submit">
-                <option value="">-- Producto --</option>
-                {% for p in productos %}
-                    <option value="{{ p.id }}"
-                            {% if filter.producto == p.id|stringformat:"s" %}selected{% endif %}>
-                    {{ p.nombre }}
-                    </option>
-                {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3 mb-2">
                 <select name="categoria" id="id_categoria"
                         class="form-control auto-submit">
                 <option value="">-- Categoría --</option>
@@ -95,6 +84,17 @@
                 {% endfor %}
                 </select>
             </div>
+            <div class="col-md-3 mb-2">
+                <select name="producto" class="form-control auto-submit">
+                <option value="">-- Producto --</option>
+                {% for p in productos %}
+                    <option value="{{ p.id }}"
+                            {% if filter.producto == p.id|stringformat:"s" %}selected{% endif %}>
+                    {{ p.nombre }}
+                    </option>
+                {% endfor %}
+                </select>
+            </div>            
             <div class="col-md-1 mb-2">
                 <button type="button"
                         class="btn btn-outline-secondary btn-block"
