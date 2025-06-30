@@ -1,4 +1,4 @@
-asgiref==3.8.1More actions
+asgiref==3.8.1
 dj-database-url==3.0.0
 Django==5.2
 gunicorn==23.0.0
