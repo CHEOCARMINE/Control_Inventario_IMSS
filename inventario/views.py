@@ -720,19 +720,29 @@ def editar_entrada(request, pk):
                         if hijo_existente:
                             producto = hijo_existente
                         else:
+                            padre = producto  # Se guarda referencia al padre original
                             producto = Producto.objects.create(
-                                tipo=producto.tipo,
-                                nombre=producto.nombre,
-                                modelo=producto.modelo,
-                                marca=producto.marca,
-                                color=producto.color,
-                                descripcion=producto.descripcion,
-                                nota=producto.nota,
-                                costo_unitario=producto.costo_unitario,
+                                tipo=padre.tipo,
+                                nombre=padre.nombre,
+                                modelo=padre.modelo,
+                                marca=padre.marca,
+                                color=padre.color,
+                                descripcion=padre.descripcion,
+                                nota=padre.nota,
+                                costo_unitario=padre.costo_unitario,
                                 numero_serie=numero_serie,
-                                producto_padre=producto,
-                                stock=1
+                                producto_padre=padre,
                             )
+
+                            producto.stock = 1
+                            producto.save()
+
+                            # Actualizar el stock del padre (1 nuevo hijo)
+                            padre.stock = Producto.objects.filter(producto_padre=padre).count()
+                            padre.save()
+
+                            cambios_stock.append((padre, 0, padre.stock))
+
                             _registrar_log(
                                 request,
                                 tabla="producto",
@@ -758,8 +768,9 @@ def editar_entrada(request, pk):
                         del originales[linea_id]
                     else:
                         # Línea nueva
-                        producto.stock += cantidad_nueva
-                        cambios_stock.append((producto, 0, cantidad_nueva))
+                        if not producto.numero_serie:
+                            producto.stock += cantidad_nueva
+                            cambios_stock.append((producto, 0, cantidad_nueva))
 
                     producto.save()
                     linea.save()
