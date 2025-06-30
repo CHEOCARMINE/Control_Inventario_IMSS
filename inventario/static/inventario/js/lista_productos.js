@@ -57,7 +57,13 @@ $('body').on('shown.bs.modal', '#modalEditarProducto', function() {
 // Recolorea cada fila según si es padre o hijo
 function colorearFilasInventario() {
   $('#tabla-productos tbody tr').each(function() {
-    const $row   = $(this);
+    const $row = $(this);
+
+    // Ignorar fila si contiene el mensaje de "No hay productos registrados"
+    if ($row.find('td').length === 1) {
+      return; // saltamos esta fila
+    }
+
     const stock  = Number($row.find('td').eq(7).text());                // Columna 8 (índice 7)
     const minimo = Number($row.find('td[data-minimo]').data('minimo')); // Del atributo data-minimo
     const esHijo = !!$row.data('producto-padre');                       // truthy si tiene padre
