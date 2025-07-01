@@ -15,7 +15,7 @@ $(function() {
         closeOnSelect: true
       }).on('select2:select', () => $sel.select2('close'));
     });
-    // Tipo (select simple)
+    // Tipo 
     $modal.find('.select2-tipo').each(function() {
       const $sel = $(this);
       if ($sel.hasClass('select2-hidden-accessible')) return;
@@ -85,73 +85,71 @@ $(function() {
     });
 
   // Init Select2 para Productos en el formset
-// Init Select2 para Productos en el formset
-function initSelect2Productos($scope) {
-  $scope.find('.select2-producto-auto').each(function() {
-    const $sel = $(this);
-    if ($sel.hasClass('select2-hidden-accessible')) return;
+  function initSelect2Productos($scope) {
+    $scope.find('.select2-producto-auto').each(function() {
+      const $sel = $(this);
+      if ($sel.hasClass('select2-hidden-accessible')) return;
 
-    $sel.select2({
-      theme: 'bootstrap4',
-      placeholder: $sel.data('placeholder') || 'Selecciona producto…',
-      allowClear: true,
-      closeOnSelect: true,
-      width: '100%',
-      dropdownParent: $scope.closest('.modal'),
-      minimumResultsForSearch: 0,
+      $sel.select2({
+        theme: 'bootstrap4',
+        placeholder: $sel.data('placeholder') || 'Selecciona producto…',
+        allowClear: true,
+        closeOnSelect: true,
+        width: '100%',
+        dropdownParent: $scope.closest('.modal'),
+        minimumResultsForSearch: 0,
 
-      // función que formatea cada opción del dropdown
-      templateResult: function(item) {
-        if (!item.id) return item.text;    
-        const txt = item.text;
-        return txt.length > 60
-          ? txt.substr(0, 60) + '…'
-          : txt;
-      },
-      // función que formatea el texto que se muestra una vez seleccionado
-      templateSelection: function(item) {
-        if (!item.id) return item.text;
-        const txt = item.text;
-        return txt.length > 60
-          ? txt.substr(0, 60) + '…'
-          : txt;
-      }
-    });
-
-    // Ocultar productos hijos si no hay nada seleccionado todavía
-    if (!$sel.val()) {
-      $sel.find('option').each(function () {
-        const $opt = $(this);
-        const esHijo = String($opt.data('serie') || '') !== '';
-        if (esHijo) {
-          $opt.remove();  // Elimina del dropdown los productos con número de serie
+        // función que formatea cada opción del dropdown
+        templateResult: function(item) {
+          if (!item.id) return item.text;    
+          const txt = item.text;
+          return txt.length > 60
+            ? txt.substr(0, 60) + '…'
+            : txt;
+        },
+        // función que formatea el texto que se muestra una vez seleccionado
+        templateSelection: function(item) {
+          if (!item.id) return item.text;
+          const txt = item.text;
+          return txt.length > 60
+            ? txt.substr(0, 60) + '…'
+            : txt;
         }
       });
-    }
 
-    // Al seleccionar o deseleccionar, re-filtra duplicados y cierra
-    $sel.on('select2:select select2:unselect', () => {
-      updateProductoOptions();
-      $sel.select2('close');
+      // Ocultar productos hijos si no hay nada seleccionado todavía
+      if (!$sel.val()) {
+        $sel.find('option').each(function () {
+          const $opt = $(this);
+          const esHijo = String($opt.data('serie') || '') !== '';
+          if (esHijo) {
+            $opt.remove();  // Elimina del dropdown los productos con número de serie
+          }
+        });
+      }
+
+      // Al seleccionar o deseleccionar, re-filtra duplicados y cierra
+      $sel.on('select2:select select2:unselect', () => {
+        updateProductoOptions();
+        $sel.select2('close');
+      });
     });
-  });
 
-  // Primera pasada de filtrado
-  updateProductoOptions();
+    // Primera pasada de filtrado
+    updateProductoOptions();
 
-  // Ocultar botón "Crear Producto" si ya hay algo seleccionado
-  $scope.find('.select2-producto-auto').each(function () {
-    const $sel = $(this);
-    const $row = $sel.closest('tr');
-    const $btn = $row.find('.btn-nuevo-producto');
-    if ($sel.val()) {
-      $btn.hide();
-    } else {
-      $btn.show();
-    }
-  });
-}
-
+    // Ocultar botón "Crear Producto" si ya hay algo seleccionado
+    $scope.find('.select2-producto-auto').each(function () {
+      const $sel = $(this);
+      const $row = $sel.closest('tr');
+      const $btn = $row.find('.btn-nuevo-producto');
+      if ($sel.val()) {
+        $btn.hide();
+      } else {
+        $btn.show();
+      }
+    });
+  }
 
   // Filtrar duplicados deshabilitando opciones
   function updateProductoOptions() {
@@ -248,10 +246,10 @@ function initSelect2Productos($scope) {
       const $sel2 = $row.find('.select2-producto-auto');
       const $s2container = $sel2.next('.select2-container');
       $s2container.find('.select2-selection')
-        .css('pointer-events', 'none')        // evita clics
-        .css('background-color', '#e9ecef')   // gris tipo desactivado
-        .css('opacity', 0.7)                  // se ve más apagado
-        .css('cursor', 'not-allowed');        // cursor de no permitido
+        .css('pointer-events', 'none')        
+        .css('background-color', '#e9ecef')   
+        .css('opacity', 0.7)                  
+        .css('cursor', 'not-allowed');       
 
       // Para los hijos (tienen serie), bloquear también serie y cantidad;
       //    para los normales, ocultar número de serie y dejar cantidad editable.
