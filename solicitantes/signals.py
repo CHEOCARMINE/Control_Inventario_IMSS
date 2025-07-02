@@ -1,6 +1,6 @@
-from django.db.models.signals import post_migrate
-from django.dispatch import receiver
 from django.db import connection
+from django.dispatch import receiver
+from django.db.models.signals import post_migrate
 
 @receiver(post_migrate)
 def insertar_cargos_basicos(sender, **kwargs):

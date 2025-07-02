@@ -1,20 +1,15 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.hashers import make_password
-from django.core.paginator   import Paginator
 from django.urls import reverse
-from usuarios.forms import UsuarioForm, VerUsuarioForm
-from usuarios.models import DatosPersonales
-from usuarios.utils import generar_nombre_usuario_unico
+from django.contrib import messages
 from login_app.models import Usuario, Rol
-from login_app.decorators import login_required, superadmin_required
+from django.core.paginator import Paginator
+from usuarios.models import DatosPersonales
+from django.contrib.auth.hashers import make_password
+from usuarios.forms import UsuarioForm, VerUsuarioForm
+from usuarios.utils import generar_nombre_usuario_unico
+from django.shortcuts import render, redirect, get_object_or_404
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
-from usuarios.validations import (
-    validate_letters,
-    validate_correo,
-    validate_telefono,
-    validate_numero_empleado
-)
+from login_app.decorators import login_required, superadmin_required
+from usuarios.validations import (validate_letters, validate_correo, validate_telefono, validate_numero_empleado)
 
 # Crear usuario
 @login_required

@@ -1,0 +1,206 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Histórico de Entradas{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <div class="d-flex align-items-center mb-3">
+        <h2 class="mr-auto">Histórico de Entradas</h2>
+        <button class="btn btn-success"
+                data-bs-toggle="modal"
+                data-bs-target="#modalRegistrarEntrada"
+                data-remote="{% url 'inventario:registrar_entrada' %}">
+        <i class="fas fa-plus"></i> Registrar Entrada
+        </button>
+    </div>
+
+    <!-- Mensajes de Sesión -->
+    {% if mensaje_error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ mensaje_error }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    {% endif %}
+    {% if mensaje_exito %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ mensaje_exito }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    {% endif %}
+
+    <!-- FILTROS -->
+    <div class="card mb-4">
+        <div class="card-body">
+        <form id="filterForm" method="get" action="{% url 'inventario:lista_entradas' %}">
+            <div class="form-row">
+            <div class="col-md-3 mb-2">
+                <input type="text"
+                    name="folio"
+                    class="form-control auto-submit"
+                    placeholder="Folio"
+                    value="{{ filter.folio }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <input type="date"
+                    name="fecha_rec"
+                    class="form-control auto-submit"
+                    value="{{ filter.fecha_rec }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="categoria" id="id_categoria"
+                        class="form-control auto-submit">
+                <option value="">-- Categoría --</option>
+                {% for c in catalogos %}
+                <option value="{{ c.id }}"
+                    {% if filter.categoria == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.nombre }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="subcategoria" id="id_subcategoria"
+                        class="form-control auto-submit">
+                <option value="">-- Subcategoría --</option>
+                {% for s in subcatalogos %}
+                <option value="{{ s.id }}"
+                    {% if filter.subcategoria == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.nombre }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="tipo" id="id_tipo"
+                        class="form-control auto-submit">
+                <option value="">-- Tipo --</option>
+                {% for t in tipos %}
+                <option value="{{ t.id }}"
+                    {% if filter.tipo == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t.nombre }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <select name="producto" class="form-control auto-submit">
+                <option value="">-- Producto --</option>
+                {% for p in productos %}
+                    <option value="{{ p.id }}"
+                            {% if filter.producto == p.id|stringformat:"s" %}selected{% endif %}>
+                    {{ p.nombre }}
+                    </option>
+                {% endfor %}
+                </select>
+            </div>            
+            <div class="col-md-1 mb-2">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-block"
+                        onclick="clearFilters()">
+                <i class="fas fa-eraser"></i>
+                </button>
+            </div>
+            </div>
+        </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Entradas -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+        <thead class="thead-light">
+            <tr>
+            <th>Folio</th>
+            <th>Fecha Recepción</th>
+            <th>Productos</th>
+            <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entrada in page_obj.object_list %}
+            <tr class="{% if not entrada.folio %}table-warning{% endif %}">
+                <td>{{ entrada.folio|default:"Pendiente" }}</td>
+                <td>{{ entrada.fecha_recepcion }}</td>
+                <td>
+                {% for linea in entrada.lineas.all %}
+                    <span class="badge badge-info mr-1">
+                    {{ linea.producto.nombre }} ({{ linea.cantidad }})
+                    </span>
+                {% endfor %}
+                </td>
+                <td class="text-center">
+                <button class="btn btn-sm btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEditarEntrada"
+                        data-remote="{% url 'inventario:editar_entrada' entrada.id %}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No hay entradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            {% endif %}
+        </ul>
+        </nav>
+    {% endif %}
+
+    <!-- MODALES (contenedores vacíos; se cargan por AJAX) -->
+
+    <!-- Modal Registrar Entrada -->
+    <div class="modal fade" id="modalRegistrarEntrada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content"><!-- AJAX carga aquí: modal_registrar_entrada.html --></div>
+    </div>
+    </div>
+
+    <!-- Modal Crear Producto -->
+    <div class="modal fade" id="modalCrearProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content"><!-- Aquí inyectamos modal_crear_producto.html vía AJAX --></div>
+    </div>
+    </div>
+
+    <!-- Modal Editar Entrada -->
+    <div class="modal fade" id="modalEditarEntrada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content"><!-- aquí cargará AJAX: modal_editar_entrada.html --></div>
+    </div>
+    </div>
+
+</div>
+{% endblock content%}
+
+{% block extra_js %}
+<script src="{% static 'inventario/js/lista_entradas.js' %}"></script>
+{% endblock extra_js %}

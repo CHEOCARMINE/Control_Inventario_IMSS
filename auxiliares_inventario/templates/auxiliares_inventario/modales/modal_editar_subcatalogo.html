@@ -1,0 +1,16 @@
+<div class="modal-header">
+  <h5 class="modal-title">Editar Subcategoría</h5>
+  <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <form id="form-subcatalogo" method="post" action="{% url 'subcatalogo_update' sub.pk %}">
+    <div id="subcatalogo-form-fields">
+      {% include 'auxiliares_inventario/modales/fragmento_form_subcatalogo.html' %}
+    </div>
+    <div class="text-right mt-3">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</div>

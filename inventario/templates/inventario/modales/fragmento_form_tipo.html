@@ -1,0 +1,61 @@
+{% csrf_token %}
+<div class="form-group">
+    <label for="id_nombre">Nombre</label>
+    {{ form.nombre }}
+    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors.0 }}</div>{% endif %}
+</div>
+
+<div class="form-group">
+    <label for="{{ form.Subcatalogo.id_for_label }}">Subcategoría</label>
+    <select
+        name="{{ form.Subcatalogo.name }}"
+        id="{{ form.Subcatalogo.id_for_label }}"
+        class="form-control select2-subcategoria">
+        <option value=""></option>
+        {% for opt in form.Subcatalogo.field.queryset %}
+        <option
+            value="{{ opt.pk }}"
+            {% if form.Subcatalogo.value|stringformat:"s" == opt.pk|stringformat:"s" %}selected{% endif %}>
+            {{ opt.nombre }}
+        </option>
+        {% endfor %}
+    </select>
+    {% if form.Subcatalogo.errors %}
+        <div class="text-danger small">{{ form.Subcatalogo.errors.0 }}</div>
+    {% endif %}
+</div>
+
+<div class="form-group">
+    <label for="{{ form.unidad_medida.id_for_label }}">Unidad de medida</label>
+    <select
+        name="{{ form.unidad_medida.name }}"
+        id="{{ form.unidad_medida.id_for_label }}"
+        class="form-control select2-unidad">
+        <option value=""></option>
+        {% for opt in form.unidad_medida.field.queryset %}
+        <option
+            value="{{ opt.pk }}"
+            {% if form.unidad_medida.value|stringformat:"s" == opt.pk|stringformat:"s" %}selected{% endif %}>
+            {{ opt.nombre }}
+        </option>
+        {% endfor %}
+    </select>
+    {% if form.unidad_medida.errors %}
+        <div class="text-danger small">{{ form.unidad_medida.errors.0 }}</div>
+    {% endif %}
+</div>
+
+<div class="form-group">
+    <label for="id_stock_minimo">Stock mínimo</label>
+    {{ form.stock_minimo }}
+    {% if form.stock_minimo.errors %}<div class="text-danger small">{{ form.stock_minimo.errors.0 }}</div>{% endif %}
+</div>
+
+<!-- Sólo muestro Estado si no es creación -->
+{% if not crear and form.fields.estado %}
+<div class="form-group">
+    <label for="id_estado">Estado</label>
+    {{ form.estado }}
+    {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors.0 }}</div>{% endif %}
+</div>
+{% endif %}

@@ -1,7 +1,7 @@
 from functools import wraps
-from django.shortcuts import redirect
-from django.contrib import messages
 from login_app.models import Rol
+from django.contrib import messages
+from django.shortcuts import redirect
 # from login_app.decorators import login_required, superadmin_required, almacen_required, supervisor_required, salidas_required
 
 # Definición de grupos de roles permitidos

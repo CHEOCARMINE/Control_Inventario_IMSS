@@ -20,8 +20,11 @@
 <link href="{% static 'base/css/sb-admin-2.css' %}" rel="stylesheet">
 <link href="{% static 'base/css/personalizado.css' %}" rel="stylesheet">
 
-<!-- Estilos Externos -->
+<!-- CSS principal de Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<!-- Tema Bootstrap-4 para Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.3.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
 
 </head>
 
@@ -73,7 +76,7 @@
                 Auxiliares
             </div>
 
-            <!-- Grupo desplegable: Solicitudes -->
+            <!-- Solicitantes -->
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseSolicitantes"
                     aria-expanded="false" aria-controls="collapseSolicitantes">
@@ -90,6 +93,23 @@
                 </div>
             </li>
 
+            <!-- Auxiliares de Inventario -->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAuxiliaresInventario"
+                    aria-expanded="false" aria-controls="collapseAuxiliaresInventario">
+                    <i class="fas fa-boxes"></i>
+                    <span>Axiliares de Inventario</span>
+                </a>
+                <div id="collapseAuxiliaresInventario" class="collapse" aria-labelledby="headingSolicitantes" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Elementos:</h6>
+                        <a class="collapse-item" href="{% url 'catalogo_list' %}">Catalogo</a>
+                        <a class="collapse-item" href="{% url 'subcatalogo_list' %}">Subcatalogo</a>
+                        <a class="collapse-item" href="{% url 'inventario:lista_tipos' %}">Tipos</a>                        
+                    </div>
+                </div>
+            </li>
+
             <!-- Agregar mas Funciones -->
 
             {% endif %}
@@ -102,25 +122,23 @@
 
             <!-- Título ejemplo-->
             <div class="sidebar-heading">
-                Supervisor de almacén
+                Inventario
             </div>
 
-            <!-- Elemento de navegación - Contraer menú de páginas ejemplo para mas para selecionar -->
             <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-cog"></i>
-                    <span>Components</span>
+                <a class="nav-link" href="{% url 'inventario:lista_productos' %}">
+                    <i class="fas fa-fw fa-layer-group"></i>
+                    <span>Inventario</span>
                 </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Custom Components:</h6>
-                        <a class="collapse-item" href="buttons.html">Buttons</a>
-                        <a class="collapse-item" href="cards.html">Cards</a>
-                    </div>
-                </div>
             </li>
 
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'inventario:lista_entradas' %}">
+                    <i class="fas fa-fw fa-layer-group"></i>
+                    <span>Entradas</span>
+                </a>
+            </li>
             <!-- Agregar mas Funciones -->
 
             {% endif %}
@@ -279,9 +297,11 @@
 
 <!-- Scripts personalizados -->
 <script src="{% static 'base/js/personalizado.js' %}"></script>
+<script src="{% static 'inventario/js/formulario_entradas.js' %}"></script>
 
-<!-- Scripts Externos -->
+<!-- Externos -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
 <!-- aquí inyectarás scripts de cada vista -->
 {% block extra_js %}{% endblock extra_js %}
