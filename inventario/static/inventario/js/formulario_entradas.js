@@ -41,7 +41,8 @@ $(function() {
     const $m      = $(this);
     const $field  = $m.find('[name="tiene_serie"]');      
     const $rowTS  = $field.closest('.col-md-6.mb-3');     
-    const $rowNum = $m.find('#div_numero_serie').closest('.row'); 
+    const $rowNum = $m.find('#div_numero_serie').closest('.row');
+    initSelect2ProductoModal($m);
 
     // función que decide qué mostrar
     function actualizarVista() {
