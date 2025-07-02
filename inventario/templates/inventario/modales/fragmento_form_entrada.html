@@ -103,100 +103,102 @@
   </div>
 {% endif %}
 
-<div class="table-responsive">
-  <table class="table table-bordered" id="tabla-entradas">
-    <thead class="thead-light">
-      <tr>
-        <th style="width:250px;">Producto</th>
-        <th>Marca</th>
-        <th>Color</th>
-        <th>Modelo</th>
-        <th style="width:150px;">N.º Serie</th>
-        <th style="width:130px;">Cantidad</th>
-        <th style="width:160px;">Acción</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for form_linea in formset_lineas %}
-        <tr class="linea-form" data-index="{{ forloop.counter0 }}">
-        <div style="display: none;"> {{ form_linea.id }} </div>
-          <!-- Producto + Botón “Nuevo Producto” -->
-          <td>
-            <select name="{{ form_linea.prefix }}-producto"
-                    class="form-control select2-producto-auto"
-                    data-placeholder="Selecciona producto…">
-              <option value=""></option>
-              {% for prod in todos_productos %}
-                <option
-                  value="{{ prod.id }}"
-                  data-marca="{{ prod.marca.nombre }}"
-                  data-color="{{ prod.color }}"
-                  data-modelo="{{ prod.modelo }}"
-                  data-serie="{{ prod.numero_serie|default_if_none:'' }}"
-                  data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}"
-                  data-tiene-serie="{{ prod.tiene_serie|yesno:'true,false' }}"
-                  {% with selected_value=form_linea.producto.value|stringformat:"s" current_id=prod.id|stringformat:"s" %}
-                    {% if selected_value == current_id %}
-                      selected
-                    {% endif %}
-                  {% endwith %}>
-                  {{ prod }}
-                </option>
-              {% endfor %}
-            </select>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-info btn-nuevo-producto btn-block"
-              data-remote="{% url 'inventario:crear_producto' %}"
-              style="margin-top: .25rem;">
-              + Crear Producto
-            </button>
-          </td>
-          <!-- Columnas de datos -->
-          <td class="marca-cell">
-            {% if form_linea.initial.producto %}
-              {{ form_linea.initial.producto.marca.nombre }}
-            {% endif %}
-          </td>
-          <td class="color-cell">
-            {% if form_linea.initial.producto %}
-              {{ form_linea.initial.producto.color }}
-            {% endif %}
-          </td>
-          <td class="modelo-cell">
-            {% if form_linea.initial.producto %}
-              {{ form_linea.initial.producto.modelo }}
-            {% endif %}
-          </td>
-          <td class="serie-cell">
-            {{ form_linea.numero_serie }}
-            {% if form_linea.numero_serie.errors %}
-              <div class="text-danger small">{{ form_linea.numero_serie.errors.0 }}</div>
-            {% endif %}
-          </td>
-          <!-- Cantidad -->
-          <td>
-            {{ form_linea.cantidad }}
-            {% if form_linea.cantidad.errors %}
-              <div class="text-danger small">{{ form_linea.cantidad.errors.0 }}</div>
-            {% endif %}
-          </td>
-          <!-- Acción: solo eliminar -->
-          <td class="text-center align-middle">
-            <div style="display:none;">
-              {{ form_linea.DELETE }}
-            </div>
-            <button
-              type="button"
-              class="btn btn-sm btn-danger btn-eliminar-fila"
-              title="Eliminar fila">
-              &times;
-            </button>
-          </td>
+<div class="formset-scroll-wrapper flex-grow-1">
+  <div class="table-responsive">
+    <table class="table table-bordered" id="tabla-entradas">
+      <thead class="thead-light">
+        <tr>
+          <th style="width:250px;">Producto</th>
+          <th>Marca</th>
+          <th>Color</th>
+          <th>Modelo</th>
+          <th style="width:150px;">N.º Serie</th>
+          <th style="width:130px;">Cantidad</th>
+          <th style="width:160px;">Acción</th>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% for form_linea in formset_lineas %}
+          <tr class="linea-form" data-index="{{ forloop.counter0 }}">
+          <div style="display: none;"> {{ form_linea.id }} </div>
+            <!-- Producto + Botón “Nuevo Producto” -->
+            <td>
+              <select name="{{ form_linea.prefix }}-producto"
+                      class="form-control select2-producto-auto"
+                      data-placeholder="Selecciona producto…">
+                <option value=""></option>
+                {% for prod in todos_productos %}
+                  <option
+                    value="{{ prod.id }}"
+                    data-marca="{{ prod.marca.nombre }}"
+                    data-color="{{ prod.color }}"
+                    data-modelo="{{ prod.modelo }}"
+                    data-serie="{{ prod.numero_serie|default_if_none:'' }}"
+                    data-tiene-hijos="{{ prod.productos_hijos.count|yesno:'true,false' }}"
+                    data-tiene-serie="{{ prod.tiene_serie|yesno:'true,false' }}"
+                    {% with selected_value=form_linea.producto.value|stringformat:"s" current_id=prod.id|stringformat:"s" %}
+                      {% if selected_value == current_id %}
+                        selected
+                      {% endif %}
+                    {% endwith %}>
+                    {{ prod }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-info btn-nuevo-producto btn-block"
+                data-remote="{% url 'inventario:crear_producto' %}"
+                style="margin-top: .25rem;">
+                + Crear Producto
+              </button>
+            </td>
+            <!-- Columnas de datos -->
+            <td class="marca-cell">
+              {% if form_linea.initial.producto %}
+                {{ form_linea.initial.producto.marca.nombre }}
+              {% endif %}
+            </td>
+            <td class="color-cell">
+              {% if form_linea.initial.producto %}
+                {{ form_linea.initial.producto.color }}
+              {% endif %}
+            </td>
+            <td class="modelo-cell">
+              {% if form_linea.initial.producto %}
+                {{ form_linea.initial.producto.modelo }}
+              {% endif %}
+            </td>
+            <td class="serie-cell">
+              {{ form_linea.numero_serie }}
+              {% if form_linea.numero_serie.errors %}
+                <div class="text-danger small">{{ form_linea.numero_serie.errors.0 }}</div>
+              {% endif %}
+            </td>
+            <!-- Cantidad -->
+            <td>
+              {{ form_linea.cantidad }}
+              {% if form_linea.cantidad.errors %}
+                <div class="text-danger small">{{ form_linea.cantidad.errors.0 }}</div>
+              {% endif %}
+            </td>
+            <!-- Acción: solo eliminar -->
+            <td class="text-center align-middle">
+              <div style="display:none;">
+                {{ form_linea.DELETE }}
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger btn-eliminar-fila"
+                title="Eliminar fila">
+                &times;
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Botón para agregar más filas -->

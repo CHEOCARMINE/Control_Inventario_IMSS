@@ -33,3 +33,46 @@
   border: 1px solid #ced4da !important;
   pointer-events: none;
 }
+
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+/* MODAL: Centrado vertical + ancho personalizado */
+.modal.show .modal-dialog {
+  display: flex;
+  align-items: center;      /* CENTRADO VERTICAL */
+  justify-content: center;  /* CENTRADO HORIZONTAL */
+  min-height: 100vh;        /* Altura total de viewport */
+  margin: 0 auto;
+  max-width: 1000px;
+}
+
+/* MODAL: contenedor general con altura limitada */
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* MODAL BODY: espacio distribuido */
+.modal-body {
+  overflow: hidden;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* FORMSET: Scroll solo aquí */
+.formset-scroll-wrapper {
+  overflow-y: auto;
+  max-height: 300px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 10px;
+  background-color: #fff;
+  margin-bottom: 1rem;
+}
