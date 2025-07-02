@@ -14,6 +14,9 @@ $(function() {
         minimumResultsForSearch: 0,
         closeOnSelect: true
       }).on('select2:select', () => $sel.select2('close'));
+      if ($sel.prop('disabled')) {
+        $sel.select2('enable', false);
+      }
     });
     // Tipo 
     $modal.find('.select2-tipo').each(function() {
@@ -27,6 +30,9 @@ $(function() {
         minimumResultsForSearch: 0,
         closeOnSelect: true
       }).on('select2:select', () => $sel.select2('close'));
+      if ($sel.prop('disabled')) {
+        $sel.select2('enable', false);
+      }
     });
   }
 

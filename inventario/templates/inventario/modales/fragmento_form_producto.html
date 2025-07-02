@@ -8,7 +8,8 @@
         <select
             name="{{ form.tipo.name }}"
             id="{{ form.tipo.id_for_label }}"
-            class="form-control select2-tipo">
+            class="form-control select2-tipo"
+            {% if form.tipo.field.disabled %}disabled{% endif %}>
             <option value=""></option>
             {% for opt in form.tipo.field.queryset %}
             <option
@@ -47,6 +48,7 @@
             id="{{ form.marca.id_for_label }}"
             class="form-control select2-tags"
             data-placeholder="Escribe o selecciona una marca…"
+            {% if form.fields.marca.disabled %}disabled{% endif %}
             required>
             <option></option>
             {% for nombre in marcas_existentes %}

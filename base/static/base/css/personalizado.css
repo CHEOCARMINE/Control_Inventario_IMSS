@@ -26,3 +26,10 @@
 #modalCrearProducto .modal-backdrop {
   z-index: 1060 !important;
 }
+
+.select2-container--bootstrap4.select2-container--disabled .select2-selection--single {
+  background-color: #EAECF4 !important;
+  color: #6c757d !important;        /* texto gris como los inputs */
+  border: 1px solid #ced4da !important;
+  pointer-events: none;
+}
