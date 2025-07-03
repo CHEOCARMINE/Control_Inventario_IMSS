@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'usuarios',
     'solicitantes', 
     'auxiliares_inventario',
-    'inventario'
+    'inventario',
+    'salidas',
 ]
 
 AUTH_USER_MODEL = 'login_app.Usuario'
