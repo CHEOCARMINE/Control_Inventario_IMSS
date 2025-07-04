@@ -42,5 +42,8 @@ urlpatterns = [
 
     # Ruta para Inventario
     path('inventario/', include('inventario.urls', namespace='inventario')),
+
+    # Ruta para Salidas
+    path('salidas/', include('salidas.urls')),
 ]
 
