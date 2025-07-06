@@ -1,0 +1,25 @@
+{% load static %}
+<form id="formSalida" method="post" action="{% url 'salidas:registrar_salida' %}">
+    {% csrf_token %}
+    <div class="modal-header">
+        <h5 class="modal-title">Registrar Salida de Productos</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+    </div>
+
+    <div class="modal-body p-4">
+        {% include 'salidas/modales/fragmento_form_salida.html' %}
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-success">Guardar Salida</button>
+    </div>
+</form>
+
+<script>
+    window.datosSolicitantes = {{ datos_solicitantes_json|safe }};
+    window.datosUnidades = {{ datos_unidades_json|safe }};
+    window.todosSolicitantes = {{ todos_solicitantes_json|safe }};
+</script>
+
+<!-- Script específico del modal -->
+<script src="{% static 'salidas/js/modal_registrar_salida.js' %}"></script>

@@ -1,8 +1,10 @@
+import json
 from django.db.models import Q
 from django.shortcuts import render
 from django.core.paginator import Paginator
 from inventario.models import Producto, Tipo
 from auxiliares_inventario.models import Catalogo, Subcatalogo
+from solicitantes.models import Unidad, Departamento, Solicitante
 from login_app.decorators import login_required, salidas_required
 
 
@@ -77,3 +79,51 @@ def productos_para_salida(request):
         'subcatalogos': subcatalogos,
         'tipos': tipos,
     })
+
+# Registrar Salida
+@login_required
+@salidas_required
+def modal_registrar_salida(request):
+    solicitantes = Solicitante.objects.select_related('unidad', 'departamento').all()
+    unidades = Unidad.objects.all()
+    departamentos = Departamento.objects.all()
+
+    # Para llenar automáticamente unidad y departamento al elegir solicitante
+    datos_solicitantes = {
+        s.id: {
+            'unidad_id': s.unidad_id,
+            'departamento_id': s.departamento_id
+        }
+        for s in solicitantes
+    }
+
+    # Para que al elegir unidad se muestren solo sus departamentos
+    datos_unidades = {}
+    for depto in departamentos:
+        for unidad in depto.unidades.all():
+            datos_unidades.setdefault(unidad.id, []).append({
+                'id': depto.id,
+                'nombre': depto.nombre
+            })
+
+    # Para filtrar solicitantes por unidad y departamento
+    todos_solicitantes = [
+        {
+            'id': s.id,
+            'nombre': s.nombre,
+            'unidad_id': s.unidad_id,
+            'departamento_id': s.departamento_id
+        }
+        for s in solicitantes
+    ]
+
+    context = {
+        'solicitantes': solicitantes,
+        'unidades': unidades,
+        'departamentos': departamentos,
+        'datos_solicitantes_json': json.dumps(datos_solicitantes),
+        'datos_unidades_json': json.dumps(datos_unidades),
+        'todos_solicitantes_json': json.dumps(todos_solicitantes),
+    }
+
+    return render(request, 'salidas/modales/modal_registrar_salida.html', context)
