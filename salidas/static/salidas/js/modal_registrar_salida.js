@@ -79,28 +79,64 @@ $(function () {
         }
     });
 
-    // Autocompletar unidad y depto al elegir solicitante
-    $('#id_solicitante').on('change', function () {
-        const solicitanteId = $(this).val();
-        const datos = window.datosSolicitantes || {};
-        if (datos[solicitanteId]) {
-            $('#id_unidad').val(datos[solicitanteId].unidad_id).trigger('change');
-            $('#id_departamento').val(datos[solicitanteId].departamento_id).trigger('change');
+    // Auto-llenado de Unidad y Departamento al seleccionar un Solicitante
+    $('#id_solicitante').on('select2:select', function(e) {
+    const solId = e.params.data.id;
+    const datos = window.datosSolicitantes || {};
+    const uniId = datos[solId]?.unidad_id;
+    const depId = datos[solId]?.departamento_id;
+
+    if (uniId) {
+        // Asigna el valor y refresca solo el widget Select2 de Unidad
+        $('#id_unidad')
+        .val(uniId)
+        .trigger('change.select2');
+    }
+    if (depId) {
+        // Asigna el valor y refresca solo el widget Select2 de Departamento
+        $('#id_departamento')
+        .val(depId)
+        .trigger('change.select2');
+    }
+    });
+
+    // Al cambiar DEPARTAMENTO → actualizar UNIDADES
+    $('#id_departamento').on('select2:select', function(e) {
+    const deptoId       = parseInt(e.params.data.id, 10);
+    const todasUnidades = window.todosUnidades || [];
+    const $unidad       = $('#id_unidad').empty().append('<option value="">---------</option>');
+
+    todasUnidades.forEach(u => {
+        // u.departamentos es un array de IDs de departamentos
+        if (u.departamentos.includes(deptoId)) {
+        $unidad.append(`<option value="${u.id}">${u.nombre}</option>`);
         }
     });
 
-    // Al cambiar unidad → actualizar departamentos
-    $('#id_unidad').on('change', function () {
-        const unidadId = $(this).val();
-        const datos = window.datosUnidades || {};
-        const $depto = $('#id_departamento');
-        $depto.empty().append('<option value="">---------</option>');
-        if (datos[unidadId]) {
-            datos[unidadId].forEach(dep => {
-                $depto.append(`<option value="${dep.id}">${dep.nombre}</option>`);
-            });
+    // refrescamos solo la UI de Select2
+    $unidad.val('').trigger('change.select2');
+    });
+
+    // Al cambiar UNIDAD o DEPARTAMENTO → actualizar SOLICITANTES
+    $('#id_unidad, #id_departamento').on('select2:select', function() {
+    const unidadId     = $('#id_unidad').val();
+    const deptoId      = $('#id_departamento').val();
+    const todos        = window.todosSolicitantes || [];
+    const $solicitante = $('#id_solicitante').empty().append('<option value="">---------</option>');
+    const prev         = $('#id_solicitante').val();
+    let sigueValido    = false;
+
+    todos.forEach(s => {
+        if (( !unidadId || s.unidad_id == unidadId ) &&
+            ( !deptoId  || s.departamento_id == deptoId )) {
+        $solicitante.append(`<option value="${s.id}">${s.nombre}</option>`);
+        if (s.id == prev) sigueValido = true;
         }
-        $depto.val('').trigger('change');
+    });
+
+    $solicitante
+        .val(sigueValido ? prev : '')
+        .trigger('change.select2');
     });
 
     // Al cambiar unidad/departamento → actualizar solicitantes

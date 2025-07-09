@@ -72,7 +72,7 @@ $(function () {
         const $input = $row.find('.input-cantidad');
         const cantidad = parseInt($input.val(), 10);
 
-        // 🔄 Refrescar carrito desde localStorage antes de verificar
+        // Refrescar carrito desde localStorage antes de verificar
         carrito = JSON.parse(localStorage.getItem('carritoSalida') || '[]');
         if (carrito.find(p => p.id == id)) {
             mostrarToast('Este producto ya fue agregado.');
@@ -106,7 +106,7 @@ $(function () {
         const color = $btn.data('color') || '';
         const numero_serie = $btn.data('numero-serie') || '';
 
-        // 🔄 Refrescar carrito desde localStorage antes de verificar
+        // Refrescar carrito desde localStorage antes de verificar
         carrito = JSON.parse(localStorage.getItem('carritoSalida') || '[]');
         if (carrito.find(p => p.id == id)) {
             mostrarToast('Este producto hijo ya fue agregado.');

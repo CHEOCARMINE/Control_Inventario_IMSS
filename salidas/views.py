@@ -117,6 +117,16 @@ def modal_registrar_salida(request):
         for s in solicitantes
     ]
 
+    # Para filtrar unidades al cambiar departamento
+    todos_unidades = [
+        {
+            'id': u.id,
+            'nombre': u.nombre,
+            'departamentos': [d.id for d in u.departamentos.all()]
+        }
+        for u in unidades
+    ]
+
     context = {
         'solicitantes': solicitantes,
         'unidades': unidades,
@@ -124,6 +134,7 @@ def modal_registrar_salida(request):
         'datos_solicitantes_json': json.dumps(datos_solicitantes),
         'datos_unidades_json': json.dumps(datos_unidades),
         'todos_solicitantes_json': json.dumps(todos_solicitantes),
+        'todos_unidades_json':      json.dumps(todos_unidades),
     }
 
     return render(request, 'salidas/modales/modal_registrar_salida.html', context)
