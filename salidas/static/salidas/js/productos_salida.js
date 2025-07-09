@@ -87,7 +87,7 @@ $(function () {
         }
 
         carrito.push({
-            id, nombre, cantidad, esHijo: false,
+            id, nombre, cantidad, stock, esHijo: false,
             marca, modelo, color, numero_serie
         });
 
