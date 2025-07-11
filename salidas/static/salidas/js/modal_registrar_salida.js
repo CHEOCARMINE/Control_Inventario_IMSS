@@ -159,4 +159,38 @@
     $('#id_unidad').on('select2:select', filtrarSolicitantes);
     $('#id_departamento').on('select2:select', filtrarSolicitantes);
 
-    });  
+    // Capturar el submit y enviarlo por AJAX
+    $('#formSalida').on('submit', function(e) {
+    e.preventDefault();
+
+    // Inyectar el carrito actual en el hidden
+    $('#id_carrito_json').val(JSON.stringify(carrito));
+
+    // Serializar y enviar
+    const url  = $(this).attr('action');
+    const data = $(this).serialize();
+    $.ajax({
+        url:    url,
+        method: 'POST',
+        data:   data,
+        success(resp) {
+        if (resp.success) {
+            // Aquí borramos el carrito de localStorage
+            localStorage.removeItem('carritoSalida');
+            // También reseteamos la variable en memoria
+            carrito = [];
+            // Y actualizamos el contador (badges) en la UI
+            if (window.actualizarContadorSalida) {
+            window.actualizarContadorSalida();
+            }
+            // Ahora cerramos el modal y redirigimos
+            $('#modalRegistrarSalida').modal('hide');
+            window.location.href = resp.redirect_url;
+        } else {
+            // errores de validación: pintamos el fragmento con errores
+            $('#modalRegistrarSalida .modal-body').html(resp.html_form);
+        }
+        }
+    });
+    });
+});  

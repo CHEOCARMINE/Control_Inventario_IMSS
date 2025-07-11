@@ -1,6 +1,7 @@
 {% load static %}
 <form id="formSalida" method="post" action="{% url 'salidas:registrar_salida' %}">
     {% csrf_token %}
+    <input type="hidden" name="carrito_json" id="id_carrito_json" value="" />
     <div class="modal-header">
         <h5 class="modal-title">Registrar Salida de Productos</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>

@@ -1,17 +1,48 @@
 import json
 from django.db.models import Q
+from django.db.models import F
+from django.urls import reverse
+from django.utils import timezone
+from .forms import ValeSalidaForm
 from django.shortcuts import render
+from django.http import JsonResponse
+from .utils import generar_folio_automatico
 from django.core.paginator import Paginator
 from inventario.models import Producto, Tipo
+from django.db import transaction, IntegrityError
+from django.template.loader import render_to_string
+from django.shortcuts import redirect, get_object_or_404
+from .models import ValeSalida, ValeDetalle, Producto
 from auxiliares_inventario.models import Catalogo, Subcatalogo
 from solicitantes.models import Unidad, Departamento, Solicitante
 from login_app.decorators import login_required, salidas_required
+from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
 
+# Helper para registros de log, idéntico al de inventario
+def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
+    user_id_dato = getattr(request.user, 'id_dato', None) or request.user.pk
+    if not user_id_dato:
+        return
+    try:
+        with transaction.atomic():
+            ref = ReferenciasLog.objects.create(tabla=tabla, id_registro=id_registro)
+            modulo = Modulo.objects.get(nombre=nombre_modulo)
+            accion = Accion.objects.get(nombre=nombre_accion)
+            LogsSistema.objects.create(
+                id_dato    = user_id_dato,
+                id_modulo  = modulo,
+                id_accion  = accion,
+                id_ref_log = ref,
+                ip_origen  = request.META.get('REMOTE_ADDR')
+            )
+    except Exception:
+        pass
 
 # Vista para listar productos disponibles para salida
 @login_required
 @salidas_required
 def productos_para_salida(request):
+    mensaje_exito = request.session.pop('salida_success', None)
     nombre = request.GET.get('nombre', '').strip()
     categoria_id = request.GET.get('categoria', '').strip()
     subcategoria_id = request.GET.get('subcategoria', '').strip()
@@ -78,63 +109,126 @@ def productos_para_salida(request):
         'catalogos': catalogos,
         'subcatalogos': subcatalogos,
         'tipos': tipos,
+        'mensaje_exito': mensaje_exito,
     })
 
 # Registrar Salida
 @login_required
 @salidas_required
-def modal_registrar_salida(request):
-    solicitantes = Solicitante.objects.select_related('unidad', 'departamento').all()
-    unidades = Unidad.objects.all()
-    departamentos = Departamento.objects.all()
+def registrar_salida(request):
+    # GET: devolver modal con el form
+    if request.method == 'GET':
+        solicitantes  = Solicitante.objects.select_related('unidad','departamento').filter(estado=True)
+        unidades      = Unidad.objects.filter(estado=True)
+        departamentos = Departamento.objects.filter(estado=True)
 
-    # Para llenar automáticamente unidad y departamento al elegir solicitante
-    datos_solicitantes = {
-        s.id: {
-            'unidad_id': s.unidad_id,
-            'departamento_id': s.departamento_id
+        datos_solicitantes = {
+            s.id: {'unidad_id': s.unidad_id, 'departamento_id': s.departamento_id}
+            for s in solicitantes
         }
-        for s in solicitantes
-    }
+        datos_unidades = {}
+        for d in departamentos:
+            for u in d.unidades.all():
+                datos_unidades.setdefault(u.id, []).append({'id': d.id, 'nombre': d.nombre})
 
-    # Para que al elegir unidad se muestren solo sus departamentos
-    datos_unidades = {}
-    for depto in departamentos:
-        for unidad in depto.unidades.all():
-            datos_unidades.setdefault(unidad.id, []).append({
-                'id': depto.id,
-                'nombre': depto.nombre
-            })
+        todos_solicitantes = [
+            {'id': s.id, 'nombre': s.nombre,
+                'unidad_id': s.unidad_id, 'departamento_id': s.departamento_id}
+            for s in solicitantes
+        ]
+        todos_unidades = [
+            {'id': u.id, 'nombre': u.nombre,
+                'departamentos': [d.id for d in u.departamentos.all()]}
+            for u in unidades
+        ]
 
-    # Para filtrar solicitantes por unidad y departamento
-    todos_solicitantes = [
-        {
-            'id': s.id,
-            'nombre': s.nombre,
-            'unidad_id': s.unidad_id,
-            'departamento_id': s.departamento_id
-        }
-        for s in solicitantes
-    ]
+        return render(request,
+                        'salidas/modales/modal_registrar_salida.html',
+                        {
+                            'solicitantes': solicitantes,
+                            'unidades': unidades,
+                            'departamentos': departamentos,
+                            'datos_solicitantes_json': json.dumps(datos_solicitantes),
+                            'datos_unidades_json':      json.dumps(datos_unidades),
+                            'todos_solicitantes_json':  json.dumps(todos_solicitantes),
+                            'todos_unidades_json':      json.dumps(todos_unidades),
+                        }
+        )
 
-    # Para filtrar unidades al cambiar departamento
-    todos_unidades = [
-        {
-            'id': u.id,
-            'nombre': u.nombre,
-            'departamentos': [d.id for d in u.departamentos.all()]
-        }
-        for u in unidades
-    ]
+    # POST AJAX: procesar guardado de la salida
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    if request.method == 'POST' and is_ajax:
+        form = ValeSalidaForm(request.POST)
+        if form.is_valid():
+            carrito      = form.cleaned_data['carrito_json']
+            solicitante  = form.cleaned_data['solicitante']
+            unidad       = form.cleaned_data['unidad']
+            departamento = form.cleaned_data['departamento']
 
-    context = {
-        'solicitantes': solicitantes,
-        'unidades': unidades,
-        'departamentos': departamentos,
-        'datos_solicitantes_json': json.dumps(datos_solicitantes),
-        'datos_unidades_json': json.dumps(datos_unidades),
-        'todos_solicitantes_json': json.dumps(todos_solicitantes),
-        'todos_unidades_json':      json.dumps(todos_unidades),
-    }
+            try:
+                with transaction.atomic():
+                    # Crear cabecera de vale
+                    folio = generar_folio_automatico()
+                    vale = ValeSalida.objects.create(
+                        folio          = folio,
+                        solicitante    = solicitante,
+                        unidad         = unidad,
+                        departamento   = departamento,
+                        fecha_creacion = timezone.now()
+                    )
+                    _registrar_log(request, "vale_salida", vale.id, "Salidas", "Crear")
 
-    return render(request, 'salidas/modales/modal_registrar_salida.html', context)
+                    # Procesar cada ítem del carrito
+                    for item in carrito:
+                        prod = get_object_or_404(Producto, pk=item['id'])
+
+                        if item.get('esHijo'):
+                            ValeDetalle.objects.create(vale=vale, producto=prod, cantidad=1)
+
+                            prod.stock = F('stock') - 1
+                            prod.save(update_fields=['stock'])
+                            prod.refresh_from_db(fields=['stock'])
+                            _registrar_log(request, "producto", prod.id, "Salidas", "Ajuste stock")
+
+                            prod.estado = False
+                            prod.save(update_fields=['estado'])
+                            _registrar_log(request, "producto", prod.id, "Salidas", "Desactivar hijo")
+
+                            padre = prod.producto_padre
+                            padre.stock = F('stock') - 1
+                            padre.save(update_fields=['stock'])
+                            padre.refresh_from_db(fields=['stock'])
+                            _registrar_log(request, "producto", padre.id, "Salidas", "Ajuste stock")
+                        else:
+                            cantidad = item['cantidad']
+                            ValeDetalle.objects.create(vale=vale, producto=prod, cantidad=cantidad)
+
+                            prod.stock = F('stock') - cantidad
+                            prod.save(update_fields=['stock'])
+                            prod.refresh_from_db(fields=['stock'])
+                            _registrar_log(request, "producto", prod.id, "Salidas", "Ajuste stock")
+
+                    # Guardar mensaje en sesión y redirigir
+                    request.session['salida_success'] = f"Salida registrada correctamente. Folio: {folio}"
+                    return JsonResponse({
+                        'success':      True,
+                        'redirect_url': reverse('salidas:productos_para_salida')
+                    })
+            except IntegrityError:
+                form.add_error(None, "Error al guardar la salida. Intenta de nuevo.")
+
+        # Si hay errores de validación, recargamos solo el fragmento del form
+        html = render_to_string(
+            'salidas/modales/fragmento_form_salida.html',
+            {
+                'form': form,
+                'solicitantes':  Solicitante.objects.filter(estado=True),
+                'unidades':      Unidad.objects.filter(estado=True),
+                'departamentos': Departamento.objects.filter(estado=True),
+            },
+            request=request
+        )
+        return JsonResponse({'success': False, 'html_form': html})
+
+    # cualquier otro caso, redirigir
+    return redirect('salidas:productos_para_salida')
