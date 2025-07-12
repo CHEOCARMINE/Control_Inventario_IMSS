@@ -17,10 +17,13 @@
 </form>
 
 <script>
-    window.datosSolicitantes = {{ datos_solicitantes_json|safe }};
-    window.datosUnidades = {{ datos_unidades_json|safe }};
-    window.todosSolicitantes = {{ todos_solicitantes_json|safe }};
-    window.todosUnidades = {{ todos_unidades_json|safe }};
+    // Datos para auto-llenado de solicitante → unidad & departamento
+    window.datosSolicitantes     = {{ datos_solicitantes_json|safe }};
+    window.datosUnidades         = {{ datos_unidades_json|safe }};   
+    // Listas completas para inicialización y filtrado
+    window.todosSolicitantes     = {{ todos_solicitantes_json|safe }};
+    window.todosUnidadesCompleto = {{ todos_unidades_json|safe }};
+    window.todosDepartamentos    = {{ departamentos_list_json|safe }};
 </script>
 
 <!-- Script específico del modal -->

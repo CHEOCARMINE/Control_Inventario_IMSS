@@ -142,6 +142,11 @@ def registrar_salida(request):
             for u in unidades
         ]
 
+        departamentos_list = [
+            {'id': d.id, 'nombre': d.nombre}
+            for d in departamentos
+        ]
+
         return render(request,
                         'salidas/modales/modal_registrar_salida.html',
                         {
@@ -152,6 +157,7 @@ def registrar_salida(request):
                             'datos_unidades_json':      json.dumps(datos_unidades),
                             'todos_solicitantes_json':  json.dumps(todos_solicitantes),
                             'todos_unidades_json':      json.dumps(todos_unidades),
+                            'departamentos_list_json':  json.dumps(departamentos_list),
                         }
         )
 

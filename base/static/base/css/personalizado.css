@@ -76,3 +76,10 @@ body.modal-open {
   background-color: #fff;
   margin-bottom: 1rem;
 }
+
+.select2-results__option .text-muted {
+  color: #999 !important;
+  font-style: italic;
+  text-decoration: line-through;
+  opacity: 0.6;
+}

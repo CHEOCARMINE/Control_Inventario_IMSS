@@ -1,9 +1,46 @@
+    function formatOption(option) {
+    if (!option.id) {
+        // placeholder
+        return option.text;
+    }
+    // lee el atributo data-valid del <option>
+    const valid = $(option.element).data('valid');
+    if (valid === false || valid === 'false') {
+        // pinta inválidas en gris (usa tu clase CSS o inline)
+        return `<span class="text-muted">${option.text}</span>`;
+    }
+    return option.text;
+    }
+
     $(function () {
     // Inicializar Select2
-    $('.select2-solicitante, .select2-unidad, .select2-departamento').select2({
-        theme: 'bootstrap4',
-        width: '100%',
-        dropdownParent: $('#modalRegistrarSalida')
+    $('#id_solicitante').select2({
+    placeholder:    'Selecciona un solicitante',
+    allowClear:     true,
+    theme:          'bootstrap4',
+    width:          '100%',
+    dropdownParent: $('#modalRegistrarSalida'),
+    data:           window.todosSolicitantes.map(s => ({ id: s.id, text: s.nombre }))
+    });
+
+    $('#id_unidad').select2({
+    placeholder:    'Selecciona una unidad',
+    allowClear:     true,
+    theme:          'bootstrap4',
+    width:          '100%',
+    dropdownParent: $('#modalRegistrarSalida'),
+    templateResult: formatOption,
+    escapeMarkup:   markup => markup
+    });
+
+    $('#id_departamento').select2({
+    placeholder:    'Selecciona un departamento',
+    allowClear:     true,
+    theme:          'bootstrap4',
+    width:          '100%',
+    dropdownParent: $('#modalRegistrarSalida'),
+    templateResult: formatOption,
+    escapeMarkup:   markup => markup
     });
 
     // Lógica de carrito y cantidades (igual a como ya lo tenías)
@@ -93,71 +130,90 @@
         if (depId) $('#id_departamento').val(depId).trigger('change.select2');
     });
 
-    // Al cambiar DEPARTAMENTO → repuebla UNIDADES sin perder selección válida
-    $('#id_departamento').on('select2:select', function (e) {
-        const deptoId       = parseInt(e.params.data.id, 10);
-        const todasUnidades = window.todosUnidades || [];
-        const $unidad       = $('#id_unidad');
-        const prevUni       = $unidad.val();
+    // Al seleccionar DEPARTAMENTO → actualiza data-valid de cada opción de UNIDAD
+    $('#id_departamento').on('select2:select', function(e) {
+    const deptoId = Number(e.params.data.id);
+    $('#id_unidad option').each(function() {
+        const val = this.value;
+        if (!val || isNaN(Number(val))) return;       // saltar placeholder u opciones vacías
 
-        $unidad.empty().append('<option value="">---------</option>');
-        todasUnidades.forEach(u => {
-        if (u.departamentos.includes(deptoId)) {
-            $unidad.append(`<option value="${u.id}">${u.nombre}</option>`);
-        }
-        });
+        const uId    = Number(val);
+        const unidad = window.todosUnidadesCompleto.find(u => u.id === uId);
+        if (!unidad) return;                          // saltar si no existe en el array
 
-        // Restaurar unidad previa si sigue siendo válida
-        if (prevUni && $unidad.find(`option[value="${prevUni}"]`).length) {
-        $unidad.val(prevUni);
-        } else {
-        $unidad.val('');
-        }
-        $unidad.trigger('change.select2');
+        const valid = unidad.departamentos.includes(deptoId);
+        $(this).data('valid', valid);
     });
 
-    // Al cambiar UNIDAD → repuebla DEPARTAMENTOS sin perder selección válida
-    $('#id_unidad').on('select2:select', function (e) {
-        const unidadId  = parseInt(e.params.data.id, 10);
-        const datosDeps  = window.datosUnidades || {};
-        const $depto    = $('#id_departamento');
-        const prevDepto = $depto.val();
-
-        $depto.empty().append('<option value="">---------</option>');
-        (datosDeps[unidadId] || []).forEach(dep => {
-        $depto.append(`<option value="${dep.id}">${dep.nombre}</option>`);
-        });
-
-        // Restaurar depto previo si sigue siendo válido
-        if (prevDepto && $depto.find(`option[value="${prevDepto}"]`).length) {
-        $depto.val(prevDepto);
-        } else {
-        $depto.val('');
-        }
-        $depto.trigger('change.select2');
+    $('#id_unidad').trigger('change.select2');
+    filtrarSolicitantes();
     });
 
-    // Filtrar SOLICITANTES al cambiar unidad o departamento
-    function filtrarSolicitantes() {
-        const unidadId = $('#id_unidad').val();
-        const deptoId  = $('#id_departamento').val();
-        const todos    = window.todosSolicitantes || [];
-        const $sol     = $('#id_solicitante').empty().append('<option value="">---------</option>');
-        const prevSol  = $('#id_solicitante').val();
-        let valid      = false;
+    // Al borrar (clear) DEPARTAMENTO → marca todas las UNIDADES como válidas
+    $('#id_departamento').on('select2:clear', function() {
+    $('#id_unidad option').data('valid', true);
+    $('#id_unidad').trigger('change.select2');
+    filtrarSolicitantes();
+    });
 
-        todos.forEach(s => {
-        if ((!unidadId || s.unidad_id == unidadId) &&
-            (!deptoId  || s.departamento_id == deptoId)) {
-            $sol.append(`<option value="${s.id}">${s.nombre}</option>`);
-            if (s.id == prevSol) valid = true;
-        }
-        });
+    // Al seleccionar UNIDAD → actualiza data-valid de cada opción de DEPARTAMENTO
+    $('#id_unidad').on('select2:select', function(e) {
+    const unidadId = Number(e.params.data.id);
+    $('#id_departamento option').each(function() {
+        const val = this.value;
+        if (!val || isNaN(Number(val))) return;       // saltar placeholder
 
-        $sol.val(valid ? prevSol : '').trigger('change.select2');
+        const dId   = Number(val);
+        const unidad = window.todosUnidadesCompleto.find(u => u.id === unidadId);
+        if (!unidad) return;
+
+        const valid = (unidad.departamentos || []).includes(dId);
+        $(this).data('valid', valid);
+    });
+
+    $('#id_departamento').trigger('change.select2');
+    filtrarSolicitantes();
+    });
+
+    // Al borrar (clear) UNIDAD → marca todos los DEPARTAMENTOS como válidos
+    $('#id_unidad').on('select2:clear', function() {
+    $('#id_departamento option').data('valid', true);
+    $('#id_departamento').trigger('change.select2');
+    filtrarSolicitantes();
+    });
+
+    // Si seleccionas una UNIDAD inválida para el departamento actual, limpia el departamento
+    $('#id_unidad').on('select2:select', function(e) {
+    if ($(e.params.data.element).data('valid') === false) {
+        $('#id_departamento').val(null).trigger('change.select2');
     }
-    $('#id_unidad').on('select2:select', filtrarSolicitantes);
-    $('#id_departamento').on('select2:select', filtrarSolicitantes);
+    });
+
+    // Si seleccionas un DEPARTAMENTO inválido para la unidad actual, limpia la unidad
+    $('#id_departamento').on('select2:select', function(e) {
+    if ($(e.params.data.element).data('valid') === false) {
+        $('#id_unidad').val(null).trigger('change.select2');
+    }
+    });
+
+    // Función para filtrar solicitantes según unidad/departamento
+    function filtrarSolicitantes() {
+    const unidadId = $('#id_unidad').val();
+    const deptoId  = $('#id_departamento').val();
+    const $sol     = $('#id_solicitante').empty();
+
+    window.todosSolicitantes.forEach(s => {
+        if (
+        (!unidadId || s.unidad_id == unidadId) &&
+        (!deptoId  || s.departamento_id == deptoId)
+        ) {
+        $sol.append(new Option(s.nombre, s.id));
+        }
+    });
+
+    // Siempre deselecciona tras repoblar
+    $sol.val(null).trigger('change.select2');
+    }
 
     // Capturar el submit y enviarlo por AJAX
     $('#formSalida').on('submit', function(e) {
