@@ -1,12 +1,10 @@
     function formatOption(option) {
     if (!option.id) {
-        // placeholder
+        // placeholder (valor vacío)
         return option.text;
     }
-    // lee el atributo data-valid del <option>
     const valid = $(option.element).data('valid');
     if (valid === false || valid === 'false') {
-        // pinta inválidas en gris (usa tu clase CSS o inline)
         return `<span class="text-muted">${option.text}</span>`;
     }
     return option.text;
@@ -20,8 +18,11 @@
     theme:          'bootstrap4',
     width:          '100%',
     dropdownParent: $('#modalRegistrarSalida'),
-    data:           window.todosSolicitantes.map(s => ({ id: s.id, text: s.nombre }))
+    templateResult: formatOption,
+    escapeMarkup:   markup => markup
     });
+    $('#id_solicitante option').data('valid', true);
+    $('#id_solicitante').trigger('change.select2');
 
     $('#id_unidad').select2({
     placeholder:    'Selecciona una unidad',
@@ -200,19 +201,29 @@
     function filtrarSolicitantes() {
     const unidadId = $('#id_unidad').val();
     const deptoId  = $('#id_departamento').val();
-    const $sol     = $('#id_solicitante').empty();
 
-    window.todosSolicitantes.forEach(s => {
-        if (
-        (!unidadId || s.unidad_id == unidadId) &&
-        (!deptoId  || s.departamento_id == deptoId)
-        ) {
-        $sol.append(new Option(s.nombre, s.id));
-        }
+    // 1) Marca data-valid en cada <option>
+    $('#id_solicitante option').each(function() {
+        const $opt = $(this);
+        const sUni = $opt.data('unidad-id');
+        const sDep = $opt.data('departamento-id');
+        const valid =
+        (!unidadId || sUni == unidadId) &&
+        (!deptoId  || sDep == deptoId);
+        $opt.data('valid', valid);
     });
 
-    // Siempre deselecciona tras repoblar
-    $sol.val(null).trigger('change.select2');
+    // 2) Si la opción actualmente seleccionada ya no es válida, la limpia
+    const selVal = $('#id_solicitante').val();
+    if (selVal) {
+        const selValid = $('#id_solicitante option:selected').data('valid');
+        if (selValid === false) {
+        $('#id_solicitante').val(null);
+        }
+    }
+
+    // 3) Refresca el dropdown para que templateResult pinte en gris
+    $('#id_solicitante').trigger('change.select2');
     }
 
     // Capturar el submit y enviarlo por AJAX

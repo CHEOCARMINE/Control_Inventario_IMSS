@@ -8,7 +8,12 @@
         <select name="solicitante" id="id_solicitante" class="form-control select2-solicitante" required>
             <option value="">Selecciona un solicitante…</option>
             {% for s in solicitantes %}
-            <option value="{{ s.id }}">{{ s.nombre }}</option>
+            <option 
+                value="{{ s.id }}"
+                data-unidad-id="{{ s.unidad_id }}"
+                data-departamento-id="{{ s.departamento_id }}">
+            {{ s.nombre }}
+            </option>
             {% endfor %}
         </select>
         </div>
