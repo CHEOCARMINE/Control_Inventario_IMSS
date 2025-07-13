@@ -238,3 +238,59 @@ def registrar_salida(request):
 
     # cualquier otro caso, redirigir
     return redirect('salidas:productos_para_salida')
+
+# Lista de salidas registradas
+@login_required
+@salidas_required
+def lista_salidas(request):
+    # Filtros
+    folio        = request.GET.get('folio', '').strip()
+    solicitante  = request.GET.get('solicitante', '').strip()
+    unidad       = request.GET.get('unidad', '').strip()
+    departamento = request.GET.get('departamento', '').strip()
+    producto     = request.GET.get('producto', '').strip()
+    estado       = request.GET.get('estado', '').strip()
+
+    # Query optimizada
+    qs = ValeSalida.objects.select_related(
+                'solicitante', 'unidad', 'departamento'
+            ).prefetch_related('detalles__producto')
+
+    # Aplicar filtros simples
+    if folio:
+        qs = qs.filter(folio__icontains=folio)
+    if solicitante.isdigit():
+        qs = qs.filter(solicitante_id=int(solicitante))
+    if unidad.isdigit():
+        qs = qs.filter(unidad_id=int(unidad))
+    if departamento.isdigit():
+        qs = qs.filter(departamento_id=int(departamento))
+    if producto.isdigit():
+        prod_id = int(producto)
+        qs = qs.filter(Q(detalles__producto_id=prod_id)| Q(detalles__producto__producto_padre_id=prod_id))
+    if estado:
+        qs = qs.filter(estado=estado)
+
+    # Ordenar y paginar
+    qs = qs.order_by('-fecha_creacion').distinct()
+    page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
+
+    # Datos para selects
+    context = {
+        'page_obj':     page_obj,
+        'filter': {
+            'folio':        folio,
+            'solicitante':  solicitante,
+            'unidad':       unidad,
+            'departamento': departamento,
+            'producto':     producto,
+            'estado':       estado,
+        },
+        'solicitantes':  Solicitante.objects.order_by('nombre'),
+        'unidades':       Unidad.objects.order_by('nombre'),
+        'departamentos':  Departamento.objects.order_by('nombre'),
+        'productos':      Producto.objects.filter(
+                                producto_padre__isnull=True
+                            ).order_by('nombre'),
+    }
+    return render(request, 'salidas/lista_salidas.html', context)

@@ -1,0 +1,228 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Histórico de Salidas{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="mb-3">Histórico de Salidas</h2>
+
+  <!-- FILTROS -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form id="filterForm" method="get" action="{% url 'salidas:lista_salidas' %}">
+        <div class="form-row">
+          <div class="col-md-3 mb-2">
+            <input type="text"
+                    name="folio"
+                    class="form-control auto-submit"
+                    placeholder="Folio"
+                    value="{{ filter.folio }}">
+          </div>
+          <div class="col-md-3 mb-2">
+            <select name="solicitante"
+                    class="form-control auto-submit select2-solicitante">
+              <option value="">-- Solicitante --</option>
+              {% for s in solicitantes %}
+                <option value="{{ s.id }}"
+                  {% if filter.solicitante == s.id|stringformat:"s" %}selected{% endif %}>
+                  {{ s.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select name="unidad"
+                    class="form-control auto-submit select2-unidad">
+              <option value="">-- Unidad --</option>
+              {% for u in unidades %}
+                <option value="{{ u.id }}"
+                  {% if filter.unidad == u.id|stringformat:"s" %}selected{% endif %}>
+                  {{ u.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select name="departamento"
+                    class="form-control auto-submit select2-departamento">
+              <option value="">-- Departamento --</option>
+              {% for d in departamentos %}
+                <option value="{{ d.id }}"
+                  {% if filter.departamento == d.id|stringformat:"s" %}selected{% endif %}>
+                  {{ d.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select name="producto"
+                    class="form-control auto-submit select2-producto">
+              <option value="">-- Producto --</option>
+              {% for p in productos %}
+                <option value="{{ p.id }}"
+                  {% if filter.producto == p.id|stringformat:"s" %}selected{% endif %}>
+                  {{ p.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select name="estado"
+                    class="form-control auto-submit select2-estado">
+              <option value="">-- Estado --</option>
+              <option value="pendiente"
+                {% if filter.estado == 'pendiente' %}selected{% endif %}>
+                Pendiente
+              </option>
+              <option value="entregado"
+                {% if filter.estado == 'entregado' %}selected{% endif %}>
+                Entregado
+              </option>
+              <option value="cancelado"
+                {% if filter.estado == 'cancelado' %}selected{% endif %}>
+                Cancelado
+              </option>
+            </select>
+          </div>
+          <div class="col-md-1 mb-2">
+            <button type="button"
+                    class="btn btn-outline-secondary btn-block"
+                    onclick="clearFilters()">
+              <i class="fas fa-eraser"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabla de Salidas -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="thead-light">
+        <tr>
+          <th>Folio</th>
+          <th>Solicitante</th>
+          <th>Unidad</th>
+          <th>Departamento</th>
+          <th>Productos</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in page_obj.object_list %}
+        <tr>
+          <td>{{ s.folio }}</td>
+          <td>{{ s.solicitante.nombre }}</td>
+          <td>{{ s.unidad.nombre }}</td>
+          <td>{{ s.departamento.nombre }}</td>
+          <td>
+            {% for det in s.detalles.all %}
+              <span class="badge badge-info mr-1">
+                {{ det.producto.nombre }} ({{ det.cantidad }})
+              </span>
+            {% endfor %}
+          </td>
+          <td>
+            {% if s.estado == 'pendiente' %}
+              <span class="badge badge-secondary">Pendiente</span>
+            {% elif s.estado == 'entregado' %}
+              <span class="badge badge-success">Entregado</span>
+            {% else %}
+              <span class="badge badge-danger">Cancelado</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                      type="button"
+                      id="acciones{{ s.pk }}"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false">
+                <i class="fas fa-ellipsis-v"></i> Acciones
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="acciones{{ s.pk }}">
+                <li>
+                  <a class="dropdown-item text-warning"
+                    href="#"
+                    data-action="editar"
+                    data-id="{{ s.pk }}">
+                    <i class="fas fa-edit"></i> Editar/Ver
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item text-danger"
+                    href="#"
+                    data-action="cancelar"
+                    data-id="{{ s.pk }}">
+                    <i class="fas fa-ban"></i> Cancelar
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item text-success"
+                    href="#"
+                    data-action="entregar"
+                    data-id="{{ s.pk }}">
+                    <i class="fas fa-check-circle"></i> Entregar
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item text-info"
+                    href="#"
+                    data-action="imprimir"
+                    data-id="{{ s.pk }}">
+                    <i class="fas fa-file-pdf"></i> PDF
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center">No hay salidas registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="Paginación">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">&laquo;</span>
+      </li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+      <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+      </li>
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">&raquo;</span>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'salidas/js/lista_salidas.js' %}"></script>
+{% endblock %}
