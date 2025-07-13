@@ -202,7 +202,7 @@
     const unidadId = $('#id_unidad').val();
     const deptoId  = $('#id_departamento').val();
 
-    // 1) Marca data-valid en cada <option>
+    // Marca data-valid en cada <option>
     $('#id_solicitante option').each(function() {
         const $opt = $(this);
         const sUni = $opt.data('unidad-id');
@@ -213,7 +213,7 @@
         $opt.data('valid', valid);
     });
 
-    // 2) Si la opción actualmente seleccionada ya no es válida, la limpia
+    // Si la opción actualmente seleccionada ya no es válida, la limpia
     const selVal = $('#id_solicitante').val();
     if (selVal) {
         const selValid = $('#id_solicitante option:selected').data('valid');
@@ -222,7 +222,7 @@
         }
     }
 
-    // 3) Refresca el dropdown para que templateResult pinte en gris
+    // Refresca el dropdown para que templateResult pinte en gris
     $('#id_solicitante').trigger('change.select2');
     }
 

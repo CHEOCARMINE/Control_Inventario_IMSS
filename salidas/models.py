@@ -2,7 +2,6 @@ from django.db import models
 from solicitantes.models import Solicitante, Unidad, Departamento
 from inventario.models import Producto
 
-
 class ValeSalida(models.Model):
     folio = models.CharField(max_length=30, unique=True, blank=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
