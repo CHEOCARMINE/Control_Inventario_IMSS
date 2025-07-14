@@ -1,4 +1,3 @@
-// salidas/static/salidas/js/lista_salidas.js
 $(function(){
   const filterForm = document.getElementById('filterForm');
   let typingTimer;
@@ -32,5 +31,45 @@ $(function(){
     const acción = $(this).data('action');
     const id     = $(this).data('id');
     console.log('Acción:', acción, 'ID:', id);
+  });
+
+  // Helper para obtener el CSRF token de la cookie (Django)
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(cookie => {
+        const c = cookie.trim();
+        if (c.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(c.substring(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+  }
+
+  // Handler AJAX para marcar un vale como entregado
+  $('table').on('click', '.btn-entregar', function(e) {
+    e.preventDefault();
+    const url = $(this).data('url');
+
+    $.ajax({
+      url: url,
+      type: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      success(response) {
+        if (response.success) {
+          // recarga para ver el nuevo estado
+          location.reload();
+        } else {
+          alert(response.error || 'No se pudo marcar como entregado.');
+        }
+      },
+      error() {
+        alert('Error en la petición de entrega.');
+      }
+    });
   });
 });

@@ -294,3 +294,25 @@ def lista_salidas(request):
                             ).order_by('nombre'),
     }
     return render(request, 'salidas/lista_salidas.html', context)
+
+# Entregar Vale
+@login_required
+@salidas_required
+def entregar_vale(request, pk):
+    # Solo vales pendientes pueden marcarse como entregados
+    vale = get_object_or_404(ValeSalida, pk=pk, estado='pendiente')
+
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # Cambiamos el estado y guardamos fecha de entrega
+        vale.estado = 'entregado'
+        vale.fecha_entrega = timezone.now()
+        vale.save(update_fields=['estado', 'fecha_entrega'])
+
+        # Registramos en tu sistema de logs
+        _registrar_log(request, "vale_salida", vale.id, "Salidas", "Entregar")
+
+        # Devolvemos OK al front
+        return JsonResponse({'success': True})
+
+    # Si no es POST/AJAX devolvemos error
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)

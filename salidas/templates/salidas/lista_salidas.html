@@ -162,10 +162,10 @@
                   </a>
                 </li>
                 <li>
-                  <a class="dropdown-item text-success"
+                  <a class="dropdown-item text-success btn-entregar"
                     href="#"
                     data-action="entregar"
-                    data-id="{{ s.pk }}">
+                    data-url="{% url 'salidas:entregar_vale' s.pk %}">
                     <i class="fas fa-check-circle"></i> Entregar
                   </a>
                 </li>
