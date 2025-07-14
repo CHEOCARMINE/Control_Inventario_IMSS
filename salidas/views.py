@@ -243,6 +243,11 @@ def registrar_salida(request):
 @login_required
 @salidas_required
 def lista_salidas(request):
+
+    # Mensajes de éxito/error
+    mensaje_exito = request.session.pop('mensaje_exito', None)
+    mensaje_error = request.session.pop('mensaje_error', None)
+
     # Filtros
     folio        = request.GET.get('folio', '').strip()
     solicitante  = request.GET.get('solicitante', '').strip()
@@ -277,6 +282,8 @@ def lista_salidas(request):
 
     # Datos para selects
     context = {
+        'mensaje_exito': mensaje_exito,
+        'mensaje_error': mensaje_error,
         'page_obj':     page_obj,
         'filter': {
             'folio':        folio,
@@ -310,6 +317,9 @@ def entregar_vale(request, pk):
 
         # Registramos en tu sistema de logs
         _registrar_log(request, "vale_salida", vale.id, "Salidas", "Entregar")
+
+        # Mensaje de éxito en sesión
+        request.session['mensaje_exito'] = f"Vale {vale.folio} marcado como entregado."
 
         # Devolvemos OK al front
         return JsonResponse({'success': True})

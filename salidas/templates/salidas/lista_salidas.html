@@ -7,6 +7,19 @@
 <div class="container-fluid mt-4">
   <h2 class="mb-3">Histórico de Salidas</h2>
 
+  {% if mensaje_error %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ mensaje_error }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+  {% endif %}
+  {% if mensaje_exito %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ mensaje_exito }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+  {% endif %}
+
   <!-- FILTROS -->
   <div class="card mb-4">
     <div class="card-body">
