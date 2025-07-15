@@ -42,3 +42,15 @@ class ValeSalidaForm(forms.Form):
                     f"La cantidad del producto #{idx} debe ser un número entero mayor que cero."
                 )
         return carrito
+
+# Formulario para cancelar un vale de salida
+class CancelarValeForm(forms.Form):
+    motivo = forms.CharField(
+        label='Motivo de cancelación',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Escribe aquí el motivo…',
+            'required': True,
+        })
+    )

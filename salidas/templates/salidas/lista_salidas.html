@@ -166,11 +166,12 @@
                     <i class="fas fa-edit"></i> Editar/Ver
                   </a>
                 </li>
+                {% if s.estado == 'pendiente' %}
                 <li>
-                  <a class="dropdown-item text-danger"
+                  <a class="dropdown-item text-danger btn-cancelar"
                     href="#"
                     data-action="cancelar"
-                    data-id="{{ s.pk }}">
+                    data-url="{% url 'salidas:cancelar_vale' s.pk %}">
                     <i class="fas fa-ban"></i> Cancelar
                   </a>
                 </li>
@@ -182,6 +183,7 @@
                     <i class="fas fa-check-circle"></i> Entregar
                   </a>
                 </li>
+                {% endif %}
                 <li>
                   <a class="dropdown-item text-info"
                     href="#"
@@ -234,6 +236,16 @@
   </nav>
   {% endif %}
 </div>
+
+<!-- Modal para confirmar cancelación -->
+<div class="modal fade" id="modalCancelar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      {# aquí se cargará vía AJAX el template confirmar_cancelacion.html #}
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}

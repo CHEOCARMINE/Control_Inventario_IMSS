@@ -72,4 +72,42 @@ $(function(){
       }
     });
   });
+
+  // Handler para abrir modal de cancelación
+  $('table').on('click', '.btn-cancelar', function(e) {
+    e.preventDefault();
+    const url = $(this).data('url');
+    // Carga el fragmento con el form en el modal
+    $('#modalCancelar .modal-content').load(url, function() {
+      // BS4: mostrar el modal vía jQuery
+      $('#modalCancelar').modal('show');
+    });
+  });
+
+  // Handler para enviar cancelación
+  $(document).on('submit', '#form-cancelar', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    $.ajax({
+      url: $form.attr('action'),
+      type: 'POST',
+      data: $form.serialize(),
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      success(response) {
+        if (response.success) {
+          // BS4: cerrar modal y recargar para ver el mensaje
+          $('#modalCancelar').modal('hide');
+          location.reload();
+        } else {
+          alert(response.error || 'Error al cancelar el vale.');
+        }
+      },
+      error() {
+        alert('Error en la petición de cancelación.');
+      }
+    });
+  });
 });

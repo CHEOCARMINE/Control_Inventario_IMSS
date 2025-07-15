@@ -3,7 +3,6 @@ from django.db.models import Q
 from django.db.models import F
 from django.urls import reverse
 from django.utils import timezone
-from .forms import ValeSalidaForm
 from django.shortcuts import render
 from django.http import JsonResponse
 from .utils import generar_folio_automatico
@@ -11,6 +10,7 @@ from django.core.paginator import Paginator
 from inventario.models import Producto, Tipo
 from django.db import transaction, IntegrityError
 from django.template.loader import render_to_string
+from .forms import ValeSalidaForm, CancelarValeForm 
 from django.shortcuts import redirect, get_object_or_404
 from .models import ValeSalida, ValeDetalle, Producto
 from auxiliares_inventario.models import Catalogo, Subcatalogo
@@ -326,3 +326,76 @@ def entregar_vale(request, pk):
 
     # Si no es POST/AJAX devolvemos error
     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+
+# Cancelar Vale
+@login_required
+@salidas_required
+def cancelar_vale(request, pk):
+    vale = get_object_or_404(ValeSalida, pk=pk, estado='pendiente')
+
+    # GET: cargar modal con el form para motivo
+    if request.method == 'GET':
+        form = CancelarValeForm()
+        return render(request,
+                        'salidas/modales/confirmar_cancelacion.html',
+                        {'vale': vale, 'form': form})
+
+    # POST AJAX: procesar cancelación
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CancelarValeForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse({
+                'success': False,
+                'error': form.errors['motivo'][0]
+            })
+
+        motivo = form.cleaned_data['motivo']
+        try:
+            with transaction.atomic():
+                # Cambiar estado y guardar motivo
+                vale.estado = 'cancelado'
+                vale.motivo_cancelacion = motivo
+                vale.save(update_fields=['estado', 'motivo_cancelacion'])
+
+                # Restaurar stock invirtiendo registrar_salida
+                for detalle in vale.detalles.all():
+                    prod = detalle.producto
+
+                    if prod.producto_padre_id:
+                        # Era hijo: reactivar y sumar 1
+                        prod.estado = True
+                        prod.stock = F('stock') + 1
+                        prod.save(update_fields=['estado', 'stock'])
+                        prod.refresh_from_db(fields=['stock'])
+                        _registrar_log(request, "producto", prod.id, "Salidas", "Reactivar hijo")
+
+                        # Sumar 1 al padre
+                        padre = prod.producto_padre
+                        padre.stock = F('stock') + 1
+                        padre.save(update_fields=['stock'])
+                        padre.refresh_from_db(fields=['stock'])
+                        _registrar_log(request, "producto", padre.id, "Salidas", "Restaurar stock padre")
+                    else:
+                        # Producto normal: sumar la cantidad original
+                        prod.stock = F('stock') + detalle.cantidad
+                        prod.save(update_fields=['stock'])
+                        prod.refresh_from_db(fields=['stock'])
+                        _registrar_log(request, "producto", prod.id, "Salidas", "Restaurar stock normal")
+
+                # Registrar en logs la cancelación del vale
+                _registrar_log(request, "vale_salida", vale.id, "Salidas", "Cancelar")
+
+                # Mensaje de éxito para la lista
+                request.session['mensaje_exito'] = (
+                    f"Vale {vale.folio} cancelado correctamente."
+                )
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+        return JsonResponse({'success': True})
+
+    # Método no permitido
+    return JsonResponse(
+        {'success': False, 'error': 'Método no permitido.'},
+        status=405
+    )
