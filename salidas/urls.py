@@ -9,4 +9,5 @@ urlpatterns = [
     path('', views.lista_salidas, name='lista_salidas'),
     path('vale/<int:pk>/entregar/', views.entregar_vale, name='entregar_vale'),
     path('vale/<int:pk>/cancelar/',  views.cancelar_vale,  name='cancelar_vale'),
+    path('vales/<int:pk>/imprimir/', views.imprimir_vale, name='imprimir_vale'),
 ]

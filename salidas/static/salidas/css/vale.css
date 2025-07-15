@@ -1,0 +1,152 @@
+@page {
+  size: A4 portrait;
+  margin: 1cm;
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  src: url("../fonts/NotoSans-Regular.ttf") format("truetype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'Noto Sans';
+  src: url("../fonts/NotoSans-Bold.ttf") format("truetype");
+  font-weight: bold;
+}
+
+body {
+  font-family: 'Noto Sans', Arial, sans-serif;
+  font-size: 10pt;
+  margin: 0;
+  padding: 0;
+}
+
+.watermark {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: rotate(-45deg) translate(-50%, -50%);
+  font-size: 6em;
+  color: rgba(0,0,0,0.1);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* HEADER: logos alineados y texto central */
+.vale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8pt;
+}
+.logo-left,
+.logo-right {
+  display: flex;
+  align-items: center;
+}
+.logo-img-gob,
+.logo-img-imss {
+  height: 14mm;
+  object-fit: contain;
+}
+.logo-img-gob { width: 43mm; }
+.logo-img-imss { width: 52.3mm; }
+.logo-center {
+  flex: 1;
+  padding: 0 10mm;
+  text-align: center;
+}
+.header-line {
+  margin: 0;
+  font-size: 8pt;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+/* TITLES */
+.title {
+  font-size: 14pt;
+  text-align: center;
+  margin: 2pt 0;
+}
+
+/* CAMPOS */
+.fields {
+  margin: 6pt 0;
+}
+.fields p {
+  margin: 2pt 0;
+}
+.fields strong {
+  font-size: 10pt;
+}
+
+/* TABLA DE ÍTEMS: anchos fijos en mm y texto adaptable */
+.items-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 10pt;
+}
+/* Si prefieres definir aquí, puedes usar:
+   .items-table col:nth-child(1) { width:15mm; }
+   .items-table col:nth-child(2) { width:120mm; }
+   .items-table col:nth-child(3) { width:40mm; }
+   Pero al tenerlo en el HTML con <col style="…"> ya es suficiente. */
+.items-table th,
+.items-table td {
+  border: 1px solid #000;
+  padding: 4pt;
+  font-size: 10pt;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.items-table th {
+  background: #f0f0f0;
+}
+
+/* Ajuste específico de celdas */
+.cell-qty {
+  text-align: center;
+}
+.cell-obs {
+  min-height: 8mm;
+}
+
+/* PIE DE FIRMAS: separación, sin salto de página y líneas verticales */
+.signatures {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 40pt;
+  page-break-inside: avoid;
+  position: relative;
+}
+.signatures td {
+  text-align: center;
+  font-size: 10pt;
+  vertical-align: top;
+  padding: 4pt;
+}
+/* Borde vertical entre cada celda de firma */
+.signatures td + td {
+  border-left: 1px solid #000;
+}
+
+/* Línea de firma horizontal */
+.signature-line {
+  display: block;
+  width: 80%;
+  margin: 6pt auto;
+  height: 1px;
+  background-color: #000;
+}
+
+/* (Opcional) Línea de firma vertical en lugar de horizontal:
+.signature-line-vertical {
+  width: 1px;
+  height: 20mm;  /--ajusta altura--/
+  background-color: #000;
+  margin: 6pt auto;
+}
+*/

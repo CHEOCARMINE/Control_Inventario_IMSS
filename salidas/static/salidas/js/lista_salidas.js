@@ -110,4 +110,12 @@ $(function(){
       }
     });
   });
+
+  // Handler para imprimir el vale
+  $(document).on('click', '[data-action="imprimir"]', function(e) {
+    e.preventDefault();
+    const url = $(this).data('url');
+    if (!url) return;
+    window.open(url, '_blank');
+  });
 });
