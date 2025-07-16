@@ -77,9 +77,13 @@ body {
     margin: 2pt 0;
 }
 
+.title + .title {
+    margin-top: 12pt;
+}
+
 /* CAMPOS */
 .fields {
-    margin: 6pt 0;
+    margin: 6pt 0 12pt;
 }
 .fields p {
     margin: 2pt 0;
@@ -93,7 +97,7 @@ body {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    margin-top: 10pt;
+    margin-top: 12pt;
 }
 .items-table th,
 .items-table td {
