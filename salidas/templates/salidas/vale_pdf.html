@@ -11,32 +11,41 @@
             <div class="watermark">CANCELADO</div>
         {% endif %}
 
-        <!-- HEADER REORGANIZADO COMO TABLA -->
+        <!-- HEADER -->
         <header class="vale-header">
-            <table class="header-table" width="100%" cellspacing="0" cellpadding="0">
+        <table class="header-table" width="100%" cellspacing="0" cellpadding="0">
+            <colgroup>
+            <!-- ancho fijo de los logos -->
+            <col style="width:43mm;">
+            <!-- columna central: auto -->
+            <col>
+            <col style="width:52.3mm;">
+            </colgroup>
             <tr>
-                <td class="logo-cell logo-left">
+            <!-- Logo izquierda -->
+            <td class="logo-left">
                 <img src="{% static 'salidas/img/logo_gob.png' %}"
-                    alt="Logo Gobierno de México"
+                    alt="Gobierno de México"
                     class="logo-img-gob">
-                </td>
-                <td class="logo-cell logo-right">
-                <img src="{% static 'salidas/img/logo_imss.png' %}"
-                    alt="Logo IMSS-Bienestar"
-                    class="logo-img-imss">
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" class="header-text">
-                <p class="header-line">
-                    Servicios de Salud del Instituto Mexicano de Seguro Social para el Bienestar
+            </td>
+            <!-- Texto central, verticalmente centrado -->
+            <td class="header-text">
+                <p class="header-line header-line--first">
+                Servicios de Salud del Instituto Mexicano de Seguro Social para el Bienestar
                 </p>
                 <p class="header-line">Coordinación Estatal de Campeche</p>
                 <p class="header-line">Departamento de Tecnología de la Información</p>
-                </td>
+            </td>
+            <!-- Logo derecha -->
+            <td class="logo-right">
+                <img src="{% static 'salidas/img/logo_imss.png' %}"
+                    alt="IMSS Bienestar"
+                    class="logo-img-imss">
+            </td>
             </tr>
-            </table>
+        </table>
         </header>
+
 
         <h1 class="title">Vale de Salida de Almacén</h1>
         <h1 class="title">Folio {{ vale.folio }}</h1>
