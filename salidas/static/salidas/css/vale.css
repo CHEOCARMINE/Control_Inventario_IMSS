@@ -32,17 +32,23 @@ body {
   pointer-events: none;
 }
 
-/* HEADER: logos alineados y texto central */
-.vale-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* HEADER: logos en extremos con tabla */
+.header-table {
+  border-collapse: collapse;
   margin-bottom: 8pt;
+  width: 100%;
 }
-.logo-left,
+.header-table td {
+  padding: 0;
+  vertical-align: middle;
+}
+.logo-left {
+  width: 50%;
+  text-align: left;
+}
 .logo-right {
-  display: flex;
-  align-items: center;
+  width: 50%;
+  text-align: right;
 }
 .logo-img-gob,
 .logo-img-imss {
@@ -51,11 +57,11 @@ body {
 }
 .logo-img-gob { width: 43mm; }
 .logo-img-imss { width: 52.3mm; }
-.logo-center {
-  flex: 1;
-  padding: 0 10mm;
+.header-text {
   text-align: center;
+  padding-top: 4pt;
 }
+
 .header-line {
   margin: 0;
   font-size: 8pt;
@@ -81,18 +87,13 @@ body {
   font-size: 10pt;
 }
 
-/* TABLA DE ÍTEMS: anchos fijos en mm y texto adaptable */
+/* TABLA DE ÍTEMS */
 .items-table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
   margin-top: 10pt;
 }
-/* Si prefieres definir aquí, puedes usar:
-   .items-table col:nth-child(1) { width:15mm; }
-   .items-table col:nth-child(2) { width:120mm; }
-   .items-table col:nth-child(3) { width:40mm; }
-   Pero al tenerlo en el HTML con <col style="…"> ya es suficiente. */
 .items-table th,
 .items-table td {
   border: 1px solid #000;
@@ -114,13 +115,12 @@ body {
   min-height: 8mm;
 }
 
-/* PIE DE FIRMAS: separación, sin salto de página y líneas verticales */
+/* PIE DE FIRMAS */
 .signatures {
   width: 100%;
   border-collapse: collapse;
   margin-top: 40pt;
   page-break-inside: avoid;
-  position: relative;
 }
 .signatures td {
   text-align: center;
@@ -128,12 +128,9 @@ body {
   vertical-align: top;
   padding: 4pt;
 }
-/* Borde vertical entre cada celda de firma */
 .signatures td + td {
   border-left: 1px solid #000;
 }
-
-/* Línea de firma horizontal */
 .signature-line {
   display: block;
   width: 80%;
@@ -141,12 +138,3 @@ body {
   height: 1px;
   background-color: #000;
 }
-
-/* (Opcional) Línea de firma vertical en lugar de horizontal:
-.signature-line-vertical {
-  width: 1px;
-  height: 20mm;  /--ajusta altura--/
-  background-color: #000;
-  margin: 6pt auto;
-}
-*/
