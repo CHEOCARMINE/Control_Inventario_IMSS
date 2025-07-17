@@ -79,6 +79,9 @@
                 {{ detalle.producto.marca }}, 
                 {{ detalle.producto.color }}, 
                 {{ detalle.producto.modelo }}
+                {% if detalle.producto.numero_serie %}
+                    , No. de serie: {{ detalle.producto.numero_serie }}
+                {% endif %}
                 </td>
                 <td class="cell-obs">{{ detalle.observaciones }}</td>
             </tr>

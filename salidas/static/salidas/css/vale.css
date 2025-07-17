@@ -102,9 +102,10 @@ body {
 .items-table th,
 .items-table td {
     border: 1px solid #000;
-    padding: 4pt;
+    padding: 2pt 4pt; 
     font-size: 10pt;
-    vertical-align: top;
+    vertical-align: middle;
+    text-align: center; 
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
@@ -112,12 +113,26 @@ body {
     background: #f0f0f0;
 }
 
+.items-table thead th {
+    padding: 2pt 4pt;   
+    height: 8mm;         
+    font-size: 10pt;    
+    vertical-align: middle;
+    text-align: center;  
+    font-weight: bold;
+}
+
 /* Ajuste específico de celdas */
 .cell-qty {
     text-align: center;
+    width: 15mm !important;
 }
 .cell-obs {
     min-height: 8mm;
+    width: 60mm !important;
+}
+.cell-desc {
+    width: auto !important;
 }
 
 /* PIE DE FIRMAS */
