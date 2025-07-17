@@ -9,6 +9,7 @@
     font-weight: normal;
     font-style: normal;
 }
+
 @font-face {
     font-family: 'Noto Sans Bold';
     src: url("../fonts/NotoSans-Bold.ttf") format("truetype");
@@ -21,6 +22,7 @@ body {
     font-size: 10pt;
     margin: 0;
     padding: 0;
+    position: relative;
 }
 
 .watermark {
@@ -40,23 +42,28 @@ body {
     margin-bottom: 20pt !important;
     width: 100%;
 }
+
 .header-table td {
     padding: 0;
-    vertical-align: middle;  /* centra verticalmente logos y texto */
+    vertical-align: middle;  
 }
+
 /* Logos a los extremos */
 .logo-left  { text-align: left; }
 .logo-right { text-align: right; }
+
 /* Tamaño fijo de los logos */
 .logo-img-gob,
 .logo-img-imss {
     height: 14mm;
     object-fit: contain;
 }
+
 /* Texto central, ocupa la columna del medio */
 .header-text {
     text-align: center;
 }
+
 /* Líneas del header: normales */
 .header-line {
     margin: 0;
@@ -64,6 +71,7 @@ body {
     font-weight: normal;
     line-height: 1.2;
 }
+
 /* Solo la primera línea: más pequeña y bold */
 .header-line--first {
     font-size: 8pt;
@@ -85,9 +93,11 @@ body {
 .fields {
     margin: 6pt 0 12pt;
 }
+
 .fields p {
     margin: 2pt 0;
 }
+
 .fields strong {
     font-size: 10pt;
 }
@@ -99,6 +109,7 @@ body {
     border-collapse: collapse;
     margin-top: 12pt;
 }
+
 .items-table th,
 .items-table td {
     border: 1px solid #000;
@@ -109,6 +120,7 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
 .items-table th {
     background: #f0f0f0;
 }
@@ -127,34 +139,49 @@ body {
     text-align: center;
     width: 15mm !important;
 }
+
 .cell-obs {
     min-height: 8mm;
     width: 60mm !important;
 }
+
 .cell-desc {
     width: auto !important;
 }
 
 /* PIE DE FIRMAS */
 .signatures {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 40pt;
+    margin-top: 20pt;       
     page-break-inside: avoid;
 }
-.signatures td {
+
+/* Cada celda: menos padding y apilado normal */
+.sig-cell {
     text-align: center;
-    font-size: 10pt;
-    vertical-align: top;
-    padding: 4pt;
-}
-.signatures td + td {
-    border-left: 1px solid #000;
-}
-.signature-line {
+    padding: 2pt 4pt;       
     display: block;
-    width: 80%;
-    margin: 6pt auto;
-    height: 1px;
-    background-color: #000;
+}
+
+/* Label en negrita, tamaño un pelín menor */
+.sig-label {
+    display: block;
+    font-weight: bold;
+    font-size: 10pt;
+    margin-bottom: 2pt;
+}
+
+/* Línea de firma estilizada y muy fina */
+hr.signature-line {
+    border: none;
+    border-top: 0.5pt dashed #000;  
+    width: 60%;                   
+    margin: 16pt auto 2pt;           
+}
+
+/* Cargo debajo de la línea, texto más pequeño */
+.sig-role {
+    display: block;
+    font-weight: normal;
+    font-size: 9pt;
+    margin-top: 2pt;
 }
