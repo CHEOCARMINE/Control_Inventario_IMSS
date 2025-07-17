@@ -1,3 +1,4 @@
+import io
 import json
 from xhtml2pdf import pisa
 from django.urls import reverse
@@ -5,7 +6,7 @@ from django.conf import settings
 from django.db.models import Q, F
 from django.utils import timezone
 from django.shortcuts import render
-from .pdf_utils import link_callback
+from pypdf import PdfReader, PdfWriter
 from .utils import generar_folio_automatico
 from django.core.paginator import Paginator
 from inventario.models import Producto, Tipo
@@ -13,8 +14,9 @@ from django.db import transaction, IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from .forms import ValeSalidaForm, CancelarValeForm 
-from django.shortcuts import redirect, get_object_or_404
 from .models import ValeSalida, ValeDetalle, Producto
+from django.shortcuts import redirect, get_object_or_404
+from .pdf_utils import link_callback, create_watermark_page
 from auxiliares_inventario.models import Catalogo, Subcatalogo
 from solicitantes.models import Unidad, Departamento, Solicitante
 from login_app.decorators import login_required, salidas_required
@@ -406,25 +408,48 @@ def cancelar_vale(request, pk):
 @login_required
 @salidas_required
 def imprimir_vale(request, pk):
+    # Carga tu objeto
     vale = get_object_or_404(
-        ValeSalida
-        .objects
-        .select_related('solicitante', 'unidad', 'departamento')
-        .prefetch_related('detalles__producto'),
+        ValeSalida.objects
+            .select_related('solicitante','unidad','departamento')
+            .prefetch_related('detalles__producto'),
         pk=pk
     )
 
+    # Render HTML → PDF en memoria
     html = render_to_string('salidas/vale_pdf.html', {'vale': vale})
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="vale_{vale.folio}.pdf"'
-
-    pisa_status = pisa.CreatePDF(
-        src=html,
-        dest=response,
-        link_callback=link_callback
-    )
-
-    if pisa_status.err:
+    buffer_pdf = io.BytesIO()
+    status = pisa.CreatePDF(html, dest=buffer_pdf, link_callback=link_callback)
+    if status.err:
         return HttpResponse('Error al generar PDF', status=500)
+
+    # Si está PENDIENTE, retorna el PDF “crudo”
+    if vale.estado == 'pendiente':
+        buffer_pdf.seek(0)
+        response = HttpResponse(buffer_pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="vale_{vale.folio}.pdf"'
+        return response
+
+    # Caso ENTREGADO/CANCELADO: estampa la marca
+    buffer_pdf.seek(0)
+    original = PdfReader(buffer_pdf)
+    writer = PdfWriter()
+
+    svg_file = (
+        'salidas/img/watermark_entregado.svg'
+        if vale.estado == 'entregado'
+        else 'salidas/img/watermark_cancelado.svg'
+    )
+    watermark = create_watermark_page(svg_file)
+
+    for page in original.pages:
+        page.merge_page(watermark)
+        writer.add_page(page)
+
+    # Escribe y retorna el PDF final
+    out_buf = io.BytesIO()
+    writer.write(out_buf)
+    out_buf.seek(0)
+    response = HttpResponse(out_buf.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="vale_{vale.folio}.pdf"'
     return response
