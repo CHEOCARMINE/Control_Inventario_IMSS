@@ -1,9 +1,3 @@
-@page {
-    size: A4 portrait;
-    margin: 1cm;
-    background-color: #fff;
-}
-
 @font-face {
     font-family: 'Noto Sans Regular';
     src: url("../fonts/NotoSans-Regular.ttf") format("truetype");
@@ -27,7 +21,7 @@ body {
 }
 
 
-/* HEADER: logos en extremos con tabla */
+/* HEADER */
 .header-table {
     border-collapse: collapse;
     margin-bottom: 20pt !important;
@@ -39,23 +33,19 @@ body {
     vertical-align: middle;  
 }
 
-/* Logos a los extremos */
 .logo-left  { text-align: left; }
 .logo-right { text-align: right; }
 
-/* Tamaño fijo de los logos */
 .logo-img-gob,
 .logo-img-imss {
     height: 14mm;
     object-fit: contain;
 }
 
-/* Texto central, ocupa la columna del medio */
 .header-text {
     text-align: center;
 }
 
-/* Líneas del header: normales */
 .header-line {
     margin: 0;
     font-size: 10pt;
@@ -63,7 +53,6 @@ body {
     line-height: 1.2;
 }
 
-/* Solo la primera línea: más pequeña y bold */
 .header-line--first {
     font-size: 8pt;
     font-weight: bold;
@@ -125,7 +114,7 @@ body {
     font-weight: bold;
 }
 
-/* Ajuste específico de celdas */
+/* Celdas */
 .cell-qty {
     text-align: center;
     width: 15mm !important;
@@ -140,20 +129,18 @@ body {
     width: auto !important;
 }
 
-/* PIE DE FIRMAS */
-.signatures {
-    margin-top: 20pt;       
-    page-break-inside: avoid;
-}
-
-/* Cada celda: menos padding y apilado normal */
 .sig-cell {
     text-align: center;
     padding: 2pt 4pt;       
     display: block;
 }
 
-/* Label en negrita, tamaño un pelín menor */
+/* PIE DE FIRMAS */
+.signatures {
+    margin-top: 20pt;       
+    page-break-inside: avoid;
+}
+
 .sig-label {
     display: block;
     font-weight: bold;
@@ -161,7 +148,6 @@ body {
     margin-bottom: 2pt;
 }
 
-/* Línea de firma estilizada y muy fina */
 hr.signature-line {
     border: none;
     border-top: 0.5pt dashed #000;  
@@ -169,7 +155,6 @@ hr.signature-line {
     margin: 16pt auto 2pt;           
 }
 
-/* Cargo debajo de la línea, texto más pequeño */
 .sig-role {
     display: block;
     font-weight: normal;
