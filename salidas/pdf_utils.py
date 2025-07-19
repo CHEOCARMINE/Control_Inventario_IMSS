@@ -9,15 +9,11 @@ from reportlab.graphics import renderPDF
 from django.contrib.staticfiles import finders
 
 def link_callback(uri, rel):
-    # Sólo procesamos las rutas que empiecen con STATIC_URL
     if uri.startswith(settings.STATIC_URL):
-        # quitar el prefijo /static/
         path = uri[len(settings.STATIC_URL):]
-        # buscar la ruta real en disco
         real_path = finders.find(path)
         if real_path:
             return real_path
-    # si no es un static o no lo encontró, devolver uri tal cual
     return uri
 
 def create_watermark_page(svg_uri):
@@ -26,18 +22,18 @@ def create_watermark_page(svg_uri):
     drawing = svg2rlg(svg_path)
     w, h = A4
 
-    # Calcula factor de escala para que el dibujo no exceda 70% de ancho/alto
+    # Calcula factor de escala 
     max_width  = w * 0.7
     max_height = h * 0.7
     scale_w = max_width  / drawing.width
     scale_h = max_height / drawing.height
-    scale = min(scale_w, scale_h, 1)  # no escales si ya es más pequeño
+    scale = min(scale_w, scale_h, 1)  
 
     # Prepara canvas
     packet = io.BytesIO()
     c = canvas.Canvas(packet, pagesize=A4)
     c.saveState()
-    c.setFillAlpha(0.1)  # baja opacidad
+    c.setFillAlpha(0.1)  
 
     # Aplica escala y centra
     c.translate(w/2, h/2)
