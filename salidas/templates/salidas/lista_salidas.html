@@ -162,7 +162,7 @@
                   <a class="dropdown-item text-warning"
                     href="#"
                     data-action="editar"
-                    data-id="{{ s.pk }}">
+                    data-url="{% url 'salidas:editar_salida' s.pk %}">
                     <i class="fas fa-edit"></i> Editar/Ver
                   </a>
                 </li>
@@ -241,8 +241,17 @@
 <div class="modal fade" id="modalCancelar" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      {# aquí se cargará vía AJAX el template confirmar_cancelacion.html #}
+      <!-- Aquí se carga el contenido del modal por AJAX -->
     </div>
+  </div>
+</div>
+
+<!-- Modal para editar/visualizar salida -->
+<div class="modal fade" id="modal-salida" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <!-- Aquí se carga el contenido del modal por AJAX -->
+      </div>
   </div>
 </div>
 

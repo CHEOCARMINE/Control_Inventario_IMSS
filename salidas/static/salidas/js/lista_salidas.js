@@ -118,4 +118,15 @@ $(function(){
     if (!url) return;
     window.open(url, '_blank');
   });
+
+  // Handler para abrir modal de edición
+  $(document).on('click', '[data-action="editar"]', function(e) {
+    e.preventDefault();
+    const url = $(this).data('url');
+    if (!url) return;
+
+    $('#modal-salida .modal-content').load(url, function() {
+      $('#modal-salida').modal('show');
+    });
+  });
 });

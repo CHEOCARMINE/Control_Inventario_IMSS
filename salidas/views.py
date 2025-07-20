@@ -13,7 +13,6 @@ from inventario.models import Producto, Tipo
 from django.db import transaction, IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
-from .forms import ValeSalidaForm, CancelarValeForm 
 from .models import ValeSalida, ValeDetalle, Producto
 from django.shortcuts import redirect, get_object_or_404
 from .pdf_utils import link_callback, create_watermark_page
@@ -21,6 +20,7 @@ from auxiliares_inventario.models import Catalogo, Subcatalogo
 from solicitantes.models import Unidad, Departamento, Solicitante
 from login_app.decorators import login_required, salidas_required
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
+from .forms import ValeSalidaForm, CancelarValeForm, ValeSalidaFormEdicion
 
 # Helper para registros de log, idéntico al de inventario
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
@@ -453,3 +453,165 @@ def imprimir_vale(request, pk):
     response = HttpResponse(out_buf.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="vale_{vale.folio}.pdf"'
     return response
+
+# Edicion de Vale
+@login_required
+@salidas_required
+def editar_salida(request, pk):
+    vale = get_object_or_404(
+        ValeSalida.objects.select_related(
+            'solicitante', 'unidad', 'departamento'
+        ).prefetch_related('detalles__producto'),
+        pk=pk
+    )
+
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    if request.method == 'GET' and is_ajax:
+        # Cargar datos para Select2
+        solicitantes  = Solicitante.objects.select_related('unidad','departamento').filter(estado=True)
+        unidades      = Unidad.objects.filter(estado=True)
+        departamentos = Departamento.objects.filter(estado=True)
+
+        datos_solicitantes = {
+            s.id: {'unidad_id': s.unidad_id, 'departamento_id': s.departamento_id}
+            for s in solicitantes
+        }
+        datos_unidades = {}
+        for d in departamentos:
+            for u in d.unidades.all():
+                datos_unidades.setdefault(u.id, []).append({'id': d.id, 'nombre': d.nombre})
+
+        todos_solicitantes = [
+            {'id': s.id, 'nombre': s.nombre,
+            'unidad_id': s.unidad_id, 'departamento_id': s.departamento_id}
+            for s in solicitantes
+        ]
+        todos_unidades = [
+            {'id': u.id, 'nombre': u.nombre,
+            'departamentos': [d.id for d in u.departamentos.all()]}
+            for u in unidades
+        ]
+        departamentos_list = [{'id': d.id, 'nombre': d.nombre} for d in departamentos]
+
+        productos_vale = []
+        for d in vale.detalles.all():
+            p = d.producto
+            productos_vale.append({
+                'id': p.id,
+                'nombre': str(p),
+                'marca': p.marca.nombre if p.marca else '',
+                'modelo': p.modelo or '',
+                'color': p.color or '',
+                'numero_serie': p.numero_serie,
+                'stock': p.stock,
+                'cantidad': d.cantidad,
+                'esHijo': p.producto_padre_id is not None,
+            })
+
+        return render(request, 'salidas/modales/modal_editar_salida.html', {
+            'vale': vale,
+            'solicitantes': solicitantes,
+            'unidades': unidades,
+            'departamentos': departamentos,
+            'datos_solicitantes_json': json.dumps(datos_solicitantes),
+            'datos_unidades_json':      json.dumps(datos_unidades),
+            'todos_solicitantes_json':  json.dumps(todos_solicitantes),
+            'todos_unidades_json':      json.dumps(todos_unidades),
+            'departamentos_list_json':  json.dumps(departamentos_list),
+            'productos_json':           json.dumps(productos_vale),
+            'solo_vista': vale.estado != 'pendiente',
+            'motivo_cancelacion': vale.motivo_cancelacion if vale.estado == 'cancelado' else None,
+        })
+
+    # POST: procesar edición
+    if request.method == 'POST' and is_ajax and vale.estado == 'pendiente':
+        form = ValeSalidaFormEdicion(request.POST, instance=vale)
+
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar encabezado
+                    vale = form.save()
+
+                    # Recuperar detalles actuales
+                    originales = {
+                        d.producto_id: d
+                        for d in vale.detalles.select_related('producto')
+                    }
+
+                    # Procesar productos nuevos/modificados
+                    productos_post = request.POST.getlist('producto_id[]')
+                    cantidades_post = request.POST.getlist('cantidad[]')
+
+                    nuevos = []
+                    usados_ids = set()
+                    for i, prod_id in enumerate(productos_post):
+                        if not prod_id:
+                            continue
+                        prod_id = int(prod_id)
+                        usados_ids.add(prod_id)
+
+                        producto = Producto.objects.get(id=prod_id)
+                        cantidad = int(cantidades_post[i]) if not producto.producto_padre_id else 1
+
+                        if prod_id in originales:
+                            detalle = originales.pop(prod_id)
+                            if detalle.cantidad != cantidad:
+                                diff = cantidad - detalle.cantidad
+                                producto.stock = F('stock') - diff
+                                producto.save(update_fields=['stock'])
+                                _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
+                                detalle.cantidad = cantidad
+                                detalle.save()
+                        else:
+                            ValeDetalle.objects.create(vale=vale, producto=producto, cantidad=cantidad)
+                            producto.stock = F('stock') - cantidad
+                            producto.save(update_fields=['stock'])
+                            _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
+
+                            if producto.producto_padre_id:
+                                producto.estado = False
+                                producto.save(update_fields=['estado'])
+                                _registrar_log(request, "producto", producto.id, "Salidas", "Desactivar hijo")
+
+                                padre = producto.producto_padre
+                                padre.stock = F('stock') - 1
+                                padre.save(update_fields=['stock'])
+                                _registrar_log(request, "producto", padre.id, "Salidas", "Ajuste stock")
+
+                    # Productos eliminados → restaurar stock
+                    for eliminado in originales.values():
+                        producto = eliminado.producto
+                        eliminado.delete()
+
+                        if producto.producto_padre_id:
+                            producto.estado = True
+                            producto.stock = F('stock') + 1
+                            producto.save(update_fields=['estado', 'stock'])
+                            _registrar_log(request, "producto", producto.id, "Salidas", "Reactivar hijo")
+
+                            padre = producto.producto_padre
+                            padre.stock = F('stock') + 1
+                            padre.save(update_fields=['stock'])
+                            _registrar_log(request, "producto", padre.id, "Salidas", "Restaurar stock padre")
+                        else:
+                            producto.stock = F('stock') + eliminado.cantidad
+                            producto.save(update_fields=['stock'])
+                            _registrar_log(request, "producto", producto.id, "Salidas", "Restaurar stock")
+
+                    _registrar_log(request, "vale_salida", vale.id, "Salidas", "Editar")
+                    request.session['mensaje_exito'] = f"Vale {vale.folio} actualizado correctamente."
+
+                    return JsonResponse({'success': True, 'redirect_url': reverse('salidas:productos_para_salida')})
+
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+
+        html = render_to_string('salidas/modales/fragmento_form_salida.html', {
+            'form': form,
+            'vale': vale,
+        }, request=request)
+        return JsonResponse({'success': False, 'html_form': html})
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido o vale no editable.'}, status=405)

@@ -1,6 +1,7 @@
 import json
 from django import forms
 from solicitantes.models import Solicitante, Unidad, Departamento
+from .models import ValeSalida
 
 # Formulario para registrar una salida de productos
 class ValeSalidaForm(forms.Form):
@@ -54,3 +55,15 @@ class CancelarValeForm(forms.Form):
             'required': True,
         })
     )
+
+class ValeSalidaFormEdicion(forms.ModelForm):
+    class Meta:
+        model = ValeSalida
+        fields = ['solicitante', 'unidad', 'departamento']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields.values():
+            field.required = True
+            field.widget.attrs['class'] = 'form-control'
