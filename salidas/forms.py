@@ -56,14 +56,30 @@ class CancelarValeForm(forms.Form):
         })
     )
 
+# Formulario para editar un vale de salida
 class ValeSalidaFormEdicion(forms.ModelForm):
+    solicitante = forms.ModelChoiceField(
+        queryset=Solicitante.objects.filter(estado=True),
+        label="Solicitante",
+        widget=forms.Select(attrs={
+            'class': 'form-control select2-solicitante',
+        })
+    )
+    unidad = forms.ModelChoiceField(
+        queryset=Unidad.objects.filter(estado=True),
+        label="Unidad",
+        widget=forms.Select(attrs={
+            'class': 'form-control select2-unidad',
+        })
+    )
+    departamento = forms.ModelChoiceField(
+        queryset=Departamento.objects.filter(estado=True),
+        label="Departamento",
+        widget=forms.Select(attrs={
+            'class': 'form-control select2-departamento',
+        })
+    )
+
     class Meta:
         model = ValeSalida
         fields = ['solicitante', 'unidad', 'departamento']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        for field in self.fields.values():
-            field.required = True
-            field.widget.attrs['class'] = 'form-control'

@@ -1,11 +1,12 @@
 $(document).ready(function () {
-    inicializarSelects();
+    inicializarSelectsProductos();
+    inicializarSelectsSolicitudes();
 
     // Agregar fila nueva
     $('#btn-agregar-fila-edicion').on('click', function () {
         const nuevaFila = construirFilaVacia();
         $('#tabla-editar-salida tbody').append(nuevaFila);
-        inicializarSelects();
+        inicializarSelectsProductos();
     });
 
     // Eliminar fila
@@ -19,38 +20,30 @@ $(document).ready(function () {
         const option = $(this).find('option:selected');
         const productoId = option.val();
 
-        // Vaciar campos
-        fila.find('.marca-cell').text('');
-        fila.find('.modelo-cell').text('');
-        fila.find('.color-cell').text('');
-        fila.find('.serie-cell').text('');
+        fila.find('.marca-cell, .modelo-cell, .color-cell, .serie-cell').text('');
         fila.find('.cantidad-input').val('').prop('readonly', false);
 
         if (!productoId) return;
 
-        const tieneSerie = option.data('tiene-serie') === true || option.data('tiene-serie') === 'true';
-        const tieneHijos = option.data('tiene-hijos') === true || option.data('tiene-hijos') === 'true';
+        const tieneSerie = option.data('tiene-serie') == true || option.data('tiene-serie') == 'true';
+        const tieneHijos = option.data('tiene-hijos') == true || option.data('tiene-hijos') == 'true';
 
-        // Pintar datos base
         fila.find('.marca-cell').text(option.data('marca') || '');
         fila.find('.modelo-cell').text(option.data('modelo') || '');
         fila.find('.color-cell').text(option.data('color') || '');
 
-        // Si es producto padre
         if (tieneHijos) {
-        const hijo = seleccionarHijoDisponible(productoId);
-        if (hijo) {
-            fila.find('.serie-cell').text(hijo.numero_serie || '');
-            fila.find('.cantidad-input').val(1).prop('readonly', true);
-            fila.attr('data-producto-hijo-id', hijo.id);
+            const hijo = seleccionarHijoDisponible(productoId);
+            if (hijo) {
+                fila.find('.serie-cell').text(hijo.numero_serie || '');
+                fila.find('.cantidad-input').val(1).prop('readonly', true);
+                fila.attr('data-producto-hijo-id', hijo.id);
+            } else {
+                alert('No hay hijos disponibles para este producto.');
+                $(this).val('').trigger('change');
+            }
         } else {
-            alert('No hay hijos disponibles para este producto.');
-            $(this).val('').trigger('change');
-        }
-        } else {
-        // Producto normal
-        fila.find('.serie-cell').text(option.data('serie') || '');
-        fila.find('.cantidad-input').prop('readonly', false);
+            fila.find('.serie-cell').text(option.data('serie') || '');
         }
     });
 
@@ -60,61 +53,176 @@ $(document).ready(function () {
         const fila = input.closest('tr');
         const option = fila.find('.select2-producto-auto option:selected');
         const stock = option.data('stock');
-
         const val = parseInt(input.val());
-
         if (isNaN(val) || val < 1) {
-        input.val(1);
+            input.val(1);
         } else if (val > stock) {
-        input.val(stock);
+            input.val(stock);
         }
     });
-    });
 
-    function inicializarSelects() {
-    $('.select2-producto-auto').select2({
-        theme: 'bootstrap4',
-        width: 'resolve',
-        placeholder: 'Selecciona producto...'
-    });
+    // SELECT2 CON VALIDACIONES Y ESTILO GRIS
+    function formatOption(option) {
+        if (!option.id) return option.text;
+        const valid = $(option.element).data('valid');
+        if (valid === false || valid === 'false') {
+            return `<span class="text-muted">${option.text}</span>`;
+        }
+        return option.text;
     }
 
+    function inicializarSelectsSolicitudes() {
+        const $modal = $('#form-editar-salida');
+
+        $('#id_solicitante', $modal).select2({
+            placeholder: 'Selecciona un solicitante',
+            allowClear: true,
+            theme: 'bootstrap4',
+            width: '100%',
+            dropdownParent: $modal,
+            templateResult: formatOption,
+            escapeMarkup: m => m
+        });
+
+        $('#id_unidad, #id_departamento', $modal).select2({
+            placeholder: 'Selecciona…',
+            allowClear: true,
+            theme: 'bootstrap4',
+            width: '100%',
+            dropdownParent: $modal,
+            templateResult: formatOption,
+            escapeMarkup: m => m
+        });
+
+        // Triggers para autollenado y validación cruzada
+        $('#id_solicitante').on('select2:select', function (e) {
+            const datos = window.datosSolicitantes || {};
+            const id = e.params.data.id;
+            const u = datos[id]?.unidad_id;
+            const d = datos[id]?.departamento_id;
+            if (u) $('#id_unidad').val(u).trigger('change.select2');
+            if (d) $('#id_departamento').val(d).trigger('change.select2');
+        });
+
+        $('#id_departamento').on('select2:select select2:clear', function () {
+            actualizarValidacionesUnidad();
+            filtrarSolicitantes();
+        });
+
+        $('#id_unidad').on('select2:select select2:clear', function () {
+            actualizarValidacionesDepartamento();
+            filtrarSolicitantes();
+        });
+
+        $('#id_unidad').on('select2:select', function (e) {
+            if ($(e.params.data.element).data('valid') === false) {
+                $('#id_departamento').val(null).trigger('change.select2');
+            }
+        });
+
+        $('#id_departamento').on('select2:select', function (e) {
+            if ($(e.params.data.element).data('valid') === false) {
+                $('#id_unidad').val(null).trigger('change.select2');
+            }
+        });
+
+        $('#id_solicitante option').data('valid', true);
+        $('#id_unidad option').data('valid', true);
+        $('#id_departamento option').data('valid', true);
+    }
+
+    function actualizarValidacionesUnidad() {
+        const deptoId = Number($('#id_departamento').val());
+        $('#id_unidad option').each(function () {
+            const val = Number(this.value);
+            const unidad = window.todosUnidadesCompleto.find(u => u.id === val);
+            const valid = !deptoId || (unidad?.departamentos || []).includes(deptoId);
+            $(this).data('valid', valid);
+        });
+        $('#id_unidad').trigger('change.select2');
+    }
+
+    function actualizarValidacionesDepartamento() {
+        const unidadId = Number($('#id_unidad').val());
+        $('#id_departamento option').each(function () {
+            const val = Number(this.value);
+            const unidad = window.todosUnidadesCompleto.find(u => u.id === unidadId);
+            const valid = !unidadId || (unidad?.departamentos || []).includes(val);
+            $(this).data('valid', valid);
+        });
+        $('#id_departamento').trigger('change.select2');
+    }
+
+    function filtrarSolicitantes() {
+        const unidadId = $('#id_unidad').val();
+        const deptoId  = $('#id_departamento').val();
+
+        $('#id_solicitante option').each(function () {
+            const sUni = $(this).data('unidad-id');
+            const sDep = $(this).data('departamento-id');
+            const valid = (!unidadId || sUni == unidadId) && (!deptoId || sDep == deptoId);
+            $(this).data('valid', valid);
+        });
+
+        const selVal = $('#id_solicitante').val();
+        const selValid = $('#id_solicitante option:selected').data('valid');
+        if (selVal && selValid === false) {
+            $('#id_solicitante').val(null).trigger('change.select2');
+        }
+
+        $('#id_solicitante').trigger('change.select2');
+    }
+
+    // SELECT2 PARA PRODUCTOS
+    function inicializarSelectsProductos() {
+        $('.select2-producto-auto').select2({
+            theme: 'bootstrap4',
+            width: 'resolve',
+            placeholder: 'Selecciona producto...'
+        });
+    }
+
+    // Construcción de fila
     function construirFilaVacia() {
-    return `
+        return `
         <tr class="linea-form">
-        <td>
-            <select class="form-control select2-producto-auto">
-            <option></option>
-            ${window.todosProductos.map(p => `
-                <option value="${p.id}"
-                data-marca="${p.marca.nombre}"
-                data-modelo="${p.modelo}"
-                data-color="${p.color}"
-                data-serie="${p.numero_serie || ''}"
-                data-tiene-serie="${p.tiene_serie}"
-                data-tiene-hijos="${p.tiene_hijos}"
-                data-stock="${p.stock}">
-                ${p.tipo.nombre} – ${p.nombre}
-                </option>
-            `).join('')}
-            </select>
-        </td>
-        <td class="marca-cell"></td>
-        <td class="modelo-cell"></td>
-        <td class="color-cell"></td>
-        <td class="serie-cell"></td>
-        <td><input type="number" class="form-control cantidad-input" min="1"></td>
-        <td class="text-center"><button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button></td>
+            <td>
+                <select class="form-control select2-producto-auto" name="producto_id[]">
+                    <option></option>
+                    ${window.todosProductos.map(p => `
+                        <option value="${p.id}"
+                                data-marca="${p.marca.nombre}"
+                                data-modelo="${p.modelo}"
+                                data-color="${p.color}"
+                                data-serie="${p.numero_serie || ''}"
+                                data-tiene-serie="${p.tiene_serie}"
+                                data-tiene-hijos="${p.tiene_hijos}"
+                                data-stock="${p.stock}"
+                                data-padre-id="${p.padre_id || ''}"
+                                data-estado="${p.estado || ''}"
+                                data-es-hijo="${p.esHijo}"
+                                data-producto-hijo-id="${p.producto_hijo_id || ''}">
+                            ${p.tipo.nombre} – ${p.nombre}
+                        </option>
+                    `).join('')}
+                </select>
+            </td>
+            <td class="marca-cell"></td>
+            <td class="modelo-cell"></td>
+            <td class="color-cell"></td>
+            <td class="serie-cell"></td>
+            <td><input type="number" class="form-control cantidad-input" name="cantidad[]" min="1"></td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button></td>
         </tr>
-    `;
+        `;
     }
 
     function seleccionarHijoDisponible(productoPadreId) {
-    // Buscar hijo activo y con stock 1 del padre
-    for (let prod of window.todosProductos) {
-        if (prod.padre_id === productoPadreId && prod.estado === 'activo' && prod.stock === 1) {
-        return prod;
+        for (let prod of window.todosProductos) {
+            if (prod.padre_id === productoPadreId && prod.estado === 'activo' && prod.stock === 1) {
+                return prod;
+            }
         }
+        return null;
     }
-    return null;
-}
+});

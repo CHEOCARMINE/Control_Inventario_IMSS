@@ -472,6 +472,11 @@ def editar_salida(request, pk):
         solicitantes  = Solicitante.objects.select_related('unidad','departamento').filter(estado=True)
         unidades      = Unidad.objects.filter(estado=True)
         departamentos = Departamento.objects.filter(estado=True)
+        productos_disponibles = Producto.objects.filter(
+            estado=True,
+            stock__gt=0,
+            producto_padre__isnull=True
+        ).select_related('marca', 'tipo').order_by('nombre')
 
         datos_solicitantes = {
             s.id: {'unidad_id': s.unidad_id, 'departamento_id': s.departamento_id}
@@ -509,6 +514,7 @@ def editar_salida(request, pk):
                 'esHijo': p.producto_padre_id is not None,
             })
 
+        detalles = vale.detalles.select_related('producto', 'producto__marca').all()
         return render(request, 'salidas/modales/modal_editar_salida.html', {
             'vale': vale,
             'solicitantes': solicitantes,
@@ -522,6 +528,8 @@ def editar_salida(request, pk):
             'productos_json':           json.dumps(productos_vale),
             'solo_vista': vale.estado != 'pendiente',
             'motivo_cancelacion': vale.motivo_cancelacion if vale.estado == 'cancelado' else None,
+            'detalles': detalles,
+            'productos_disponibles': productos_disponibles,
         })
 
     # POST: procesar edición

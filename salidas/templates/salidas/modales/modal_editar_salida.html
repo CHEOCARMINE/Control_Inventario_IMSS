@@ -28,8 +28,8 @@
 
 <!-- Variables necesarias para JS -->
 <script>
-  // Datos usados por el JS para autollenado y validación
-    window.todosProductos = {{ productos_disponibles_json|safe }};
+    window.modoSoloVista = {{ solo_vista|yesno:"true,false" }};
+    window.todosProductos = {{ productos_json|safe }};
 </script>
 
 <!-- Script específico para este modal -->
