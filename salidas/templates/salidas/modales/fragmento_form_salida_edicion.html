@@ -77,7 +77,7 @@
         </thead>
         <tbody>
             {% for detalle in detalles %}
-            <tr class="linea-form" data-producto-id="{{ detalle.producto.id }}">
+            <tr class="linea-form fila-existente" data-producto-id="{{ detalle.producto.id }}">
                 <td>
                 <select name="producto_id[]" class="form-control select2-producto-auto"
                         {% if solo_vista %}disabled{% endif %}>

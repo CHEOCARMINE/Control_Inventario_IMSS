@@ -1,4 +1,29 @@
 $(document).ready(function () {
+
+    $('.fila-existente').each(function () {
+        const $fila = $(this);
+        const $select = $fila.find('.select2-producto-auto');
+        const productoId = Number($fila.data('producto-id'));
+
+        // Bloquear el select de producto
+        $select.prop('disabled', true);
+
+        // Buscar el producto en la lista global
+        const producto = window.todosProductos.find(p => p.id === productoId);
+        if (!producto) return;
+
+        // Si es hijo → bloquear input cantidad y poner en 1
+        if (producto.esHijo) {
+            $fila.find('.cantidad-input')
+                .val(1)
+                .prop('readonly', true);
+        } else {
+            // Si es normal → dejar editable (por si acaso desbloquear)
+            $fila.find('.cantidad-input')
+                .prop('readonly', false);
+        }
+    });
+
     inicializarSelectsProductos();
     inicializarSelectsSolicitudes();
 
