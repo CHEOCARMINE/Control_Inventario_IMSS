@@ -472,11 +472,17 @@ def editar_salida(request, pk):
         solicitantes  = Solicitante.objects.select_related('unidad','departamento').filter(estado=True)
         unidades      = Unidad.objects.filter(estado=True)
         departamentos = Departamento.objects.filter(estado=True)
+        productos_usados_ids = vale.detalles.values_list('producto_id', flat=True)
+
         productos_disponibles = Producto.objects.filter(
-            estado=True,
-            stock__gt=0,
-            producto_padre__isnull=True
-        ).select_related('marca', 'tipo').order_by('nombre')
+            Q(estado=True, stock__gt=0, producto_padre__isnull=True) |  
+            Q(id__in=productos_usados_ids) 
+        ).select_related('marca', 'tipo').order_by(
+            'tipo__Subcatalogo__catalogo__nombre',
+            'tipo__Subcatalogo__nombre',
+            'tipo__nombre',
+            'nombre'
+        )
 
         datos_solicitantes = {
             s.id: {'unidad_id': s.unidad_id, 'departamento_id': s.departamento_id}
