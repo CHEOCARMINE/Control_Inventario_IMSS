@@ -505,19 +505,22 @@ def editar_salida(request, pk):
         ]
         departamentos_list = [{'id': d.id, 'nombre': d.nombre} for d in departamentos]
 
-        productos_vale = []
-        for d in vale.detalles.all():
-            p = d.producto
-            productos_vale.append({
+        productos_json = []
+        for p in productos_disponibles:
+            productos_json.append({
                 'id': p.id,
                 'nombre': str(p),
-                'marca': p.marca.nombre if p.marca else '',
+                'marca': {'nombre': p.marca.nombre if p.marca else ''},
                 'modelo': p.modelo or '',
                 'color': p.color or '',
                 'numero_serie': p.numero_serie,
                 'stock': p.stock,
-                'cantidad': d.cantidad,
+                'tiene_serie': p.tiene_serie,
+                'tiene_hijos': p.productos_hijos.exists(),
+                'padre_id': p.producto_padre_id,
+                'estado': 'activo' if p.estado else 'inactivo',
                 'esHijo': p.producto_padre_id is not None,
+                'tipo': {'nombre': p.tipo.nombre if p.tipo else ''}
             })
 
         detalles = vale.detalles.select_related('producto', 'producto__marca').all()
@@ -531,7 +534,7 @@ def editar_salida(request, pk):
             'todos_solicitantes_json':  json.dumps(todos_solicitantes),
             'todos_unidades_json':      json.dumps(todos_unidades),
             'departamentos_list_json':  json.dumps(departamentos_list),
-            'productos_json':           json.dumps(productos_vale),
+            'productos_json': json.dumps(productos_json),
             'solo_vista': vale.estado != 'pendiente',
             'motivo_cancelacion': vale.motivo_cancelacion if vale.estado == 'cancelado' else None,
             'detalles': detalles,

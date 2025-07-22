@@ -27,6 +27,14 @@ $(document).ready(function () {
     inicializarSelectsProductos();
     inicializarSelectsSolicitudes();
 
+    // Refrescar opciones deshabilitadas al seleccionar o limpiar producto
+    $('#tabla-editar-salida').on('select2:select select2:unselect', '.select2-producto-auto', function () {
+        updateProductoOptions();
+    });
+
+    // Al cargar, aplicar deshabilitados iniciales
+    updateProductoOptions();
+
     // Agregar fila nueva
     $('#btn-agregar-fila-edicion').on('click', function () {
         const nuevaFila = construirFilaVacia();
@@ -207,29 +215,82 @@ $(document).ready(function () {
         });
     }
 
+    // Actualizar opciones de productos al cargar
+    function updateProductoOptions() {
+        const counts = {};
+        $('.select2-producto-auto').each(function () {
+            const $sel = $(this);
+            const val = $sel.val();
+            const opt = $sel.find(`option[value="${val}"]`);
+            const tieneSerie = opt.data('tiene-serie') === true || opt.data('tiene-serie') === 'true';
+
+            if (val && !tieneSerie) {
+                counts[val] = (counts[val] || 0) + 1;
+            }
+        });
+
+        $('.select2-producto-auto').each(function () {
+            const $sel = $(this);
+            const current = $sel.val();
+
+            $sel.find('option').each(function () {
+                const $opt = $(this);
+                const val = $opt.val();
+                const tieneSerie = $opt.data('tiene-serie') === true || $opt.data('tiene-serie') === 'true';
+
+                if (!val) return;
+
+                let disable = false;
+                if (!tieneSerie && counts[val] >= 1 && current !== val) {
+                    disable = true;
+                }
+                $opt.prop('disabled', disable);
+            });
+
+            $sel.trigger('change.select2');
+        });
+    }
+
     // Construcción de fila
     function construirFilaVacia() {
+        const usadosNormales = new Set();
+
+        $('.select2-producto-auto').each(function () {
+            const selectedId = Number($(this).val());
+            const prod = window.todosProductos.find(p => p.id === selectedId);
+            if (prod && !prod.esHijo && !prod.padre_id) {
+                usadosNormales.add(selectedId);
+            }
+        });
+
+        const opciones = window.todosProductos
+            .filter(p => !p.esHijo)
+            .map(p => {
+                const esNormal = !p.tiene_hijos;
+                const deshabilitar = esNormal && usadosNormales.has(p.id);
+                return `
+                    <option value="${p.id}" 
+                            data-marca="${p.marca?.nombre || ''}"
+                            data-modelo="${p.modelo || ''}"
+                            data-color="${p.color || ''}"
+                            data-serie="${p.numero_serie || ''}"
+                            data-tiene-serie="${p.tiene_serie}"
+                            data-tiene-hijos="${p.tiene_hijos}"
+                            data-stock="${p.stock}"
+                            data-padre-id="${p.padre_id || ''}"
+                            data-estado="${p.estado}"
+                            data-es-hijo="${p.esHijo || false}"
+                            ${deshabilitar ? 'disabled' : ''}>
+                        ${p.tipo?.nombre || 'Sin tipo'} – ${p.nombre}
+                    </option>`;
+            }).join('');
+
         return `
         <tr class="linea-form">
             <td>
                 <select class="form-control select2-producto-auto" name="producto_id[]">
                     <option></option>
-                    ${window.todosProductos.map(p => `
-                        <option value="${p.id}"
-                                data-marca="${p.marca.nombre}"
-                                data-modelo="${p.modelo}"
-                                data-color="${p.color}"
-                                data-serie="${p.numero_serie || ''}"
-                                data-tiene-serie="${p.tiene_serie}"
-                                data-tiene-hijos="${p.tiene_hijos}"
-                                data-stock="${p.stock}"
-                                data-padre-id="${p.padre_id || ''}"
-                                data-estado="${p.estado || ''}"
-                                data-es-hijo="${p.esHijo}"
-                                data-producto-hijo-id="${p.producto_hijo_id || ''}">
-                            ${p.tipo.nombre} – ${p.nombre}
-                        </option>
-                    `).join('')}
+                    ${opciones}
                 </select>
             </td>
             <td class="marca-cell"></td>
@@ -238,8 +299,7 @@ $(document).ready(function () {
             <td class="serie-cell"></td>
             <td><input type="number" class="form-control cantidad-input" name="cantidad[]" min="1"></td>
             <td class="text-center"><button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button></td>
-        </tr>
-        `;
+        </tr>`;
     }
 
     function seleccionarHijoDisponible(productoPadreId) {
