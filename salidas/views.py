@@ -475,8 +475,12 @@ def editar_salida(request, pk):
         productos_usados_ids = vale.detalles.values_list('producto_id', flat=True)
 
         productos_disponibles = Producto.objects.filter(
-            Q(estado=True, stock__gt=0, producto_padre__isnull=True) |  
-            Q(id__in=productos_usados_ids) 
+            (
+                Q(estado=True, stock__gt=0) & (
+                    Q(producto_padre__isnull=True) |  
+                    Q(producto_padre__isnull=False, stock=1)  
+                )
+            ) | Q(id__in=productos_usados_ids)
         ).select_related('marca', 'tipo').order_by(
             'tipo__Subcatalogo__catalogo__nombre',
             'tipo__Subcatalogo__nombre',

@@ -67,13 +67,23 @@ $(document).ready(function () {
 
         if (tieneHijos) {
             const hijo = seleccionarHijoDisponible(productoId);
-            if (hijo) {
-                fila.find('.serie-cell').text(hijo.numero_serie || '');
-                fila.find('.cantidad-input').val(1).prop('readonly', true);
-                fila.attr('data-producto-hijo-id', hijo.id);
-            } else {
-                alert('No hay hijos disponibles para este producto.');
-                $(this).val('').trigger('change');
+            if (tieneHijos) {
+                const hijo = seleccionarHijoDisponible(productoId);
+                if (hijo) {
+                    fila.find('.serie-cell').text(hijo.numero_serie || '');
+                    fila.find('.cantidad-input').val(1).prop('readonly', true);
+                    let inputHijo = fila.find('input[name="producto_hijo_id[]"]');
+                    if (inputHijo.length === 0) {
+                        inputHijo = $('<input>', {
+                            type: 'hidden',
+                            name: 'producto_hijo_id[]'
+                        }).appendTo(fila.find('.serie-cell'));
+                    }
+                    inputHijo.val(hijo.id);
+                } else {
+                    alert('No hay hijos disponibles para este producto.');
+                    $(this).val('').trigger('change');
+                }
             }
         } else {
             fila.find('.serie-cell').text(option.data('serie') || '');
@@ -302,12 +312,19 @@ $(document).ready(function () {
         </tr>`;
     }
 
-    function seleccionarHijoDisponible(productoPadreId) {
-        for (let prod of window.todosProductos) {
-            if (prod.padre_id === productoPadreId && prod.estado === 'activo' && prod.stock === 1) {
-                return prod;
-            }
+        function seleccionarHijoDisponible(productoPadreId) {
+            const hijosDeEsePadre = window.todosProductos.filter(p =>
+                p.padre_id === Number(productoPadreId) &&
+                p.estado === 'activo' &&  
+                p.stock === 1            
+            );
+            const hijosYaUsados = $('input[name="producto_hijo_id[]"]')
+                .map(function () {
+                    return parseInt($(this).val());
+                })
+                .get()
+                .filter(id => !isNaN(id));
+            const hijosFiltrados = hijosDeEsePadre.filter(hijo => !hijosYaUsados.includes(hijo.id));
+            return hijosFiltrados.length > 0 ? hijosFiltrados[0] : null;
         }
-        return null;
-    }
 });
