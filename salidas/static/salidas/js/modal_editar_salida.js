@@ -81,8 +81,12 @@ $(document).ready(function () {
                     }
                     inputHijo.val(hijo.id);
                 } else {
-                    alert('No hay hijos disponibles para este producto.');
-                    $(this).val('').trigger('change');
+                    const $select = $(this);
+                    const $msg = $select.siblings('.mensaje-error-hijos');
+                    $msg.removeClass('d-none');
+                    $select.addClass('is-invalid');
+                    $select.val('').trigger('change');
+                    return;
                 }
             }
         } else {
@@ -302,6 +306,9 @@ $(document).ready(function () {
                     <option></option>
                     ${opciones}
                 </select>
+                <div class="invalid-feedback d-none mensaje-error-hijos">
+                    Este producto ya no tiene hijos disponibles.
+                </div>
             </td>
             <td class="marca-cell"></td>
             <td class="modelo-cell"></td>
