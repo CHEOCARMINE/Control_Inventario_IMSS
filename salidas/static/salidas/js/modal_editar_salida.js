@@ -49,8 +49,13 @@ $(document).ready(function () {
 
     // Al seleccionar producto
     $('#tabla-editar-salida').on('change', '.select2-producto-auto', function () {
-        const fila = $(this).closest('tr');
-        const option = $(this).find('option:selected');
+        const $select = $(this);
+        const $msg = $select.siblings('.mensaje-error-hijos');
+        $msg.addClass('d-none');
+        $select.removeClass('is-invalid');
+
+        const fila = $select.closest('tr');
+        const option = $select.find('option:selected');
         const productoId = option.val();
 
         fila.find('.marca-cell, .modelo-cell, .color-cell, .serie-cell').text('');
@@ -67,27 +72,23 @@ $(document).ready(function () {
 
         if (tieneHijos) {
             const hijo = seleccionarHijoDisponible(productoId);
-            if (tieneHijos) {
-                const hijo = seleccionarHijoDisponible(productoId);
-                if (hijo) {
-                    fila.find('.serie-cell').text(hijo.numero_serie || '');
-                    fila.find('.cantidad-input').val(1).prop('readonly', true);
-                    let inputHijo = fila.find('input[name="producto_hijo_id[]"]');
-                    if (inputHijo.length === 0) {
-                        inputHijo = $('<input>', {
-                            type: 'hidden',
-                            name: 'producto_hijo_id[]'
-                        }).appendTo(fila.find('.serie-cell'));
-                    }
-                    inputHijo.val(hijo.id);
-                } else {
-                    const $select = $(this);
-                    const $msg = $select.siblings('.mensaje-error-hijos');
-                    $msg.removeClass('d-none');
-                    $select.addClass('is-invalid');
-                    $select.val('').trigger('change');
-                    return;
+            if (hijo) {
+                fila.find('.serie-cell').text(hijo.numero_serie || '');
+                fila.find('.cantidad-input').val(1).prop('readonly', true);
+                let inputHijo = fila.find('input[name="producto_hijo_id[]"]');
+                if (inputHijo.length === 0) {
+                    inputHijo = $('<input>', {
+                        type: 'hidden',
+                        name: 'producto_hijo_id[]'
+                    }).appendTo(fila.find('.serie-cell'));
                 }
+                inputHijo.val(hijo.id);
+            } else {
+                // Mostrar mensaje de error si no hay hijos disponibles
+                $msg.removeClass('d-none');
+                $select.addClass('is-invalid');
+                $select.val(''); // ❗️YA NO HACEMOS trigger('change')
+                return;
             }
         } else {
             fila.find('.serie-cell').text(option.data('serie') || '');
