@@ -624,7 +624,7 @@ def editar_salida(request, pk):
                     _registrar_log(request, "vale_salida", vale.id, "Salidas", "Editar")
                     request.session['mensaje_exito'] = f"Vale {vale.folio} actualizado correctamente."
 
-                    return JsonResponse({'success': True, 'redirect_url': reverse('salidas:productos_para_salida')})
+                    return JsonResponse({'success': True, 'redirect_url': reverse('salidas:lista_salidas')})
 
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)})
@@ -635,4 +635,5 @@ def editar_salida(request, pk):
         }, request=request)
         return JsonResponse({'success': False, 'html_form': html})
 
-    return JsonResponse({'success': False, 'error': 'Método no permitido o vale no editable.'}, status=405)
+    request.session['mensaje_error'] = "Este vale no se puede editar porque ya fue entregado o cancelado."
+    return redirect('salidas:lista_salidas')

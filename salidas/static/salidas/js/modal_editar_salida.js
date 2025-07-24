@@ -337,4 +337,33 @@ $(document).ready(function () {
             const hijosFiltrados = hijosDeEsePadre.filter(hijo => !hijosYaUsados.includes(hijo.id));
             return hijosFiltrados.length > 0 ? hijosFiltrados[0] : null;
         }
+
+    // Manejo del formulario de edición
+    $(document).on('submit', '#form-editar-salida', function (e) {
+        e.preventDefault();
+
+        const $form = $(this);
+        const url = $form.attr('action');
+        const data = $form.serialize();
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: data,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function (resp) {
+                if (resp.success) {
+                    $('#modalEditarSalida').modal('hide');
+                    window.location.href = resp.redirect_url;
+                } else {
+                    $('#modalEditarSalida .modal-body').html(resp.html_form || '<p class="text-danger">Error al guardar.</p>');
+                }
+            },
+            error: function () {
+                alert('Error al guardar el vale.');
+            }
+        });
+    });
 });
