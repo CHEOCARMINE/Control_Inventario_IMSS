@@ -557,13 +557,14 @@ def editar_salida(request, pk):
 
                     # Recuperar detalles actuales
                     originales = {
-                        d.producto_id: d
+                        d.producto.id: d
                         for d in vale.detalles.select_related('producto')
                     }
 
                     # Procesar productos nuevos/modificados
                     productos_post = request.POST.getlist('producto_id[]')
                     cantidades_post = request.POST.getlist('cantidad[]')
+                    productos_hijos_post = request.POST.getlist('producto_hijo_id[]')
 
                     nuevos = []
                     usados_ids = set()
@@ -573,11 +574,12 @@ def editar_salida(request, pk):
                         prod_id = int(prod_id)
                         usados_ids.add(prod_id)
 
-                        producto = Producto.objects.get(id=prod_id)
-                        cantidad = int(cantidades_post[i]) if not producto.producto_padre_id else 1
+                        hijo_id = productos_hijos_post[i] if i < len(productos_hijos_post) and productos_hijos_post[i] else None
+                        producto = Producto.objects.get(id=hijo_id) if hijo_id else Producto.objects.get(id=prod_id)
+                        cantidad = 1 if producto.producto_padre_id else int(cantidades_post[i])
 
-                        if prod_id in originales:
-                            detalle = originales.pop(prod_id)
+                        if producto.id in originales:
+                            detalle = originales.pop(producto.id)
                             if detalle.cantidad != cantidad:
                                 diff = cantidad - detalle.cantidad
                                 producto.stock = F('stock') - diff
