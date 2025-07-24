@@ -28,8 +28,13 @@
 
 <!-- Variables necesarias para JS -->
 <script>
-    window.modoSoloVista = {{ solo_vista|yesno:"true,false" }};
-    window.todosProductos = {{ productos_json|safe }};
+    window.modoSoloVista         = {{ solo_vista|yesno:"true,false" }};
+    window.todosProductos        = {{ productos_json|safe }};
+    window.datosSolicitantes     = {{ datos_solicitantes_json|safe }};
+    window.todosSolicitantes     = {{ todos_solicitantes_json|safe }};
+    window.todosUnidadesCompleto = {{ todos_unidades_json|safe }};
+    window.datosUnidades         = {{ datos_unidades_json|safe }};
+    window.departamentos_list_json = {{ departamentos_list_json|safe }};
 </script>
 
 <!-- Script específico para este modal -->

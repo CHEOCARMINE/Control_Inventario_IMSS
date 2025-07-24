@@ -1,5 +1,4 @@
 $(document).ready(function () {
-
     $('.fila-existente').each(function () {
         const $fila = $(this);
         const $select = $fila.find('.select2-producto-auto');
@@ -12,13 +11,13 @@ $(document).ready(function () {
         const producto = window.todosProductos.find(p => p.id === productoId);
         if (!producto) return;
 
-        // Si es hijo → bloquear input cantidad y poner en 1
+        // Si es hijo bloquear input cantidad y poner en 1
         if (producto.esHijo) {
             $fila.find('.cantidad-input')
                 .val(1)
                 .prop('readonly', true);
         } else {
-            // Si es normal → dejar editable (por si acaso desbloquear)
+            // Si es normal dejar editable (por si acaso desbloquear)
             $fila.find('.cantidad-input')
                 .prop('readonly', false);
         }
@@ -84,10 +83,9 @@ $(document).ready(function () {
                 }
                 inputHijo.val(hijo.id);
             } else {
-                // Mostrar mensaje de error si no hay hijos disponibles
                 $msg.removeClass('d-none');
                 $select.addClass('is-invalid');
-                $select.val(''); // ❗️YA NO HACEMOS trigger('change')
+                $select.val(''); 
                 return;
             }
         } else {
@@ -141,6 +139,10 @@ $(document).ready(function () {
             templateResult: formatOption,
             escapeMarkup: m => m
         });
+
+        $('#id_solicitante option').data('valid', true);
+        $('#id_unidad option').data('valid', true);
+        $('#id_departamento option').data('valid', true);
 
         // Triggers para autollenado y validación cruzada
         $('#id_solicitante').on('select2:select', function (e) {
