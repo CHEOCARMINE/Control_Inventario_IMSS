@@ -1,5 +1,9 @@
 $(document).ready(function () {
-    $('.fila-existente').each(function () {
+    let totalForms = parseInt($('#id_form-TOTAL_FORMS').val());
+
+    // Precargar datos de productos en las filas existentes
+    $('.linea-form').each(function () {
+        actualizarFilaPrecargada($(this));
         const $fila = $(this);
         const $select = $fila.find('.select2-producto-auto');
         const productoId = Number($fila.data('producto-id'));
@@ -11,13 +15,28 @@ $(document).ready(function () {
         const producto = window.todosProductos.find(p => p.id === productoId);
         if (!producto) return;
 
-        // Si es hijo bloquear input cantidad y poner en 1
+        // Mostrar datos en las celdas
+        $fila.find('.marca-cell').text(producto.marca?.nombre || '');
+        $fila.find('.modelo-cell').text(producto.modelo || '');
+        $fila.find('.color-cell').text(producto.color || '');
+
         if (producto.esHijo) {
+            $fila.find('.serie-cell').text(producto.numero_serie || '');
             $fila.find('.cantidad-input')
                 .val(1)
                 .prop('readonly', true);
+
+            // Agregar input hidden si no existe
+            let inputHijo = $fila.find('input[name$="-producto_hijo_id"]');
+            if (inputHijo.length === 0) {
+                inputHijo = $('<input>', {
+                    type: 'hidden',
+                    name: `${$fila.data('form-index')}-producto_hijo_id`
+                }).appendTo($fila.find('.serie-cell'));
+            }
+            inputHijo.val(producto.id);
         } else {
-            // Si es normal dejar editable (por si acaso desbloquear)
+            $fila.find('.serie-cell').text(producto.numero_serie || '');
             $fila.find('.cantidad-input')
                 .prop('readonly', false);
         }
@@ -39,11 +58,13 @@ $(document).ready(function () {
         const nuevaFila = construirFilaVacia();
         $('#tabla-editar-salida tbody').append(nuevaFila);
         inicializarSelectsProductos();
+        updateProductoOptions(); 
     });
 
     // Eliminar fila
     $('#tabla-editar-salida').on('click', '.btn-eliminar-fila', function () {
         $(this).closest('tr').remove();
+        updateProductoOptions();
     });
 
     // Al seleccionar producto
@@ -90,20 +111,6 @@ $(document).ready(function () {
             }
         } else {
             fila.find('.serie-cell').text(option.data('serie') || '');
-        }
-    });
-
-    // Validación de cantidad
-    $('#tabla-editar-salida').on('input', '.cantidad-input', function () {
-        const input = $(this);
-        const fila = input.closest('tr');
-        const option = fila.find('.select2-producto-auto option:selected');
-        const stock = option.data('stock');
-        const val = parseInt(input.val());
-        if (isNaN(val) || val < 1) {
-            input.val(1);
-        } else if (val > stock) {
-            input.val(stock);
         }
     });
 
@@ -270,8 +277,11 @@ $(document).ready(function () {
 
     // Construcción de fila
     function construirFilaVacia() {
-        const usadosNormales = new Set();
+        const index = totalForms; 
+        totalForms += 1; 
+        $('#id_form-TOTAL_FORMS').val(totalForms); 
 
+        const usadosNormales = new Set();
         $('.select2-producto-auto').each(function () {
             const selectedId = Number($(this).val());
             const prod = window.todosProductos.find(p => p.id === selectedId);
@@ -305,10 +315,11 @@ $(document).ready(function () {
         return `
         <tr class="linea-form">
             <td>
-                <select class="form-control select2-producto-auto" name="producto_id[]">
+                <select class="form-control select2-producto-auto" name="form-${index}-producto">
                     <option></option>
                     ${opciones}
                 </select>
+                <input type="hidden" name="form-${index}-producto_hijo_id">
                 <div class="invalid-feedback d-none mensaje-error-hijos">
                     Este producto ya no tiene hijos disponibles.
                 </div>
@@ -317,8 +328,12 @@ $(document).ready(function () {
             <td class="modelo-cell"></td>
             <td class="color-cell"></td>
             <td class="serie-cell"></td>
-            <td><input type="number" class="form-control cantidad-input" name="cantidad[]" min="1"></td>
-            <td class="text-center"><button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button></td>
+            <td>
+                <input type="number" class="form-control cantidad-input" name="form-${index}-cantidad" min="1">
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
+            </td>
         </tr>`;
     }
 
@@ -366,4 +381,32 @@ $(document).ready(function () {
             }
         });
     });
+
+    function actualizarFilaPrecargada($fila) {
+        const productoId = Number($fila.find('.select2-producto-auto').val());
+        const producto = window.todosProductos.find(p => p.id === productoId);
+        if (!producto) return;
+
+        $fila.find('.select2-producto-auto').prop('disabled', true);
+        $fila.find('.marca-cell').text(producto.marca?.nombre || '');
+        $fila.find('.modelo-cell').text(producto.modelo || '');
+        $fila.find('.color-cell').text(producto.color || '');
+        $fila.find('.serie-cell').text(producto.numero_serie || '');
+
+        const $cantidad = $fila.find('.cantidad-input');
+        if (producto.esHijo || producto.tiene_serie) {
+            $cantidad.val(1).prop('readonly', true);
+            let inputHijo = $fila.find('input[name$="-producto_hijo_id"]');
+            if (inputHijo.length === 0) {
+                inputHijo = $('<input>', {
+                    type: 'hidden',
+                    name: `${$fila.data('form-index')}-producto_hijo_id`
+                }).appendTo($fila.find('.serie-cell'));
+            }
+            inputHijo.val(producto.id);
+        } else {
+            $cantidad.prop('readonly', false);
+        }
+    }
+
 });

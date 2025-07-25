@@ -1,7 +1,9 @@
 import json
 from django import forms
-from solicitantes.models import Solicitante, Unidad, Departamento
 from .models import ValeSalida
+from .models import ValeDetalle
+from django.forms import modelformset_factory
+from solicitantes.models import Solicitante, Unidad, Departamento
 
 # Formulario para registrar una salida de productos
 class ValeSalidaForm(forms.Form):
@@ -83,3 +85,36 @@ class ValeSalidaFormEdicion(forms.ModelForm):
     class Meta:
         model = ValeSalida
         fields = ['solicitante', 'unidad', 'departamento']
+
+class ValeDetalleForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.cantidad_original = kwargs.pop('cantidad_original', 0)
+        super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = ValeDetalle
+        fields = ['producto', 'cantidad']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-control select2-producto-auto'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control cantidad-input'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        producto = cleaned_data.get('producto')
+        cantidad = cleaned_data.get('cantidad')
+
+        if producto and not producto.tiene_serie:
+            stock_total = producto.stock + self.cantidad_original
+            if cantidad is None or cantidad < 1:
+                self.add_error('cantidad', 'La cantidad debe ser mayor que cero.')
+            elif cantidad > stock_total:
+                self.add_error('cantidad', f'La cantidad ({cantidad}) excede el stock disponible ({stock_total}).')
+
+
+ValeDetalleFormSet = modelformset_factory(
+    ValeDetalle,
+    form=ValeDetalleForm,
+    extra=0,
+    can_delete=True
+)

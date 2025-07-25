@@ -10,9 +10,11 @@ from pypdf import PdfReader, PdfWriter
 from .utils import generar_folio_automatico
 from django.core.paginator import Paginator
 from inventario.models import Producto, Tipo
+from django.forms import modelformset_factory
 from django.db import transaction, IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
+from django.forms.models import modelformset_factory
 from .models import ValeSalida, ValeDetalle, Producto
 from django.shortcuts import redirect, get_object_or_404
 from .pdf_utils import link_callback, create_watermark_page
@@ -20,7 +22,7 @@ from auxiliares_inventario.models import Catalogo, Subcatalogo
 from solicitantes.models import Unidad, Departamento, Solicitante
 from login_app.decorators import login_required, salidas_required
 from base.models import Modulo, Accion, ReferenciasLog, LogsSistema
-from .forms import ValeSalidaForm, CancelarValeForm, ValeSalidaFormEdicion
+from .forms import ValeSalidaForm, CancelarValeForm, ValeSalidaFormEdicion, ValeSalidaFormEdicion, ValeDetalleFormSet
 
 # Helper para registros de log, idéntico al de inventario
 def _registrar_log(request, tabla, id_registro, nombre_modulo, nombre_accion):
@@ -527,6 +529,12 @@ def editar_salida(request, pk):
                 'tipo': {'nombre': p.tipo.nombre if p.tipo else ''}
             })
 
+        detalles_queryset = vale.detalles.select_related('producto')
+        formset = ValeDetalleFormSet(queryset=detalles_queryset)
+        for form in formset:
+            detalle = form.instance
+            form.cantidad_original = detalle.cantidad
+
         detalles = vale.detalles.select_related('producto', 'producto__marca').all()
         return render(request, 'salidas/modales/modal_editar_salida.html', {
             'vale': vale,
@@ -543,53 +551,52 @@ def editar_salida(request, pk):
             'motivo_cancelacion': vale.motivo_cancelacion if vale.estado == 'cancelado' else None,
             'detalles': detalles,
             'productos_disponibles': productos_disponibles,
+            'formset': formset,
         })
 
     # POST: procesar edición
     if request.method == 'POST' and is_ajax and vale.estado == 'pendiente':
         form = ValeSalidaFormEdicion(request.POST, instance=vale)
 
-        if form.is_valid():
+        # Procesar productos nuevos/modificados
+        detalles_queryset = vale.detalles.select_related('producto')
+        formset = ValeDetalleFormSet(request.POST, queryset=detalles_queryset)
+
+        for form in formset:
+            if form.instance and form.instance.pk:
+                form.cantidad_original = form.instance.cantidad
+            else:
+                form.cantidad_original = 0
+
+        if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
                     # Guardar encabezado
                     vale = form.save()
 
-                    # Recuperar detalles actuales
+                    # Recuperar detalles originales
                     originales = {
                         d.producto.id: d
                         for d in vale.detalles.select_related('producto')
                     }
 
-                    # Procesar productos nuevos/modificados
-                    productos_post = request.POST.getlist('producto_id[]')
-                    cantidades_post = request.POST.getlist('cantidad[]')
-                    productos_hijos_post = request.POST.getlist('producto_hijo_id[]')
+                    # Guardar o actualizar detalles
+                    for detalle_form in formset:
+                        detalle = detalle_form.save(commit=False)
+                        producto = detalle.producto
+                        cantidad_nueva = detalle.cantidad
+                        cantidad_original = detalle_form.cantidad_original
+                        es_nuevo = detalle.id is None
 
-                    nuevos = []
-                    usados_ids = set()
-                    for i, prod_id in enumerate(productos_post):
-                        if not prod_id:
-                            continue
-                        prod_id = int(prod_id)
-                        usados_ids.add(prod_id)
-
-                        hijo_id = productos_hijos_post[i] if i < len(productos_hijos_post) and productos_hijos_post[i] else None
-                        producto = Producto.objects.get(id=hijo_id) if hijo_id else Producto.objects.get(id=prod_id)
-                        cantidad = 1 if producto.producto_padre_id else int(cantidades_post[i])
-
-                        if producto.id in originales:
-                            detalle = originales.pop(producto.id)
-                            if detalle.cantidad != cantidad:
-                                diff = cantidad - detalle.cantidad
-                                producto.stock = F('stock') - diff
+                        if not es_nuevo:
+                            diferencia = cantidad_nueva - cantidad_original
+                            if diferencia != 0:
+                                producto.stock = F('stock') - diferencia
                                 producto.save(update_fields=['stock'])
                                 _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
-                                detalle.cantidad = cantidad
-                                detalle.save()
+                            originales.pop(producto.id, None)
                         else:
-                            ValeDetalle.objects.create(vale=vale, producto=producto, cantidad=cantidad)
-                            producto.stock = F('stock') - cantidad
+                            producto.stock = F('stock') - cantidad_nueva
                             producto.save(update_fields=['stock'])
                             _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
 
@@ -602,6 +609,9 @@ def editar_salida(request, pk):
                                 padre.stock = F('stock') - 1
                                 padre.save(update_fields=['stock'])
                                 _registrar_log(request, "producto", padre.id, "Salidas", "Ajuste stock")
+
+                        detalle.vale = vale
+                        detalle.save()
 
                     # Productos eliminados → restaurar stock
                     for eliminado in originales.values():
@@ -631,11 +641,11 @@ def editar_salida(request, pk):
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)})
 
-        html = render_to_string('salidas/modales/fragmento_form_salida.html', {
+        # Si el formulario o formset no son válidos, renderizar con errores
+        html = render_to_string('salidas/modales/fragmento_form_salida_edicion.html', {
             'form': form,
+            'formset': formset,
             'vale': vale,
+            'productos_disponibles': Producto.objects.all(),  
         }, request=request)
         return JsonResponse({'success': False, 'html_form': html})
-
-    request.session['mensaje_error'] = "Este vale no se puede editar porque ya fue entregado o cancelado."
-    return redirect('salidas:lista_salidas')

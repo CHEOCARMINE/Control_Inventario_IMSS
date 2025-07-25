@@ -1,13 +1,8 @@
-from django.utils import timezone
 from .models import ValeSalida
+from django.utils import timezone
 
 # Utility function to generate automatic folio numbers for ValeSalida
 def generar_folio_automatico():
-    """
-    Genera un folio en formato JSAF/DTI/0001/2025,
-    donde el contador se reinicia cada año y se incrementa
-    según los registros existentes para el año actual.
-    """
     prefix = "JSAF/DTI"
     # Año actual según zona horaria de Django
     year = timezone.now().year

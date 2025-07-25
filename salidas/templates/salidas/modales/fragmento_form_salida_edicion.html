@@ -59,10 +59,22 @@
 {% endif %}
 
 <hr class="my-2">
+{% if errores_cantidades %}
+
+<div class="alert alert-danger">
+    <strong>Errores detectados en cantidades:</strong>
+    <ul class="mb-0">
+        {% for idx, msg in errores_cantidades.items %}
+            <li>Fila {{ idx|add:"1" }}: {{ msg }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
 <!-- Tabla de productos (con scroll) -->
 <div class="formset-scroll-wrapper flex-grow-1">
     <div class="table-responsive">
+        {{ formset.management_form }}        
         <table class="table table-bordered table-sm" id="tabla-editar-salida">
         <thead class="thead-light">
             <tr>
@@ -75,49 +87,90 @@
             <th style="width: 60px;">Acción</th>
             </tr>
         </thead>
-        <tbody>
-            {% for detalle in detalles %}
-            <tr class="linea-form fila-existente" data-producto-id="{{ detalle.producto.id }}">
+        <tbody id="formset-container" data-total-forms="{{ formset.total_form_count }}">
+            {% for form in formset %}
+            <tr class="linea-form" data-form-index="{{ forloop.counter0 }}">
+                <td colspan="7" class="d-none">
+                    {{ form.DELETE }}
+                </td> 
                 <td>
-                <select name="producto_id[]" class="form-control select2-producto-auto"
-                        {% if solo_vista %}disabled{% endif %}>
-                    <option></option>
-                    {% for p in productos_disponibles %}
-                    <option value="{{ p.id }}"
-                        data-marca="{{ p.marca.nombre }}"
-                        data-modelo="{{ p.modelo }}"
-                        data-color="{{ p.color }}"
-                        data-serie="{{ p.numero_serie }}"
-                        data-tiene-serie="{{ p.tiene_serie|yesno:'true,false' }}"
-                        data-tiene-hijos="{{ p.productos_hijos.count|yesno:'true,false' }}"
-                        data-stock="{{ p.stock }}"
-                        {% if p.id == detalle.producto.id %}selected{% endif %}>
-                        {{ p.tipo.nombre }} – {{ p.nombre }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <input type="hidden" name="producto_id[]" value="{{ detalle.producto.producto_padre_id|default:detalle.producto.id }}">
-                <input type="hidden" name="producto_hijo_id[]" value="{% if detalle.producto.producto_padre_id %}{{ detalle.producto.id }}{% endif %}">
+                    <select name="{{ form.producto.name }}"
+                            class="form-control select2-producto-auto"
+                            {% if solo_vista %}disabled{% endif %} required>
+                        <option value="">Selecciona un producto…</option>
+                        {% for p in productos_disponibles %}
+                            <option value="{{ p.id }}"
+                                    data-marca="{{ p.marca.nombre }}"
+                                    data-modelo="{{ p.modelo }}"
+                                    data-color="{{ p.color }}"
+                                    data-serie="{{ p.numero_serie }}"
+                                    data-tiene-serie="{{ p.tiene_serie|yesno:"true,false" }}"
+                                    data-tiene-hijos="{{ p.tiene_hijos|yesno:"true,false" }}"
+                                    data-stock="{{ p.stock }}"
+                                    data-padre-id="{{ p.padre_id }}"
+                                    data-estado="{{ p.estado|yesno:"activo,inactivo" }}"
+                                    data-es-hijo="{{ p.esHijo|yesno:"true,false" }}"
+                                    {% if form.producto.value == p.id %}selected{% endif %}>
+                                {{ p.tipo.nombre }} – {{ p.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {{ form.producto.errors }}
                 </td>
-                <td class="marca-cell">{{ detalle.producto.marca.nombre }}</td>
-                <td class="modelo-cell">{{ detalle.producto.modelo }}</td>
-                <td class="color-cell">{{ detalle.producto.color }}</td>
-                <td class="serie-cell">{{ detalle.producto.numero_serie }}</td>
+                <td class="marca-cell"></td>
+                <td class="modelo-cell"></td>
+                <td class="color-cell"></td>
+                <td class="serie-cell"></td>
                 <td>
-                <input name="cantidad[]" 
-                        type="number"
-                        class="form-control cantidad-input"
-                        value="{{ detalle.cantidad }}"
-                        {% if solo_vista or detalle.producto.tiene_serie %}readonly{% endif %}>
+                    {{ form.cantidad }}
+                    {{ form.cantidad.errors }}
                 </td>
                 <td class="text-center align-middle">
-                {% if not solo_vista %}
-                    <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
-                {% endif %}
+                    {% if not solo_vista %}
+                        <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
+        <!-- Fila vacía como template para clonar desde JS -->
+        <script type="text/template" id="fila-vacia-template">
+        <tr class="linea-form" data-form-index="__prefix__">
+            <td>
+                <select name="form-__prefix__-producto"
+                        class="form-control select2-producto-auto"
+                        required>
+                    <option value="">Selecciona un producto…</option>
+                    {% for p in productos_disponibles %}
+                        <option value="{{ p.id }}"
+                                data-marca="{{ p.marca.nombre }}"
+                                data-modelo="{{ p.modelo }}"
+                                data-color="{{ p.color }}"
+                                data-serie="{{ p.numero_serie }}"
+                                data-tiene-serie="{{ p.tiene_serie|yesno:"true,false" }}"
+                                data-tiene-hijos="{{ p.tiene_hijos|yesno:"true,false" }}"
+                                data-stock="{{ p.stock }}"
+                                data-padre-id="{{ p.padre_id }}"
+                                data-estado="{{ p.estado|yesno:"activo,inactivo" }}"
+                                data-es-hijo="{{ p.esHijo|yesno:"true,false" }}">
+                            {{ p.tipo.nombre }} – {{ p.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td class="marca-cell"></td>
+            <td class="modelo-cell"></td>
+            <td class="color-cell"></td>
+            <td class="serie-cell"></td>
+            <td>
+                <input type="number" name="form-__prefix__-cantidad"
+                    class="form-control cantidad-input" required min="1">
+            </td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
+            </td>
+        </tr>
+        </script>
         </table>
     </div>
 </div>
