@@ -584,32 +584,41 @@ def editar_salida(request, pk):
                     # Guardar o actualizar detalles
                     for detalle_form in formset:
                         detalle = detalle_form.save(commit=False)
-                        producto = detalle.producto
-                        cantidad_nueva = detalle.cantidad
-                        cantidad_original = detalle_form.cantidad_original
-                        es_nuevo = detalle.id is None
+                        hijo_id = detalle_form.cleaned_data.get('producto_hijo_id')
+                        if hijo_id:
+                            producto = Producto.objects.get(pk=hijo_id)
+                        else:
+                            producto = detalle.producto
 
-                        if not es_nuevo:
+                        cantidad_nueva   = detalle_form.cleaned_data['cantidad']
+                        cantidad_original = detalle_form.cantidad_original
+                        es_nuevo         = detalle.id is None
+
+                        if es_nuevo:
+                            if producto.producto_padre_id:
+                                # Hijo: restar stock, desactivar
+                                producto.stock = F('stock') - 1
+                                producto.estado = False
+                                producto.save(update_fields=['stock','estado'])
+                                _registrar_log(request, "producto", producto.id, "Salidas", "Desactivar hijo")
+                                # Padre: restar stock
+                                padre = producto.producto_padre
+                                padre.stock = F('stock') - 1
+                                padre.save(update_fields=['stock'])
+                                _registrar_log(request, "producto", padre.id, "Salidas", "Ajuste stock padre")
+                            else:
+                                # Producto normal
+                                producto.stock = F('stock') - cantidad_nueva
+                                producto.save(update_fields=['stock'])
+                                _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
+                        else:
+                            # Ajustar diferencia
                             diferencia = cantidad_nueva - cantidad_original
-                            if diferencia != 0:
+                            if diferencia:
                                 producto.stock = F('stock') - diferencia
                                 producto.save(update_fields=['stock'])
                                 _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
                             originales.pop(producto.id, None)
-                        else:
-                            producto.stock = F('stock') - cantidad_nueva
-                            producto.save(update_fields=['stock'])
-                            _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
-
-                            if producto.producto_padre_id:
-                                producto.estado = False
-                                producto.save(update_fields=['estado'])
-                                _registrar_log(request, "producto", producto.id, "Salidas", "Desactivar hijo")
-
-                                padre = producto.producto_padre
-                                padre.stock = F('stock') - 1
-                                padre.save(update_fields=['stock'])
-                                _registrar_log(request, "producto", padre.id, "Salidas", "Ajuste stock")
 
                         detalle.vale = vale
                         detalle.save()
@@ -617,20 +626,20 @@ def editar_salida(request, pk):
                     # Productos eliminados → restaurar stock
                     for eliminado in originales.values():
                         producto = eliminado.producto
+                        cantidad_eliminada = eliminado.cantidad
                         eliminado.delete()
 
                         if producto.producto_padre_id:
                             producto.estado = True
                             producto.stock = F('stock') + 1
-                            producto.save(update_fields=['estado', 'stock'])
+                            producto.save(update_fields=['estado','stock'])
                             _registrar_log(request, "producto", producto.id, "Salidas", "Reactivar hijo")
-
                             padre = producto.producto_padre
                             padre.stock = F('stock') + 1
                             padre.save(update_fields=['stock'])
                             _registrar_log(request, "producto", padre.id, "Salidas", "Restaurar stock padre")
                         else:
-                            producto.stock = F('stock') + eliminado.cantidad
+                            producto.stock = F('stock') + cantidad_eliminada
                             producto.save(update_fields=['stock'])
                             _registrar_log(request, "producto", producto.id, "Salidas", "Restaurar stock")
 
