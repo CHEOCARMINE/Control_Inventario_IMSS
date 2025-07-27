@@ -556,23 +556,24 @@ def editar_salida(request, pk):
 
     # POST: procesar edición
     if request.method == 'POST' and is_ajax and vale.estado == 'pendiente':
-        form = ValeSalidaFormEdicion(request.POST, instance=vale)
-
-        # Procesar productos nuevos/modificados
+        if request.method == 'POST' and is_ajax and vale.estado == 'pendiente':
+            for k, v in request.POST.items():
+                print(f"{k}: {v}")
+        vale_form = ValeSalidaFormEdicion(request.POST, instance=vale)
         detalles_queryset = vale.detalles.select_related('producto')
         formset = ValeDetalleFormSet(request.POST, queryset=detalles_queryset)
 
-        for form in formset:
-            if form.instance and form.instance.pk:
-                form.cantidad_original = form.instance.cantidad
+        for detalle_form in formset:
+            if detalle_form.instance and detalle_form.instance.pk:
+                detalle_form.cantidad_original = detalle_form.instance.cantidad
             else:
-                form.cantidad_original = 0
+                detalle_form.cantidad_original = 0
 
-        if form.is_valid() and formset.is_valid():
+        if vale_form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
                     # Guardar encabezado
-                    vale = form.save()
+                    vale = vale_form.save()
 
                     # Recuperar detalles originales
                     originales = {
@@ -643,7 +644,7 @@ def editar_salida(request, pk):
 
         # Si el formulario o formset no son válidos, renderizar con errores
         html = render_to_string('salidas/modales/fragmento_form_salida_edicion.html', {
-            'form': form,
+            'form': vale_form,
             'formset': formset,
             'vale': vale,
             'productos_disponibles': Producto.objects.all(),  

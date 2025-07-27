@@ -1,4 +1,18 @@
+    function bloquearSelect2Visual($select) {
+    const $container = $select.next('.select2-container');
+    $container
+        .find('.select2-selection')
+        .css('pointer-events','none')
+        .css('background-color','#eaecf4')
+        .css('opacity','1')
+        .css('cursor','not-allowed');
+    }
+
 $(document).ready(function () {
+
+    inicializarSelectsProductos();
+    inicializarSelectsSolicitudes();
+
     let totalForms = parseInt($('#id_form-TOTAL_FORMS').val());
 
     // Precargar datos de productos en las filas existentes
@@ -9,7 +23,7 @@ $(document).ready(function () {
         const productoId = Number($fila.data('producto-id'));
 
         // Bloquear el select de producto
-        $select.prop('disabled', true);
+        bloquearSelect2Visual($select);
 
         // Buscar el producto en la lista global
         const producto = window.todosProductos.find(p => p.id === productoId);
@@ -42,9 +56,6 @@ $(document).ready(function () {
         }
     });
 
-    inicializarSelectsProductos();
-    inicializarSelectsSolicitudes();
-
     // Refrescar opciones deshabilitadas al seleccionar o limpiar producto
     $('#tabla-editar-salida').on('select2:select select2:unselect', '.select2-producto-auto', function () {
         updateProductoOptions();
@@ -55,10 +66,24 @@ $(document).ready(function () {
 
     // Agregar fila nueva
     $('#btn-agregar-fila-edicion').on('click', function () {
-        const nuevaFila = construirFilaVacia();
-        $('#tabla-editar-salida tbody').append(nuevaFila);
-        inicializarSelectsProductos();
-        updateProductoOptions(); 
+        const nuevaFilaHtml = construirFilaVacia();
+        $('#tabla-editar-salida tbody').append(nuevaFilaHtml);
+
+        const $newRow = $('#tabla-editar-salida tbody tr.linea-form').last();
+        $newRow.find('.select2-producto-auto').select2({
+            theme: 'bootstrap4',
+            width: 'resolve',
+            placeholder: 'Selecciona producto...'
+        });
+
+        updateProductoOptions();
+
+        $('.linea-form').each(function() {
+            const $fila = $(this);
+            if ($fila.data('producto-id')) {
+                bloquearSelect2Visual($fila.find('.select2-producto-auto'));
+            }
+        });
     });
 
     // Eliminar fila
@@ -387,7 +412,7 @@ $(document).ready(function () {
         const producto = window.todosProductos.find(p => p.id === productoId);
         if (!producto) return;
 
-        $fila.find('.select2-producto-auto').prop('disabled', true);
+        bloquearSelect2Visual($fila.find('.select2-producto-auto'));
         $fila.find('.marca-cell').text(producto.marca?.nombre || '');
         $fila.find('.modelo-cell').text(producto.modelo || '');
         $fila.find('.color-cell').text(producto.color || '');
