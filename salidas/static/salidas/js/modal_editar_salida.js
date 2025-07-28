@@ -120,22 +120,19 @@ $(document).ready(function () {
             if (hijo) {
                 fila.find('.serie-cell').text(hijo.numero_serie || '');
                 fila.find('.cantidad-input').val(1).prop('readonly', true);
-                let inputHijo = fila.find('input[name="producto_hijo_id[]"]');
+                let index = fila.data('form-index');
+                let inputName = `form-${index}-producto_hijo_id`;
+                let inputHijo = fila.find(`input[name="${inputName}"]`);
                 if (inputHijo.length === 0) {
                     inputHijo = $('<input>', {
                         type: 'hidden',
-                        name: 'producto_hijo_id[]'
+                        name: inputName
                     }).appendTo(fila.find('.serie-cell'));
                 }
                 inputHijo.val(hijo.id);
-            } else {
-                $msg.removeClass('d-none');
-                $select.addClass('is-invalid');
-                $select.val(''); 
-                return;
-            }
         } else {
             fila.find('.serie-cell').text(option.data('serie') || '');
+        }
         }
     });
 
@@ -338,7 +335,7 @@ $(document).ready(function () {
             }).join('');
 
         return `
-        <tr class="linea-form">
+        <tr class="linea-form" data-form-index="${index}">
             <td>
                 <select class="form-control select2-producto-auto" name="form-${index}-producto">
                     <option></option>
@@ -368,7 +365,7 @@ $(document).ready(function () {
                 p.estado === 'activo' &&  
                 p.stock === 1            
             );
-            const hijosYaUsados = $('input[name="producto_hijo_id[]"]')
+            const hijosYaUsados = $('input[name$="-producto_hijo_id"]')
                 .map(function () {
                     return parseInt($(this).val());
                 })
@@ -421,11 +418,13 @@ $(document).ready(function () {
         const $cantidad = $fila.find('.cantidad-input');
         if (producto.esHijo || producto.tiene_serie) {
             $cantidad.val(1).prop('readonly', true);
-            let inputHijo = $fila.find('input[name$="-producto_hijo_id"]');
+            let index = $fila.data('form-index');
+            let inputName = `form-${index}-producto_hijo_id`;
+            let inputHijo = $fila.find(`input[name="${inputName}"]`);
             if (inputHijo.length === 0) {
                 inputHijo = $('<input>', {
                     type: 'hidden',
-                    name: `${$fila.data('form-index')}-producto_hijo_id`
+                    name: inputName
                 }).appendTo($fila.find('.serie-cell'));
             }
             inputHijo.val(producto.id);
@@ -433,5 +432,4 @@ $(document).ready(function () {
             $cantidad.prop('readonly', false);
         }
     }
-
 });

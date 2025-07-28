@@ -87,6 +87,11 @@ class ValeSalidaFormEdicion(forms.ModelForm):
         fields = ['solicitante', 'unidad', 'departamento']
 
 class ValeDetalleForm(forms.ModelForm):
+    producto_hijo_id = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        required=False
+    )
+
     def __init__(self, *args, **kwargs):
         self.cantidad_original = kwargs.pop('cantidad_original', 0)
         super().__init__(*args, **kwargs)
@@ -110,7 +115,6 @@ class ValeDetalleForm(forms.ModelForm):
                 self.add_error('cantidad', 'La cantidad debe ser mayor que cero.')
             elif cantidad > stock_total:
                 self.add_error('cantidad', f'La cantidad ({cantidad}) excede el stock disponible ({stock_total}).')
-
 
 ValeDetalleFormSet = modelformset_factory(
     ValeDetalle,

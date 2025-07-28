@@ -556,9 +556,8 @@ def editar_salida(request, pk):
 
     # POST: procesar edición
     if request.method == 'POST' and is_ajax and vale.estado == 'pendiente':
-        if request.method == 'POST' and is_ajax and vale.estado == 'pendiente':
-            for k, v in request.POST.items():
-                print(f"{k}: {v}")
+        for k, v in request.POST.items():
+            print(f"{k}: {v}")
         vale_form = ValeSalidaFormEdicion(request.POST, instance=vale)
         detalles_queryset = vale.detalles.select_related('producto')
         formset = ValeDetalleFormSet(request.POST, queryset=detalles_queryset)
@@ -620,6 +619,7 @@ def editar_salida(request, pk):
                                 _registrar_log(request, "producto", producto.id, "Salidas", "Ajuste stock")
                             originales.pop(producto.id, None)
 
+                        detalle.producto = producto
                         detalle.vale = vale
                         detalle.save()
 
