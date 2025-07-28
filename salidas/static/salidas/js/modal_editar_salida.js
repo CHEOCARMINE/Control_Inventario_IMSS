@@ -69,6 +69,8 @@ $(document).ready(function () {
         const nuevaFilaHtml = construirFilaVacia();
         $('#tabla-editar-salida tbody').append(nuevaFilaHtml);
 
+        reindexarFormset();
+
         const $newRow = $('#tabla-editar-salida tbody tr.linea-form').last();
         $newRow.find('.select2-producto-auto').select2({
             theme: 'bootstrap4',
@@ -89,6 +91,7 @@ $(document).ready(function () {
     // Eliminar fila
     $('#tabla-editar-salida').on('click', '.btn-eliminar-fila', function () {
         $(this).closest('tr').remove();
+        reindexarFormset();
         updateProductoOptions();
     });
 
@@ -299,9 +302,7 @@ $(document).ready(function () {
 
     // Construcción de fila
     function construirFilaVacia() {
-        const index = totalForms; 
-        totalForms += 1; 
-        $('#id_form-TOTAL_FORMS').val(totalForms); 
+        const index = $('.linea-form').length;
 
         const usadosNormales = new Set();
         $('.select2-producto-auto').each(function () {
@@ -379,6 +380,8 @@ $(document).ready(function () {
     $(document).on('submit', '#form-editar-salida', function (e) {
         e.preventDefault();
 
+        reindexarFormset();
+
         const $form = $(this);
         const url = $form.attr('action');
         const data = $form.serialize();
@@ -431,5 +434,19 @@ $(document).ready(function () {
         } else {
             $cantidad.prop('readonly', false);
         }
+    }
+
+    function reindexarFormset() {
+        const filas = $('.linea-form');
+        $('#id_form-TOTAL_FORMS').val(filas.length);
+        filas.each(function (i) {
+            $(this).attr('data-form-index', i);
+            $(this).find(':input').each(function () {
+                const name = $(this).attr('name');
+                const id = $(this).attr('id');
+                if (name) $(this).attr('name', name.replace(/form-\d+-/, `form-${i}-`));
+                if (id) $(this).attr('id', id.replace(/id_form-\d+-/, `id_form-${i}-`));
+            });
+        });
     }
 });
