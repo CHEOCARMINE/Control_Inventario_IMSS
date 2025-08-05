@@ -2,7 +2,6 @@ import io
 import json
 from xhtml2pdf import pisa
 from django.urls import reverse
-from django.conf import settings
 from django.db.models import Q, F
 from django.utils import timezone
 from django.shortcuts import render
@@ -10,11 +9,9 @@ from pypdf import PdfReader, PdfWriter
 from .utils import generar_folio_automatico
 from django.core.paginator import Paginator
 from inventario.models import Producto, Tipo
-from django.forms import modelformset_factory
 from django.db import transaction, IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
-from django.forms.models import modelformset_factory
 from .models import ValeSalida, ValeDetalle, Producto
 from django.shortcuts import redirect, get_object_or_404
 from .pdf_utils import link_callback, create_watermark_page
@@ -652,10 +649,38 @@ def editar_salida(request, pk):
                 return JsonResponse({'success': False, 'error': str(e)})
 
         # Si el formulario o formset no son válidos, renderizar con errores
-        html = render_to_string('salidas/modales/fragmento_form_salida_edicion.html', {
+        solicitantes  = Solicitante.objects.select_related('unidad','departamento').filter(estado=True)
+        unidades      = Unidad.objects.filter(estado=True)
+        departamentos = Departamento.objects.filter(estado=True)
+        productos_usados_ids = vale.detalles.values_list('producto_id', flat=True)
+        productos_disponibles = Producto.objects.filter(
+            (
+                Q(estado=True, stock__gt=0) & (
+                    Q(producto_padre__isnull=True) |
+                    Q(producto_padre__isnull=False, stock=1)
+                )
+            ) | Q(id__in=productos_usados_ids)
+        ).select_related('marca','tipo').order_by(
+            'tipo__Subcatalogo__catalogo__nombre',
+            'tipo__Subcatalogo__nombre',
+            'tipo__nombre',
+            'nombre'
+        )
+
+        context = {
+            'vale': vale,
             'form': vale_form,
             'formset': formset,
-            'vale': vale,
-            'productos_disponibles': Producto.objects.all(),  
-        }, request=request)
+            'solicitantes': solicitantes,
+            'unidades': unidades,
+            'departamentos': departamentos,
+            'solo_vista': False,
+            'productos_disponibles': productos_disponibles,
+        }
+
+        html = render_to_string(
+            'salidas/modales/fragmento_form_salida_edicion.html',
+            context,
+            request=request
+        )
         return JsonResponse({'success': False, 'html_form': html})

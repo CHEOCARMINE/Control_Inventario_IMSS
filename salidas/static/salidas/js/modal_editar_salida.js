@@ -382,9 +382,19 @@ $(document).ready(function () {
 
         reindexarFormset();
 
-        const $form = $(this);
-        const url = $form.attr('action');
-        const data = $form.serialize();
+        const numFilas = $('#tabla-editar-salida tbody tr.linea-form').length;
+        if (numFilas < 1) {
+            $('.cosma-flags-message').remove();
+            $('#form-editar-salida .modal-body').prepend(`
+                <div class="alert alert-danger alert-dismissible fade show cosma-flags-message" role="alert">
+                    Debe agregar al menos una fila de productos.
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `);
+            return; 
+        }
 
         $.ajax({
             url: url,
@@ -394,11 +404,23 @@ $(document).ready(function () {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             success: function (resp) {
+                console.log('RESP AJAX:', resp);
                 if (resp.success) {
                     $('#modalEditarSalida').modal('hide');
                     window.location.href = resp.redirect_url;
                 } else {
-                    $('#modalEditarSalida .modal-body').html(resp.html_form || '<p class="text-danger">Error al guardar.</p>');
+                    // 1) Inyecta el HTML con errores
+                    $('#modalEditarSalida .modal-body').html(
+                        resp.html_form || '<p class="text-danger">Error al guardar.</p>'
+                    );
+                    // 2) Vuelve a inicializar todo para que Select2, bloqueos y conteo funcionen
+                    inicializarSelectsProductos();
+                    inicializarSelectsSolicitudes();
+                    updateProductoOptions();
+                    $('.linea-form').each(function() {
+                        bloquearSelect2Visual($(this).find('.select2-producto-auto'));
+                    });
+                    reindexarFormset();
                 }
             },
             error: function () {

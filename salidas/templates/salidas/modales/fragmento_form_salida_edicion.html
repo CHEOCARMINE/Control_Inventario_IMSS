@@ -71,6 +71,14 @@
 </div>
 {% endif %}
 
+{% if formset.non_form_errors %}
+    <div class="alert alert-danger mt-2">
+    {% for err in formset.non_form_errors %}
+        <p>{{ err }}</p>
+    {% endfor %}
+    </div>
+{% endif %}
+
 <!-- Tabla de productos (con scroll) -->
 <div class="formset-scroll-wrapper flex-grow-1">
     <div class="table-responsive">
