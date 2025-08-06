@@ -409,12 +409,19 @@ $(document).ready(function () {
                     $form.closest('.modal').modal('hide');
                     window.location.href = resp.redirect_url;
                 } else {
-                    $form.closest('.modal').find('.modal-body').html(resp.html_form);
+                    const $modalBody = $form.closest('.modal').find('.modal-body');
+                    $modalBody.html(resp.html_form);
                     inicializarSelectsProductos();
                     inicializarSelectsSolicitudes();
                     updateProductoOptions();
-                    $('.linea-form').each(function(){
-                        bloquearSelect2Visual($(this).find('.select2-producto-auto'));
+                    $modalBody.find('.linea-form').each(function () {
+                        const $fila = $(this);
+                        const productoId = $fila.data('producto-id');
+                        const $select   = $fila.find('.select2-producto-auto');
+                        if (productoId) {
+                            $select.val(productoId).trigger('change');
+                        }
+                        actualizarFilaPrecargada($fila);
                     });
                     reindexarFormset();
                 }

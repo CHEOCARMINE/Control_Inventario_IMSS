@@ -84,7 +84,7 @@
         </thead>
         <tbody id="formset-container" data-total-forms="{{ formset.total_form_count }}">
             {% for form in formset %}
-            <tr class="linea-form" data-form-index="{{ forloop.counter0 }}">
+            <tr class="linea-form" data-form-index="{{ forloop.counter0 }}" data-producto-id="{{ form.producto.value|default:'' }}">
                 <td colspan="7" class="d-none">
                     {{ form.DELETE }}
                 </td> 
@@ -139,7 +139,7 @@
         </tbody>
         <!-- Fila vacía como template para clonar desde JS -->
         <script type="text/template" id="fila-vacia-template">
-        <tr class="linea-form" data-form-index="__prefix__">
+        <tr class="linea-form" data-form-index="__prefix__" data-producto-id="">
             <td>
                 <select name="form-__prefix__-producto"
                         class="form-control select2-producto-auto"
