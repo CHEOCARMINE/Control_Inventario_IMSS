@@ -58,19 +58,6 @@
     </div>
 {% endif %}
 
-<hr class="my-2">
-{% if errores_cantidades %}
-
-<div class="alert alert-danger">
-    <strong>Errores detectados en cantidades:</strong>
-    <ul class="mb-0">
-        {% for idx, msg in errores_cantidades.items %}
-            <li>Fila {{ idx|add:"1" }}: {{ msg }}</li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
-
 {% if formset.non_form_errors %}
     <div class="alert alert-danger mt-2">
     {% for err in formset.non_form_errors %}
@@ -134,7 +121,13 @@
                 <td class="serie-cell"></td>
                 <td>
                     {{ form.cantidad }}
-                    {{ form.cantidad.errors }}
+                    {% if form.cantidad.errors %}
+                        {% for error in form.cantidad.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </td>
                 <td class="text-center align-middle">
                     {% if not solo_vista %}

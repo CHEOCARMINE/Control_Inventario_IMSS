@@ -360,70 +360,66 @@ $(document).ready(function () {
         </tr>`;
     }
 
-        function seleccionarHijoDisponible(productoPadreId) {
-            const hijosDeEsePadre = window.todosProductos.filter(p =>
-                p.padre_id === Number(productoPadreId) &&
-                p.estado === 'activo' &&  
-                p.stock === 1            
-            );
-            const hijosYaUsados = $('input[name$="-producto_hijo_id"]')
-                .map(function () {
-                    return parseInt($(this).val());
-                })
-                .get()
-                .filter(id => !isNaN(id));
-            const hijosFiltrados = hijosDeEsePadre.filter(hijo => !hijosYaUsados.includes(hijo.id));
-            return hijosFiltrados.length > 0 ? hijosFiltrados[0] : null;
-        }
+    function seleccionarHijoDisponible(productoPadreId) {
+        const hijosDeEsePadre = window.todosProductos.filter(p =>
+            p.padre_id === Number(productoPadreId) &&
+            p.estado === 'activo' &&  
+            p.stock === 1            
+        );
+        const hijosYaUsados = $('input[name$="-producto_hijo_id"]')
+            .map(function () {
+                return parseInt($(this).val());
+            })
+            .get()
+            .filter(id => !isNaN(id));
+        const hijosFiltrados = hijosDeEsePadre.filter(hijo => !hijosYaUsados.includes(hijo.id));
+        return hijosFiltrados.length > 0 ? hijosFiltrados[0] : null;
+    }
 
     // Manejo del formulario de edición
-    $(document).on('submit', '#form-editar-salida', function (e) {
+    $(document).off('submit', '#form-editar-salida');
+    $(document).on('submit', '#form-editar-salida', function(e) {
         e.preventDefault();
 
         reindexarFormset();
 
-        const numFilas = $('#tabla-editar-salida tbody tr.linea-form').length;
+        var $form      = $(this);
+        var actionUrl  = $form.attr('action');
+        var formData   = $form.serialize();
+
+        var numFilas = $('#tabla-editar-salida tbody tr.linea-form').length;
         if (numFilas < 1) {
             $('.cosma-flags-message').remove();
-            $('#form-editar-salida .modal-body').prepend(`
-                <div class="alert alert-danger alert-dismissible fade show cosma-flags-message" role="alert">
+            $('#form-editar-salida .modal-body').prepend(
+                `<div class="alert alert-danger alert-dismissible fade show cosma-flags-message" role="alert">
                     Debe agregar al menos una fila de productos.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            `);
-            return; 
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>`
+            );
+            return;
         }
 
         $.ajax({
-            url: url,
-            method: 'POST',
-            data: data,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function (resp) {
-                console.log('RESP AJAX:', resp);
+            url:     actionUrl,
+            method:  'POST',
+            data:    formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            success: function(resp) {
                 if (resp.success) {
-                    $('#modalEditarSalida').modal('hide');
+                    $form.closest('.modal').modal('hide');
                     window.location.href = resp.redirect_url;
                 } else {
-                    // 1) Inyecta el HTML con errores
-                    $('#modalEditarSalida .modal-body').html(
-                        resp.html_form || '<p class="text-danger">Error al guardar.</p>'
-                    );
-                    // 2) Vuelve a inicializar todo para que Select2, bloqueos y conteo funcionen
+                    $form.closest('.modal').find('.modal-body').html(resp.html_form);
                     inicializarSelectsProductos();
                     inicializarSelectsSolicitudes();
                     updateProductoOptions();
-                    $('.linea-form').each(function() {
+                    $('.linea-form').each(function(){
                         bloquearSelect2Visual($(this).find('.select2-producto-auto'));
                     });
                     reindexarFormset();
                 }
             },
-            error: function () {
+            error: function() {
                 alert('Error al guardar el vale.');
             }
         });

@@ -105,16 +105,28 @@ class ValeDetalleForm(forms.ModelForm):
         }
 
     def clean(self):
-        cleaned_data = super().clean()
-        producto = cleaned_data.get('producto')
-        cantidad = cleaned_data.get('cantidad')
-
+        from .models import Producto
+        cleaned_data     = super().clean()
+        hijo_id          = cleaned_data.get('producto_hijo_id')
+        cantidad         = cleaned_data.get('cantidad')
+        if hijo_id:
+            try:
+                producto = Producto.objects.get(pk=hijo_id)
+            except Producto.DoesNotExist:
+                self.add_error('cantidad', 'Producto hijo inválido.')
+                return cleaned_data
+        else:
+            producto = cleaned_data.get('producto')
         if producto and not producto.tiene_serie:
             stock_total = producto.stock + self.cantidad_original
             if cantidad is None or cantidad < 1:
                 self.add_error('cantidad', 'La cantidad debe ser mayor que cero.')
             elif cantidad > stock_total:
-                self.add_error('cantidad', f'La cantidad ({cantidad}) excede el stock disponible ({stock_total}).')
+                self.add_error(
+                    'cantidad',
+                    f'La cantidad ({cantidad}) excede el stock disponible ({stock_total}).'
+                )
+        return cleaned_data
 
 ValeDetalleFormSet = modelformset_factory(
     ValeDetalle,
