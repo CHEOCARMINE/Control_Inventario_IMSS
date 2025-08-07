@@ -97,22 +97,21 @@ $(document).ready(function () {
 
     // Al seleccionar producto
     $('#tabla-editar-salida').on('change', '.select2-producto-auto', function () {
-        const $select = $(this);
-        const $msg = $select.siblings('.mensaje-error-hijos');
+        const $select     = $(this);
+        const $msg        = $select.siblings('.mensaje-error-hijos');
         $msg.addClass('d-none');
         $select.removeClass('is-invalid');
 
-        const fila = $select.closest('tr');
-        const option = $select.find('option:selected');
-        const productoId = option.val();
+        const fila        = $select.closest('tr');
+        const option      = $select.find('option:selected');
+        const productoId  = option.val();
 
         fila.find('.marca-cell, .modelo-cell, .color-cell, .serie-cell').text('');
         fila.find('.cantidad-input').val('').prop('readonly', false);
-
         if (!productoId) return;
 
-        const tieneSerie = option.data('tiene-serie') == true || option.data('tiene-serie') == 'true';
-        const tieneHijos = option.data('tiene-hijos') == true || option.data('tiene-hijos') == 'true';
+        const tieneSerie = option.data('tiene-serie') === true || option.data('tiene-serie') === 'true';
+        const tieneHijos = option.data('tiene-hijos') === true || option.data('tiene-hijos') === 'true';
 
         fila.find('.marca-cell').text(option.data('marca') || '');
         fila.find('.modelo-cell').text(option.data('modelo') || '');
@@ -123,19 +122,25 @@ $(document).ready(function () {
             if (hijo) {
                 fila.find('.serie-cell').text(hijo.numero_serie || '');
                 fila.find('.cantidad-input').val(1).prop('readonly', true);
-                let index = fila.data('form-index');
-                let inputName = `form-${index}-producto_hijo_id`;
-                let inputHijo = fila.find(`input[name="${inputName}"]`);
-                if (inputHijo.length === 0) {
+
+                const index     = fila.data('form-index');
+                const inputName = `form-${index}-producto_hijo_id`;
+                let inputHijo   = fila.find(`input[name="${inputName}"]`);
+                if (!inputHijo.length) {
                     inputHijo = $('<input>', {
                         type: 'hidden',
                         name: inputName
                     }).appendTo(fila.find('.serie-cell'));
                 }
                 inputHijo.val(hijo.id);
+            } else {
+                $msg.text('Este producto ya no tiene hijos disponibles.')
+                    .removeClass('d-none');
+                $select.addClass('is-invalid');
+                return;
+            }
         } else {
             fila.find('.serie-cell').text(option.data('serie') || '');
-        }
         }
     });
 
@@ -383,9 +388,20 @@ $(document).ready(function () {
 
         reindexarFormset();
 
-        var $form      = $(this);
-        var actionUrl  = $form.attr('action');
-        var formData   = $form.serialize();
+        if ($('.select2-producto-auto.is-invalid').length) {
+            $('.cosma-flags-message').remove();
+            $('#form-editar-salida .modal-body').prepend(
+                `<div class="alert alert-danger alert-dismissible fade show cosma-flags-message" role="alert">
+                    Corrige los productos marcados antes de guardar.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>`
+            );
+            return;
+        }
+
+        var $form     = $(this);
+        var actionUrl = $form.attr('action');
+        var formData  = $form.serialize();
 
         var numFilas = $('#tabla-editar-salida tbody tr.linea-form').length;
         if (numFilas < 1) {

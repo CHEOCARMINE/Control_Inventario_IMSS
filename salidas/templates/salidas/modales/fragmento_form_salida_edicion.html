@@ -113,6 +113,9 @@
                             </option>
                         {% endfor %}
                     </select>
+                    <div class="invalid-feedback d-none mensaje-error-hijos">
+                        Este producto ya no tiene hijos disponibles.
+                    </div>
                     {{ form.producto.errors }}
                 </td>
                 <td class="marca-cell"></td>
@@ -161,6 +164,10 @@
                         </option>
                     {% endfor %}
                 </select>
+                <div class="invalid-feedback d-none mensaje-error-hijos">
+                    Este producto ya no tiene hijos disponibles.
+                </div>
+                {{ form.producto.errors }}
             </td>
             <td class="marca-cell"></td>
             <td class="modelo-cell"></td>
