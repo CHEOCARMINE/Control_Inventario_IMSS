@@ -79,13 +79,15 @@
             <th>Color</th>
             <th>N.º Serie</th>
             <th style="width: 100px;">Cantidad</th>
+            {% if not solo_vista %}
             <th style="width: 60px;">Acción</th>
+            {% endif %}
             </tr>
         </thead>
         <tbody id="formset-container" data-total-forms="{{ formset.total_form_count }}">
             {% for form in formset %}
             <tr class="linea-form" data-form-index="{{ forloop.counter0 }}" data-producto-id="{{ form.producto.value|default:'' }}">
-                <td colspan="7" class="d-none">
+                <td colspan="{% if not solo_vista %}7{% else %}6{% endif %}" class="d-none">
                     {{ form.DELETE }}
                 </td> 
                 <td>
@@ -123,20 +125,33 @@
                 <td class="color-cell"></td>
                 <td class="serie-cell"></td>
                 <td>
+                {% if solo_vista %}
+                    <input
+                    type="number"
+                    name="{{ form.prefix }}-cantidad"
+                    id="{{ form.cantidad.id_for_label }}"
+                    class="form-control cantidad-input"
+                    value="{{ form.cantidad.value|default_if_none:'' }}"
+                    min="{{ form.cantidad.field.min_value }}"
+                    {% if form.cantidad.field.max_value %}max="{{ form.cantidad.field.max_value }}"{% endif %}
+                    readonly
+                    >
+                {% else %}
                     {{ form.cantidad }}
-                    {% if form.cantidad.errors %}
-                        {% for error in form.cantidad.errors %}
-                            <div class="text-danger small mt-1">
-                                {{ error }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                {% endif %}
+                {% if form.cantidad.errors %}
+                    {% for error in form.cantidad.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ error }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
                 </td>
+                {% if not solo_vista %}
                 <td class="text-center align-middle">
-                    {% if not solo_vista %}
                         <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
-                    {% endif %}
                 </td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>

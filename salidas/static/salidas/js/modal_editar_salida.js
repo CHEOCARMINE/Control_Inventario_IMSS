@@ -10,8 +10,12 @@
 
 $(document).ready(function () {
 
+    const soloVista = $('#id_solicitante').is(':disabled');
+
     inicializarSelectsProductos();
     inicializarSelectsSolicitudes();
+
+    $('.cantidad-input').prop('readonly', soloVista);
 
     let totalForms = parseInt($('#id_form-TOTAL_FORMS').val());
 
@@ -51,8 +55,7 @@ $(document).ready(function () {
             inputHijo.val(producto.id);
         } else {
             $fila.find('.serie-cell').text(producto.numero_serie || '');
-            $fila.find('.cantidad-input')
-                .prop('readonly', false);
+            $fila.find('.cantidad-input').prop('readonly', soloVista);
         }
     });
 
@@ -107,7 +110,7 @@ $(document).ready(function () {
         const productoId  = option.val();
 
         fila.find('.marca-cell, .modelo-cell, .color-cell, .serie-cell').text('');
-        fila.find('.cantidad-input').val('').prop('readonly', false);
+        fila.find('.cantidad-input').val('').prop('readonly', soloVista);
         if (!productoId) return;
 
         const tieneSerie = option.data('tiene-serie') === true || option.data('tiene-serie') === 'true';
@@ -473,7 +476,7 @@ $(document).ready(function () {
             }
             inputHijo.val(producto.id);
         } else {
-            $cantidad.prop('readonly', false);
+            $cantidad.prop('readonly', soloVista);
         }
     }
 
