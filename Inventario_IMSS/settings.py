@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'usuarios',
     'solicitantes', 
     'auxiliares_inventario',
-    'inventario'
+    'inventario',
+    'salidas',
 ]
 
 AUTH_USER_MODEL = 'login_app.Usuario'
@@ -51,11 +52,11 @@ AUTH_USER_MODEL = 'login_app.Usuario'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'Inventario_IMSS.session_timeout.SessionIdleTimeout',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'Inventario_IMSS.session_timeout.SessionIdleTimeout',    
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 

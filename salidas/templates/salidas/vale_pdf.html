@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" xmlns:pdf="http://ns.adobe.com/pdf/1.3/">
+    <head>
+        <meta charset="UTF-8">
+        <title>Vale de Salida {{ vale.folio }}</title>
+        <link rel="stylesheet" href="{% static 'salidas/css/vale.css' %}">
+        <style type="text/css">
+            @page {
+                size: A4 portrait;
+                background-color: #fff;
+
+                @frame header_frame {
+                -pdf-frame-content: header_content;
+                top:    10mm;
+                left:   10mm;
+                width:  190mm;
+                height: 50mm;  
+                }
+
+                @frame content_frame {
+                top:    60mm;   
+                left:   10mm;
+                width:  190mm;
+                bottom: 20mm;
+                }
+
+                @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                bottom: 10mm;
+                left:   10mm;
+                width:  190mm;
+                height:  8mm;
+                }
+            }
+            </style>
+    </head>
+    <body>
+
+        <!-- HEADER -->
+        <div id="header_content">
+            <table class="header-table" width="100%" cellspacing="0" cellpadding="0">
+                <colgroup>
+                <!-- ancho fijo de los logos -->
+                <col style="width:43mm;">
+                <!-- columna central: auto -->
+                <col>
+                <col style="width:52.3mm;">
+                </colgroup>
+                <tr>
+                <!-- Logo izquierda -->
+                <td class="logo-left">
+                    <img src="{% static 'salidas/img/logo_gob.png' %}"
+                        alt="Gobierno de México"
+                        class="logo-img-gob">
+                </td>
+                <!-- Texto central, verticalmente centrado -->
+                <td class="header-text">
+                    <p class="header-line header-line--first">
+                    Servicios de Salud del Instituto Mexicano de Seguro Social para el Bienestar
+                    </p>
+                    <p class="header-line">Coordinación Estatal de Campeche</p>
+                    <p class="header-line">Departamento de Tecnología de la Información</p>
+                </td>
+                <!-- Logo derecha -->
+                <td class="logo-right">
+                    <img src="{% static 'salidas/img/logo_imss.png' %}"
+                        alt="IMSS Bienestar"
+                        class="logo-img-imss">
+                </td>
+                </tr>
+            </table>
+            <h1 class="title">Vale de Salida de Almacén</h1>
+            <h1 class="title">Folio {{ vale.folio }}</h1>
+        </div>
+
+        <div style="-pdf-frame: content_frame;">
+        <div class="fields">
+            <p><strong>Fecha de solicitud:</strong> {{ vale.fecha_creacion|date:"d/m/Y" }}</p>
+            <p><strong>Solicitante:</strong> {{ vale.solicitante.nombre }}</p>
+            <p><strong>Departamento:</strong> {{ vale.departamento.nombre }}</p>
+            <p><strong>Unidad para utilizarse:</strong> {{ vale.unidad.nombre }}</p>
+        </div>
+
+        <table class="items-table" repeat="1">
+            <colgroup>
+            <col style="width:15mm;">
+            <col style="width:120mm;">
+            <col style="width:40mm;">
+            </colgroup>
+            <thead>
+            <tr>
+                <th>Cant.</th>
+                <th>Descripción</th>
+                <th>Observaciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for detalle in vale.detalles.all %}
+            <tr>
+                <td class="cell-qty">{{ detalle.cantidad }}</td>
+                <td class="cell-desc">
+                {{ detalle.producto.nombre }}, 
+                {{ detalle.producto.marca }}, 
+                {{ detalle.producto.color }}, 
+                {{ detalle.producto.modelo }}
+                {% if detalle.producto.numero_serie %}
+                    , No. de serie: {{ detalle.producto.numero_serie }}
+                {% endif %}
+                </td>
+                <td class="cell-obs">{{ detalle.observaciones }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No hay ítems registrados</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <table class="signatures">
+        <colgroup>
+            <col style="width:33%;">
+            <col style="width:33%;">
+            <col style="width:33%;">
+        </colgroup>
+        <tr>
+            <td class="sig-cell">
+            <strong class="sig-label">Entregó</strong>
+            <hr class="signature-line"/>
+            <span class="sig-role">Jefe de Oficina</span>
+            </td>
+            <td class="sig-cell">
+            <strong class="sig-label">VoBo</strong>
+            <hr class="signature-line"/>
+            <span class="sig-role">Jefe de Departamento</span>
+            </td>
+            <td class="sig-cell">
+            <strong class="sig-label">Recibió</strong>
+            <hr class="signature-line"/>
+            <span class="sig-role">Solicitante</span>
+            </td>
+        </tr>
+        </table>
+        </div>
+
+        <div id="footer_content" style="text-align:center; font-size:8pt;">
+        Página <pdf:pagenumber/> de <pdf:pagecount/>
+        </div>
+    </body>
+</html>

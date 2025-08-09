@@ -1,0 +1,163 @@
+@font-face {
+    font-family: 'Noto Sans Regular';
+    src: url("../fonts/NotoSans-Regular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bold';
+    src: url("../fonts/NotoSans-Bold.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Noto Sans', Arial, sans-serif;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+
+/* HEADER */
+.header-table {
+    border-collapse: collapse;
+    margin-bottom: 20pt !important;
+    width: 100%;
+}
+
+.header-table td {
+    padding: 0;
+    vertical-align: middle;  
+}
+
+.logo-left  { text-align: left; }
+.logo-right { text-align: right; }
+
+.logo-img-gob,
+.logo-img-imss {
+    height: 14mm;
+    object-fit: contain;
+}
+
+.header-text {
+    text-align: center;
+}
+
+.header-line {
+    margin: 0;
+    font-size: 10pt;
+    font-weight: normal;
+    line-height: 1.2;
+}
+
+.header-line--first {
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+/* TITLES */
+.title {
+    font-size: 14pt;
+    text-align: center;
+    margin: 2pt 0;
+}
+
+.title + .title {
+    margin-top: 12pt;
+}
+
+/* CAMPOS */
+.fields {
+    margin: 6pt 0 12pt;
+}
+
+.fields p {
+    margin: 2pt 0;
+}
+
+.fields strong {
+    font-size: 10pt;
+}
+
+/* TABLA DE ÍTEMS */
+.items-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-top: 12pt;
+}
+
+.items-table th,
+.items-table td {
+    border: 1px solid #000;
+    padding: 2pt 4pt; 
+    font-size: 10pt;
+    vertical-align: middle;
+    text-align: center; 
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.items-table th {
+    background: #f0f0f0;
+}
+
+.items-table thead th {
+    padding: 2pt 4pt;   
+    height: 8mm;         
+    font-size: 10pt;    
+    vertical-align: middle;
+    text-align: center;  
+    font-weight: bold;
+}
+
+/* Celdas */
+.cell-qty {
+    text-align: center;
+    width: 15mm !important;
+}
+
+.cell-obs {
+    min-height: 8mm;
+    width: 60mm !important;
+}
+
+.cell-desc {
+    width: auto !important;
+}
+
+.sig-cell {
+    text-align: center;
+    padding: 2pt 4pt;       
+    display: block;
+}
+
+/* PIE DE FIRMAS */
+.signatures {
+    margin-top: 20pt;       
+    page-break-inside: avoid;
+}
+
+.sig-label {
+    display: block;
+    font-weight: bold;
+    font-size: 10pt;
+    margin-bottom: 2pt;
+}
+
+hr.signature-line {
+    border: none;
+    border-top: 0.5pt dashed #000;  
+    width: 60%;                   
+    margin: 16pt auto 2pt;           
+}
+
+.sig-role {
+    display: block;
+    font-weight: normal;
+    font-size: 9pt;
+    margin-top: 2pt;
+}

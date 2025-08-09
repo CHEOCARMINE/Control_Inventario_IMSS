@@ -1,0 +1,64 @@
+{% csrf_token %}
+<div class="container-fluid d-flex flex-column" style="max-height: 80vh;">
+
+    <!-- Solicitante, Unidad, Departamento -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+        <label for="id_solicitante">Solicitante</label>
+        <select name="solicitante" id="id_solicitante" class="form-control select2-solicitante" required>
+            <option value="">Selecciona un solicitante…</option>
+            {% for s in solicitantes %}
+            <option 
+                value="{{ s.id }}"
+                data-unidad-id="{{ s.unidad_id }}"
+                data-departamento-id="{{ s.departamento_id }}">
+            {{ s.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+        </div>
+        <div class="col-md-4 mb-3">
+        <label for="id_unidad">Unidad</label>
+        <select name="unidad" id="id_unidad" class="form-control select2-unidad" required>
+            <option value="">Selecciona unidad…</option>
+            {% for u in unidades %}
+            <option value="{{ u.id }}">{{ u.nombre }}</option>
+            {% endfor %}
+        </select>
+        </div>
+        <div class="col-md-4 mb-3">
+        <label for="id_departamento">Departamento</label>
+        <select name="departamento" id="id_departamento" class="form-control select2-departamento" required>
+            <option value="">Selecciona departamento…</option>
+            {% for d in departamentos %}
+            <option value="{{ d.id }}">{{ d.nombre }}</option>
+            {% endfor %}
+        </select>
+        </div>
+    </div>
+
+    <hr class="my-2">
+
+    <!-- Tabla del carrito con scroll -->
+        <div class="formset-scroll-wrapper flex-grow-1">
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm" id="tabla-carrito">
+            <thead class="thead-light">
+            <tr>
+                <th style="width: 25%;">Producto</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Color</th>
+                <th>N.º Serie</th>
+                <th style="width: 100px;">Cantidad</th>
+                <th style="width: 60px;">Acción</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Se llenará dinámicamente desde JS -->
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+</div>

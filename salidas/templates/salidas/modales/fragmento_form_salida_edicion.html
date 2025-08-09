@@ -1,0 +1,211 @@
+{% csrf_token %}
+
+<!-- Contenedor principal -->
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label for="id_solicitante">Solicitante</label>
+        <select name="solicitante" id="id_solicitante"
+                class="form-control select2-solicitante"
+                {% if solo_vista %}disabled{% endif %} required>
+        <option value="">Selecciona un solicitante…</option>
+        {% for s in solicitantes %}
+            <option value="{{ s.id }}"
+                    data-unidad-id="{{ s.unidad_id }}"
+                    data-departamento-id="{{ s.departamento_id }}"
+                    {% if s.id == vale.solicitante_id %}selected{% endif %}>
+            {{ s.nombre }}
+            </option>
+        {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label for="id_unidad">Unidad</label>
+        <select name="unidad" id="id_unidad"
+                class="form-control select2-unidad"
+                {% if solo_vista %}disabled{% endif %} required>
+        <option value="">Selecciona unidad…</option>
+        {% for u in unidades %}
+            <option value="{{ u.id }}"
+                    {% if u.id == vale.unidad_id %}selected{% endif %}>
+            {{ u.nombre }}
+            </option>
+        {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label for="id_departamento">Departamento</label>
+        <select name="departamento" id="id_departamento"
+                class="form-control select2-departamento"
+                {% if solo_vista %}disabled{% endif %} required>
+        <option value="">Selecciona departamento…</option>
+        {% for d in departamentos %}
+            <option value="{{ d.id }}"
+                    {% if d.id == vale.departamento_id %}selected{% endif %}>
+            {{ d.nombre }}
+            </option>
+        {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Contenedor para motivo de cancelación -->
+{% if vale.estado == "cancelado" and vale.motivo_cancelacion %}
+    <div class="alert alert-danger mt-2">
+        <strong>Motivo de cancelación:</strong><br>
+        {{ vale.motivo_cancelacion }}
+    </div>
+{% endif %}
+
+{% if formset.non_form_errors %}
+    <div class="alert alert-danger mt-2">
+    {% for err in formset.non_form_errors %}
+        <p>{{ err }}</p>
+    {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Tabla de productos (con scroll) -->
+<div class="formset-scroll-wrapper flex-grow-1">
+    <div class="table-responsive">
+        {{ formset.management_form }}        
+        <table class="table table-bordered table-sm" id="tabla-editar-salida">
+        <thead class="thead-light">
+            <tr>
+            <th style="width: 25%;">Producto</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Color</th>
+            <th>N.º Serie</th>
+            <th style="width: 100px;">Cantidad</th>
+            {% if not solo_vista %}
+            <th style="width: 60px;">Acción</th>
+            {% endif %}
+            </tr>
+        </thead>
+        <tbody id="formset-container" data-total-forms="{{ formset.total_form_count }}">
+            {% for form in formset %}
+            <tr class="linea-form" data-form-index="{{ forloop.counter0 }}" data-producto-id="{{ form.producto.value|default:'' }}">
+                <td colspan="{% if not solo_vista %}7{% else %}6{% endif %}" class="d-none">
+                    {{ form.DELETE }}
+                </td> 
+                <td>
+                    <input type="hidden"
+                        name="{{ form.prefix }}-id"
+                        value="{{ form.instance.id }}">
+                    <select name="{{ form.prefix }}-producto"
+                            class="form-control select2-producto-auto"
+                            {% if solo_vista %}disabled{% endif %} required>
+                        <option value="">Selecciona un producto…</option>
+                        {% for p in productos_disponibles %}
+                            <option value="{{ p.id }}"
+                                    data-marca="{{ p.marca.nombre }}"
+                                    data-modelo="{{ p.modelo }}"
+                                    data-color="{{ p.color }}"
+                                    data-serie="{{ p.numero_serie }}"
+                                    data-tiene-serie="{{ p.tiene_serie|yesno:"true,false" }}"
+                                    data-tiene-hijos="{{ p.tiene_hijos|yesno:"true,false" }}"
+                                    data-stock="{{ p.stock }}"
+                                    data-padre-id="{{ p.padre_id }}"
+                                    data-estado="{{ p.estado|yesno:"activo,inactivo" }}"
+                                    data-es-hijo="{{ p.esHijo|yesno:"true,false" }}"
+                                    {% if form.producto.value == p.id %}selected{% endif %}>
+                                {{ p.tipo.nombre }} – {{ p.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback d-none mensaje-error-hijos">
+                        Este producto ya no tiene hijos disponibles.
+                    </div>
+                    {{ form.producto.errors }}
+                </td>
+                <td class="marca-cell"></td>
+                <td class="modelo-cell"></td>
+                <td class="color-cell"></td>
+                <td class="serie-cell"></td>
+                <td>
+                {% if solo_vista %}
+                    <input
+                    type="number"
+                    name="{{ form.prefix }}-cantidad"
+                    id="{{ form.cantidad.id_for_label }}"
+                    class="form-control cantidad-input"
+                    value="{{ form.cantidad.value|default_if_none:'' }}"
+                    min="{{ form.cantidad.field.min_value }}"
+                    {% if form.cantidad.field.max_value %}max="{{ form.cantidad.field.max_value }}"{% endif %}
+                    readonly
+                    >
+                {% else %}
+                    {{ form.cantidad }}
+                {% endif %}
+                {% if form.cantidad.errors %}
+                    {% for error in form.cantidad.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ error }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                </td>
+                {% if not solo_vista %}
+                <td class="text-center align-middle">
+                        <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+        <!-- Fila vacía como template para clonar desde JS -->
+        <script type="text/template" id="fila-vacia-template">
+        <tr class="linea-form" data-form-index="__prefix__" data-producto-id="">
+            <td>
+                <select name="form-__prefix__-producto"
+                        class="form-control select2-producto-auto"
+                        required>
+                    <option value="">Selecciona un producto…</option>
+                    {% for p in productos_disponibles %}
+                        <option value="{{ p.id }}"
+                                data-marca="{{ p.marca.nombre }}"
+                                data-modelo="{{ p.modelo }}"
+                                data-color="{{ p.color }}"
+                                data-serie="{{ p.numero_serie }}"
+                                data-tiene-serie="{{ p.tiene_serie|yesno:"true,false" }}"
+                                data-tiene-hijos="{{ p.tiene_hijos|yesno:"true,false" }}"
+                                data-stock="{{ p.stock }}"
+                                data-padre-id="{{ p.padre_id }}"
+                                data-estado="{{ p.estado|yesno:"activo,inactivo" }}"
+                                data-es-hijo="{{ p.esHijo|yesno:"true,false" }}">
+                            {{ p.tipo.nombre }} – {{ p.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback d-none mensaje-error-hijos">
+                    Este producto ya no tiene hijos disponibles.
+                </div>
+                {{ form.producto.errors }}
+            </td>
+            <td class="marca-cell"></td>
+            <td class="modelo-cell"></td>
+            <td class="color-cell"></td>
+            <td class="serie-cell"></td>
+            <td>
+                <input type="number" name="form-__prefix__-cantidad"
+                    class="form-control cantidad-input" required min="1">
+            </td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-sm btn-danger btn-eliminar-fila">&times;</button>
+            </td>
+        </tr>
+        </script>
+        </table>
+    </div>
+</div>
+
+<!-- Botón para agregar filas -->
+{% if not solo_vista %}
+    <div class="d-flex justify-content-between mt-3">
+        <button type="button" id="btn-agregar-fila-edicion" class="btn btn-outline-primary">
+        + Agregar fila
+        </button>
+    </div>
+{% endif %}

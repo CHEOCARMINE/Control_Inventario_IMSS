@@ -1,0 +1,41 @@
+{% load static %}
+<form id="form-editar-salida"
+        method="post"
+        action="{% url 'salidas:editar_salida' vale.id %}">
+    {% csrf_token %}
+
+    <div class="modal-header">
+        <h5 class="modal-title">
+        {% if solo_vista %}
+            Vista de Vale de Salida
+        {% else %}
+            Editar Vale de Salida
+        {% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+    </div>
+
+    <div class="modal-body p-4">
+        {% include 'salidas/modales/fragmento_form_salida_edicion.html' %}
+    </div>
+
+    {% if not solo_vista %}
+        <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+    {% endif %}
+</form>
+
+<!-- Variables necesarias para JS -->
+<script>
+    window.modoSoloVista         = {{ solo_vista|yesno:"true,false" }};
+    window.todosProductos        = {{ productos_json|safe }};
+    window.datosSolicitantes     = {{ datos_solicitantes_json|safe }};
+    window.todosSolicitantes     = {{ todos_solicitantes_json|safe }};
+    window.todosUnidadesCompleto = {{ todos_unidades_json|safe }};
+    window.datosUnidades         = {{ datos_unidades_json|safe }};
+    window.departamentos_list_json = {{ departamentos_list_json|safe }};
+</script>
+
+<!-- Script específico para este modal -->
+<script src="{% static 'salidas/js/modal_editar_salida.js' %}"></script>
