@@ -2,6 +2,8 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from django.contrib.staticfiles import finders
 from openpyxl.drawing.image import Image as XLImage
+from django.db.models import Exists, OuterRef, Prefetch
+from openpyxl.formatting.rule import CellIsRule, FormulaRule
 from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
 
 # Columnas
@@ -105,3 +107,106 @@ def crear_libro_base(texto_encabezado: str) -> Workbook:
     _crear_hoja(wb, "Desactivados", texto_encabezado)
 
     return wb
+
+# INDICES de columna por nombre (útil para fórmulas)
+IDX = {name: i+1 for i, name in enumerate(COLUMNAS)}  
+
+# Query base con relaciones (evita N+1)
+def _qs_base(Producto):
+    return (Producto.objects
+        .select_related(
+            "tipo__Subcatalogo__catalogo",
+            "tipo__unidad_medida",
+            "marca",
+            "producto_padre",
+        )
+        .prefetch_related(
+            Prefetch("productos_hijos", queryset=Producto.objects.only("id", "nombre", "numero_serie", "producto_padre", "stock"))
+        )
+        .annotate(tiene_hijos=Exists(Producto.objects.filter(producto_padre_id=OuterRef("pk"))))
+    )
+
+# Helpers para mapear el producto a una fila
+def _rol(p):
+    if p.producto_padre_id:
+        return "Hijo"
+    return "Padre" if getattr(p, "tiene_hijos", False) else "Normal"
+
+def _categoria(p):
+    try:  
+        return str(p.tipo.Subcatalogo.catalogo)
+    except Exception:
+        return ""
+
+def _unidad(p):
+    try:
+        return str(p.tipo.unidad_medida)
+    except Exception:
+        return ""
+
+def _padre_nombre(p):
+    return str(p.producto_padre) if p.producto_padre_id else ""
+
+def _stock_min(p):
+    try:
+        return int(p.tipo.stock_minimo)
+    except Exception:
+        return None
+
+def fila_from_producto(p):
+    return [
+        p.id,
+        p.nombre,
+        str(p.tipo.nombre) if p.tipo_id else "",
+        _categoria(p),
+        str(p.marca) if p.marca_id else "",
+        p.modelo,
+        p.color,
+        _rol(p),
+        _padre_nombre(p),
+        p.numero_serie or "",
+        _unidad(p),
+        int(p.stock or 0),
+        _stock_min(p),
+        "Activo" if p.estado else "Desactivado",
+    ]
+
+def _escribir_filas(ws, filas, fila_inicio=6):
+    r = fila_inicio
+    for row in filas:
+        for c_idx, val in enumerate(row, start=1):
+            cell = ws.cell(row=r, column=c_idx, value=val)
+            cell.border = BORDER
+            if c_idx in (IDX["Stock"], IDX["Stock mínimo"]):
+                cell.alignment = Alignment(horizontal="center")
+        r += 1
+    # Extiende AutoFilter al rango de datos
+    last_col = get_column_letter(len(COLUMNAS))
+    ws.auto_filter.ref = f"A5:{last_col}{max(5, r-1)}"
+    return r - 1  
+
+# Formato condicional: Stock (Activos/Normales: todos)
+def _pintar_stock_general(ws, fila_inicio=6):
+    colS = get_column_letter(IDX["Stock"])
+    colM = get_column_letter(IDX["Stock mínimo"])
+    last = ws.max_row
+    if last < fila_inicio:
+        return
+    rango = f"{colS}{fila_inicio}:{colS}{last}"
+    rojo = PatternFill(fill_type="solid", start_color="FFF8CBAD", end_color="FFF8CBAD")
+    amarillo = PatternFill(fill_type="solid", start_color="FFFFF2CC", end_color="FFFFF2CC")
+    ws.conditional_formatting.add(
+        rango, CellIsRule(operator="equal", formula=["0"], stopIfTrue=True, fill=rojo)
+    )
+    formula = f'AND({colS}{fila_inicio}>0,{colS}{fila_inicio}<={colM}{fila_inicio})'
+    ws.conditional_formatting.add(
+        rango, FormulaRule(formula=[formula], stopIfTrue=True, fill=amarillo)
+    )
+
+# Poblar hoja Activos
+def poblar_activos(wb, Producto, texto_encabezado):
+    ws = wb["Activos"] if "Activos" in wb.sheetnames else wb.active
+    qs = _qs_base(Producto).filter(estado=True)
+    filas = (fila_from_producto(p) for p in qs.iterator(chunk_size=1000))
+    _escribir_filas(ws, filas)
+    _pintar_stock_general(ws)
