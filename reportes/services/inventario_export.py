@@ -210,3 +210,14 @@ def poblar_activos(wb, Producto, texto_encabezado):
     filas = (fila_from_producto(p) for p in qs.iterator(chunk_size=1000))
     _escribir_filas(ws, filas)
     _pintar_stock_general(ws)
+
+def poblar_normales(wb, Producto, _texto_encabezado=None):
+    ws = wb["Normales"]
+    qs = _qs_base(Producto).filter(
+        estado=True,
+        producto_padre__isnull=True,
+        tiene_hijos=False
+    )
+    filas = (fila_from_producto(p) for p in qs.iterator(chunk_size=1000))
+    _escribir_filas(ws, filas)
+    _pintar_stock_general(ws)
