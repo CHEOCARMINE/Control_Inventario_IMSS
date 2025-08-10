@@ -3,7 +3,7 @@ from django.utils import timezone
 from salidas.models import Producto
 from django.http import HttpResponse
 from login_app.decorators import login_required, supervisor_required
-from .services.inventario_export import crear_libro_base, poblar_activos, poblar_normales, poblar_padres_hijos
+from .services.inventario_export import crear_libro_base, poblar_activos, poblar_normales, poblar_padres_hijos, poblar_desactivados
 
 TEXTO_ENCABEZADO = (
     "Servicios de Salud del Instituto Mexicano del Seguro Social para el Bienestar\n"
@@ -22,6 +22,7 @@ def inventario_excel(request):
     poblar_activos(wb, Producto, TEXTO_ENCABEZADO)
     poblar_normales(wb, Producto, TEXTO_ENCABEZADO)
     poblar_padres_hijos(wb, Producto, TEXTO_ENCABEZADO)
+    poblar_desactivados(wb, Producto, TEXTO_ENCABEZADO)
 
     bio = BytesIO()
     wb.save(bio)

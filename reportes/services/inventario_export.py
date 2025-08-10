@@ -259,3 +259,11 @@ def poblar_padres_hijos(wb, Producto, _texto_encabezado=None):
 
     _escribir_filas(ws, filas_generator())
     _pintar_stock_solo_padres(ws)
+
+def poblar_desactivados(wb, Producto, _texto_encabezado=None):
+    ws = wb["Desactivados"]
+    qs = (_qs_base(Producto)
+            .filter(estado=False)
+            .order_by("tipo__Subcatalogo__catalogo__nombre", "tipo__nombre", "nombre"))
+    filas = (fila_from_producto(p) for p in qs.iterator(chunk_size=1000))
+    _escribir_filas(ws, filas)
