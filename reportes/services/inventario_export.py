@@ -120,9 +120,6 @@ def _qs_base(Producto):
             "marca",
             "producto_padre",
         )
-        .prefetch_related(
-            Prefetch("productos_hijos", queryset=Producto.objects.only("id", "nombre", "numero_serie", "producto_padre", "stock"))
-        )
         .annotate(tiene_hijos=Exists(Producto.objects.filter(producto_padre_id=OuterRef("pk"))))
     )
 
@@ -203,6 +200,24 @@ def _pintar_stock_general(ws, fila_inicio=6):
         rango, FormulaRule(formula=[formula], stopIfTrue=True, fill=amarillo)
     )
 
+def _pintar_stock_solo_padres(ws, fila_inicio=6):
+    colS  = get_column_letter(IDX["Stock"])
+    colM  = get_column_letter(IDX["Stock mínimo"])
+    colR  = get_column_letter(IDX["Rol (Normal/Padre/Hijo)"])
+    last  = ws.max_row
+    if last < fila_inicio:
+        return
+
+    rango = f"{colS}{fila_inicio}:{colS}{last}"
+    rojo = PatternFill(fill_type="solid", start_color="FFF8CBAD", end_color="FFF8CBAD")
+    amarillo = PatternFill(fill_type="solid", start_color="FFFFF2CC", end_color="FFFFF2CC")
+
+    formula_rojo = f'AND({colR}{fila_inicio}="Padre",{colS}{fila_inicio}=0)'
+    ws.conditional_formatting.add(rango, FormulaRule(formula=[formula_rojo], stopIfTrue=True, fill=rojo))
+
+    formula_amarillo = f'AND({colR}{fila_inicio}="Padre",{colS}{fila_inicio}>0,{colS}{fila_inicio}<={colM}{fila_inicio})'
+    ws.conditional_formatting.add(rango, FormulaRule(formula=[formula_amarillo], stopIfTrue=True, fill=amarillo))
+
 # Poblar hoja Activos
 def poblar_activos(wb, Producto, texto_encabezado):
     ws = wb["Activos"] if "Activos" in wb.sheetnames else wb.active
@@ -221,3 +236,26 @@ def poblar_normales(wb, Producto, _texto_encabezado=None):
     filas = (fila_from_producto(p) for p in qs.iterator(chunk_size=1000))
     _escribir_filas(ws, filas)
     _pintar_stock_general(ws)
+
+def poblar_padres_hijos(wb, Producto, _texto_encabezado=None):
+    ws = wb["Padres e Hijos"]
+
+    # Prefetch de hijos activos con todas las relaciones necesarias
+    hijos_qs = (Producto.objects
+                .filter(estado=True)
+                .select_related("tipo__Subcatalogo__catalogo", "tipo__unidad_medida", "marca", "producto_padre"))
+
+    padres_qs = (_qs_base(Producto)
+                .filter(estado=True, producto_padre__isnull=True, tiene_hijos=True)
+                .prefetch_related(Prefetch("productos_hijos", queryset=hijos_qs)))
+
+    def filas_generator():
+        for padre in padres_qs.iterator(chunk_size=500):
+            yield fila_from_producto(padre)
+            for h in padre.productos_hijos.all():
+                fila = fila_from_producto(h)
+                fila[1] = f"— {fila[1]}"  
+                yield fila
+
+    _escribir_filas(ws, filas_generator())
+    _pintar_stock_solo_padres(ws)
