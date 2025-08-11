@@ -45,5 +45,8 @@ urlpatterns = [
 
     # Ruta para Salidas
     path('salidas/', include('salidas.urls')),
+
+    # Ruta para Reportes
+    path("reportes/", include("reportes.urls")),
 ]
 

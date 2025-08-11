@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'auxiliares_inventario',
     'inventario',
     'salidas',
+    "reportes",
 ]
 
 AUTH_USER_MODEL = 'login_app.Usuario'

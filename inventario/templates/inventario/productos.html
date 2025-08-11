@@ -9,6 +9,12 @@
     <!-- Encabezado + Botón Registrar Entrada -->
     <div class="d-flex align-items-center mb-3">
         <h2 class="mr-auto">Inventario</h2>
+
+        <a href="{% url 'inventario_excel' %}"
+            class="btn btn-success ml-2"
+            title="Exportar inventario a Excel">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </a>
     </div>
 
     <!-- Mensajes de Sesión -->
