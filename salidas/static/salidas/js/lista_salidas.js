@@ -4,7 +4,7 @@ $(function(){
   const doneTyping = 300;
 
   // Init Select2 en solicitante, unidad, departamento y producto
-  $('.select2-solicitante, .select2-unidad, .select2-departamento, .select2-producto')
+  $('.select2-solicitante, .select2-unidad, .select2-departamento, .select2-producto, .select2-estado')
     .select2({ theme: 'bootstrap4', width: '100%' })
     .on('change', function(){
       console.log('Filtro change:', $(this).attr('name'), $(this).val());

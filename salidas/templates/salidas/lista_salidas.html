@@ -210,27 +210,40 @@
   <nav aria-label="Paginación">
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
-      </li>
+        <li class="page-item">
+          <a class="page-link"
+            href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+            aria-label="Anterior">&laquo;</a>
+        </li>
       {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">&laquo;</span>
-      </li>
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true">&laquo;</span>
+        </li>
       {% endif %}
       {% for num in page_obj.paginator.page_range %}
-      <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-      </li>
+        {% if num == page_obj.number %}
+          <li class="page-item active" aria-current="page">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link"
+              href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">
+              {{ num }}
+            </a>
+          </li>
+        {% endif %}
       {% endfor %}
       {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
-      </li>
+        <li class="page-item">
+          <a class="page-link"
+            href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+            aria-label="Siguiente">&raquo;</a>
+        </li>
       {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">&raquo;</span>
-      </li>
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true">&raquo;</span>
+        </li>
       {% endif %}
     </ul>
   </nav>
