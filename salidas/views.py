@@ -277,11 +277,18 @@ def lista_salidas(request):
         prod_id = int(producto)
         qs = qs.filter(Q(detalles__producto_id=prod_id)| Q(detalles__producto__producto_padre_id=prod_id))
     if estado:
-        qs = qs.filter(estado=estado)
+        if estado.isdigit():
+            qs = qs.filter(estado=int(estado))
+        else:
+            qs = qs.filter(estado__iexact=estado)
 
     # Ordenar y paginar
     qs = qs.order_by('-fecha_creacion').distinct()
     page_obj = Paginator(qs, 10).get_page(request.GET.get('page'))
+
+    params = request.GET.copy()          
+    params.pop('page', None)             
+    querystring = params.urlencode()    
 
     # Datos para selects
     context = {
@@ -302,6 +309,7 @@ def lista_salidas(request):
         'productos':      Producto.objects.filter(
                                 producto_padre__isnull=True
                             ).order_by('nombre'),
+        'querystring': querystring,
     }
     return render(request, 'salidas/lista_salidas.html', context)
 
